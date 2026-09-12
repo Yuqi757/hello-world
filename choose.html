@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>电气选型工作台 Pro · 多回路项目版</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#10141b;--panel:#161c26;--line:#283243;--line2:#37425a;--tx:#e9eef6;--dim:#93a0b4;--mut:#5d6b80;
+--amber:#ffb63b;--amber2:#ffd27a;--copper:#ff9345;--green:#3fd68c;--blue:#58b6ff;--red:#ff5d5d;
+--disp:'ZCOOL QingKe HuangYou','Noto Sans SC',sans-serif;--num:'Rajdhani','Noto Sans SC',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans SC',system-ui,sans-serif;color:var(--tx);min-height:100vh;background:
+ radial-gradient(1100px 520px at 75% -8%,rgba(90,140,200,.09),transparent 62%),
+ linear-gradient(rgba(255,255,255,.026) 1px,transparent 1px) 0 0/100% 28px,
+ linear-gradient(90deg,rgba(255,255,255,.026) 1px,transparent 1px) 0 0/28px 100%,var(--bg)}
+::selection{background:rgba(255,182,59,.35)}
+.wrap{max-width:1360px;margin:0 auto;padding:0 20px}
+.topbar{display:flex;align-items:center;gap:16px;padding:14px 24px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:44px;height:44px;display:grid;place-items:center;background:linear-gradient(160deg,#232c3c,#141a24);border:1px solid var(--line2);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+.mark svg{width:22px;height:22px}
+.brand h1{font-family:var(--disp);font-weight:400;font-size:24px;letter-spacing:3px}
+.brand p{font-family:var(--num);font-size:10.5px;letter-spacing:.3em;color:var(--mut)}
+.proj-name{background:#10151f;border:1px solid var(--line2);border-radius:5px;color:var(--amber2);font:600 15px var(--num);padding:8px 12px;letter-spacing:.06em;outline:none;transition:.2s}
+.proj-name:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(255,182,59,.12)}
+.readouts{margin-left:auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.ro{display:flex;align-items:baseline;gap:5px;font-family:var(--num)}
+.ro .lbl{font-size:11px;color:var(--mut);letter-spacing:.12em}
+.ro .val{font-size:22px;font-weight:700;color:var(--amber2);min-width:56px;text-align:right;text-shadow:0 0 12px rgba(255,182,59,.3)}
+.ro .unit{font-size:11px;color:var(--mut)}
+.status{display:flex;align-items:center;gap:8px;padding:6px 13px;border:1px solid var(--line2);border-radius:4px;background:#141a24;font-size:11.5px;letter-spacing:.18em;color:var(--dim)}
+.led{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 9px var(--green);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 2px var(--green)}}
+.hazard{height:6px;background:repeating-linear-gradient(-45deg,var(--amber) 0 14px,#12161f 14px 28px);opacity:.85}
+.toolbar{display:flex;align-items:center;gap:9px;padding:11px 14px;margin-top:18px;background:linear-gradient(180deg,#1a212e,#151b25);border:1px solid var(--line);border-radius:8px;flex-wrap:wrap}
+.btn{font-family:inherit;font-size:12.5px;padding:7px 14px;border-radius:5px;cursor:pointer;transition:.18s;border:1px solid var(--line2);background:#1c2432;color:var(--dim)}
+.btn:hover{transform:translateY(-1px);border-color:var(--amber);color:var(--amber2)}
+.btn:active{transform:translateY(1px)}
+.btn.hot{background:var(--amber);border-color:var(--amber);color:#1b1405;font-weight:700}
+.btn.hot:hover{background:var(--amber2)}
+.btn.danger:hover{border-color:var(--red);color:var(--red)}
+.sep{width:1px;height:22px;background:var(--line2);margin:0 4px}
+.toolbar label{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.toolbar select,.toolbar input{background:#10151f;border:1px solid var(--line2);color:var(--tx);border-radius:4px;padding:6px 8px;font:600 13px var(--num);outline:none}
+.toolbar input{width:52px}
+.save-tip{font-size:11px;color:var(--mut);letter-spacing:.06em}
+.flex1{flex:1}
+.layout2{display:grid;grid-template-columns:294px 1fr;gap:18px;margin-top:16px;align-items:start}
+@media(max-width:1060px){.layout2{grid-template-columns:1fr}}
+.panel{background:linear-gradient(180deg,#1a212e,#151b25);border:1px solid var(--line);border-radius:8px}
+.sec-h{display:flex;align-items:center;gap:10px;font-size:11.5px;letter-spacing:.22em;color:var(--dim);padding:13px 15px 10px}
+.sec-h b{font-family:var(--num);color:var(--amber);font-size:13px}
+.sec-h::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+.ck{display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px solid #1d2531;cursor:pointer;transition:.15s}
+.ck:hover{background:#1c2433}
+.ck.active{background:rgba(255,182,59,.07);box-shadow:inset 3px 0 0 var(--amber)}
+.ck-id{font:700 12px var(--num);color:#141414;background:#5d6b80;padding:3px 7px;border-radius:3px;min-width:34px;text-align:center}
+.ck.active .ck-id{background:var(--amber)}
+.ck-main{flex:1;min-width:0}
+.ck-n{display:block;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ck-s{font:600 11px var(--num);color:var(--mut);letter-spacing:.04em}
+.ck-b{font-style:normal;font:700 11px var(--num);width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex:none}
+.ck-b.ok{color:#0d2a1c;background:var(--green)}
+.ck-b.bad{color:#2b0d0d;background:var(--red)}
+.ck-b.na{color:var(--mut);background:#232c3c}
+.sum{padding:4px 15px 15px;font-size:12.5px}
+.sum .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #232d3d;color:var(--dim)}
+.sum .row b{font-family:var(--num);color:var(--tx);font-size:14px}
+.sum .kdi{width:60px;background:#10151f;border:1px solid var(--line2);color:var(--amber2);border-radius:4px;padding:3px 6px;font:600 13px var(--num);text-align:right;outline:none}
+.ijs{display:flex;align-items:baseline;gap:6px;margin-top:10px}
+.ijs span{font:700 34px var(--num);color:var(--amber2);text-shadow:0 0 16px rgba(255,182,59,.35)}
+.ijs small{color:var(--mut)}
+.incom-feed{margin-top:8px;font-size:12px;color:var(--dim);padding:8px 10px;background:#10151f;border-left:3px solid var(--blue);border-radius:0 4px 4px 0;font-family:var(--num);letter-spacing:.03em}
+.editor{padding-bottom:16px}
+.ed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 15px}
+@media(max-width:700px){.ed-grid{grid-template-columns:1fr 1fr}}
+.field{display:flex;align-items:center;background:#10151f;border:1px solid var(--line);border-radius:6px;padding:0 10px;transition:.2s}
+.field:focus-within{border-color:var(--amber);box-shadow:0 0 0 3px rgba(255,182,59,.12)}
+.field label{font-size:11.5px;color:var(--mut);white-space:nowrap}
+.field input{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--tx);font:700 19px var(--num);padding:8px 6px;text-align:right}
+.field .u{font-size:11px;color:var(--mut)}
+.field input[type=text]{text-align:left;font:500 14px 'Noto Sans SC'}
+.field select{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--amber2);font:700 15px var(--num);padding:9px 4px;text-align:right;cursor:pointer}
+.field select option{background:#141a24;color:var(--tx)}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+input[type=number]{-moz-appearance:textfield}
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding:8px 15px 0}
+.chip{display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line2);border-radius:6px;background:#182030;color:var(--dim);cursor:pointer;font-size:12.5px;font-family:inherit;transition:.2s}
+.chip:hover{border-color:#4c5b78;color:#c4d0e2}
+.chip.active{border-color:var(--amber);color:var(--amber2);background:rgba(255,182,59,.08);box-shadow:0 0 0 1px rgba(255,182,59,.25)}
+.chip.sm{padding:6px 11px;font-size:12px}
+.seg{display:flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+.seg button{flex:1;padding:8px 10px;background:#141a26;border:none;color:var(--dim);font:600 13px var(--num);cursor:pointer;transition:.2s;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button.active{background:var(--amber);color:#1b1405}
+.sl-row .top{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:6px}
+.sl-row .top b{font-family:var(--num);color:var(--amber2)}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--amber) var(--p,50%),#2b3547 var(--p,50%));outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:4px;background:var(--amber2);border:1px solid #a9770f;box-shadow:0 0 0 4px rgba(255,182,59,.13)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:4px;background:var(--amber2);border:1px solid #a9770f}
+.tgl{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border:1px dashed var(--line2);border-radius:6px;cursor:pointer;font-size:12px;color:var(--dim);transition:.2s}
+.tgl:hover{color:#c4d0e2;border-color:#4c5b78}
+.tgl input{display:none}
+.sw{position:relative;width:36px;height:18px;background:#2b3547;border:1px solid var(--line2);border-radius:18px;transition:.25s;flex:none}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#8b98ab;transition:.25s}
+.tgl input:checked+.sw{background:rgba(255,182,59,.22);border-color:var(--amber)}
+.tgl input:checked+.sw::after{left:20px;background:var(--amber)}
+.sld-panel{margin-top:16px;padding-bottom:4px}
+.sld-scroll{overflow-x:auto;padding:0 10px}
+#sld{width:100%;min-width:820px;display:block}
+.mini{display:flex;border-top:1px solid var(--line);margin-top:4px}
+.mini div{flex:1;padding:10px 8px 12px;text-align:center;border-right:1px solid var(--line)}
+.mini div:last-child{border-right:none}
+.mini .k{font-size:10px;letter-spacing:.18em;color:var(--mut)}
+.mini .v{font:700 20px var(--num);margin-top:2px}
+.mini .v em{font-style:normal;font-size:11px;color:var(--mut)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:15px;margin-top:16px}
+.card{background:linear-gradient(180deg,#1b2230,#151b26);border:1px solid var(--line);border-radius:8px;padding:14px 15px 12px;position:relative;overflow:hidden;transition:transform .25s,border-color .25s,box-shadow .25s;animation:up .5s both}
+.card:nth-child(2){animation-delay:.06s}.card:nth-child(3){animation-delay:.12s}.card:nth-child(4){animation-delay:.18s}
+@keyframes up{from{opacity:0;transform:translateY(14px)}}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac)}
+.card:hover{transform:translateY(-4px);border-color:var(--ac);box-shadow:0 12px 26px -14px var(--ac)}
+.c-h{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.c-tag{font:700 11.5px var(--num);letter-spacing:.1em;color:#141414;background:var(--ac);padding:2px 8px;border-radius:3px}
+.c-name{font-size:13px;font-weight:700}
+.c-model{font:700 19px/1.3 var(--num);color:var(--ac);min-height:48px;display:flex;align-items:center}
+.spec{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--dim);padding:5.5px 0;border-bottom:1px dashed #2b3547}
+.spec b{font-family:var(--num);color:var(--tx);font-size:13.5px;text-align:right}
+.ovsel{max-width:175px;background:#10151f;border:1px solid var(--line2);color:var(--amber2);border-radius:4px;font:600 11.5px var(--num);padding:3px 5px;outline:none;cursor:pointer}
+.ovsel option,.ovsel optgroup{background:#141a24;color:var(--tx)}
+.c-note{font-size:11px;color:var(--mut);margin-top:8px;line-height:1.55}
+.gauge-wrap{display:flex;align-items:center;gap:10px;margin-top:6px}
+#gaugeNeedle{transform-origin:70px 78px;transition:transform .9s cubic-bezier(.2,.9,.25,1.15)}
+.du-bar{height:7px;background:#0e131c;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:8px}
+.du-bar i{display:block;height:100%;width:0;background:var(--green);transition:width .8s,background .4s}
+.cards2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:16px}
+@media(max-width:860px){.cards2{grid-template-columns:1fr}}
+.vp{padding:14px 16px 13px;position:relative;overflow:hidden}
+.vp::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac)}
+.badge{margin-left:auto;font:700 11px var(--num);letter-spacing:.08em;padding:3px 10px;border-radius:20px}
+.badge.ok{background:rgba(63,214,140,.15);color:var(--green);border:1px solid rgba(63,214,140,.4)}
+.badge.bad{background:rgba(255,93,93,.13);color:var(--red);border:1px solid rgba(255,93,93,.45)}
+.chk{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px dashed #232d3d;font-size:12.5px;color:var(--dim)}
+.chk:last-child{border:none}
+.chk i{font-style:normal;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:700 12px var(--num);flex:none}
+.chk.ok i{background:rgba(63,214,140,.16);color:var(--green)}
+.chk.bad i{background:rgba(255,93,93,.15);color:var(--red)}
+.chk em{margin-left:auto;font:700 13px var(--num);font-style:normal;color:var(--tx)}
+.chk.bad em{color:var(--red)}
+.advice{margin-top:16px;padding:12px 16px 13px;border-left:3px solid var(--red)}
+.advice.allok{border-left-color:var(--green)}
+.advice ul{list-style:none;margin-top:6px}
+.advice li{font-size:12.5px;color:var(--dim);line-height:1.75;padding:5px 0 5px 18px;position:relative;border-bottom:1px dashed #232d3d}
+.advice li:last-child{border:none}
+.advice li::before{content:'▸';position:absolute;left:2px;color:var(--red)}
+.advice.allok li{color:var(--green)}
+.advice.allok li::before{content:'✓';color:var(--green)}
+.advice li b{color:var(--amber2);font-family:var(--num)}
+.bom{margin-top:16px;padding:14px 16px}
+.bom-box{margin-top:11px;padding:14px 16px;background:#0e131c;border:1px dashed var(--line2);border-radius:6px;white-space:pre-wrap;font-size:12.5px;line-height:1.95;color:#b9c5d8}
+.bom-box b{color:var(--amber2);font-family:var(--num)}
+.modal-mask{position:fixed;inset:0;background:rgba(6,9,14,.72);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:120}
+.modal-mask[hidden]{display:none}
+.modal{width:min(560px,92vw);background:linear-gradient(180deg,#1d2532,#161c26);border:1px solid var(--line2);border-radius:10px;padding:18px 20px;box-shadow:0 30px 80px -20px #000;animation:up .3s both}
+.m-h{font:700 16px var(--num);letter-spacing:.1em;color:var(--amber2);margin-bottom:10px}
+.m-b{max-height:46vh;overflow:auto;font-size:13px;color:var(--dim);line-height:1.9;padding:10px 14px;background:#0e131c;border:1px dashed var(--line2);border-radius:6px}
+.m-b li{margin-left:16px}
+.m-f{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+footer{margin:28px 0 36px;text-align:center;font-size:11px;color:var(--mut);line-height:1.9}
+.toast{position:fixed;left:50%;bottom:32px;transform:translate(-50%,20px);background:#20293a;border:1px solid var(--amber);color:var(--amber2);padding:10px 22px;border-radius:6px;font-size:13px;opacity:0;pointer-events:none;transition:.35s;z-index:99;max-width:80vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="mark"><svg viewBox="0 0 24 24"><path d="M13 2 5 13h6l-1 9 9-12h-6l0-8z" fill="#ffb63b"/></svg></div>
+    <div><h1>电气选型工作台 <span style="color:var(--amber);font-size:15px">PRO</span></h1><p>MULTI-CIRCUIT PROJECT CONSOLE · GB 50054 / IEC 60909 简化</p></div>
+  </div>
+  <input class="proj-name" id="projName" value="未命名项目" spellcheck="false">
+  <div class="readouts">
+    <div class="ro"><span class="lbl">U</span><span class="val" id="roU">380.0</span><span class="unit">V</span></div>
+    <div class="ro"><span class="lbl">f</span><span class="val" id="roF">50.00</span><span class="unit">Hz</span></div>
+    <div class="status"><i class="led"></i><span>项目模式</span></div>
+  </div>
+</header>
+<div class="hazard"></div>
+
+<div class="wrap">
+  <div class="toolbar">
+    <button class="btn hot" id="btnAdd">＋ 新增回路</button>
+    <button class="btn" id="btnDup">⧉ 复制回路</button>
+    <button class="btn danger" id="btnDel">✕ 删除回路</button>
+    <span class="sep"></span>
+    <label>变压器
+      <select id="txS"><option>200</option><option>315</option><option>500</option><option>630</option><option>800</option><option>1000</option><option selected>1250</option><option>1600</option><option>2000</option></select> kVA
+    </label>
+    <label>uk <input id="txUk" type="number" value="6" step="0.5" min="2" max="12"> %</label>
+    <span class="save-tip" id="saveTip">● 本地自动保存已启用</span>
+    <span class="flex1"></span>
+    <button class="btn" id="btnImport">⇪ 导入</button>
+    <button class="btn" id="btnExport">≫ 导出JSON</button>
+    <button class="btn" id="btnPrint">⎙ 打印选型书</button>
+    <button class="btn" id="btnPng">▦ 单线图PNG</button>
+    <input type="file" id="fileImport" accept=".json" hidden>
+  </div>
+
+  <div class="layout2">
+    <aside>
+      <div class="panel">
+        <div class="sec-h"><b>01</b>回路列表 <span id="cktCount" style="letter-spacing:0;color:var(--mut)"></span></div>
+        <div id="cktList"></div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <div class="sec-h"><b>Σ</b>进线汇总</div>
+        <div class="sum">
+          <div class="row"><span>装机容量 ΣP</span><b id="sumP">—</b></div>
+          <div class="row"><span>额定电流和 ΣIe</span><b id="sumIe">—</b></div>
+          <div class="row"><span>需要系数 Kd</span><input class="kdi" id="inKd" type="number" value="0.8" step="0.05" min="0.1" max="1"></div>
+          <div class="row" style="border:none"><span>进线计算电流 Ijs</span></div>
+          <div class="ijs"><span id="ijsVal">—</span><small>A</small></div>
+          <div class="incom-feed">进线建议：<span id="incomQf">—</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <section>
+      <div class="panel editor">
+        <div class="sec-h"><b>02</b>当前回路 · <span id="edId" style="font-family:var(--num);color:var(--amber2);letter-spacing:.08em">W1</span></div>
+        <div class="ed-grid">
+          <div class="field" style="grid-column:span 2"><label>名称</label><input type="text" id="edName" value="回路1" spellcheck="false"></div>
+          <div class="seg" id="edPhase"><button data-ph="3" class="active">三相380V</button><button data-ph="1">单相220V</button></div>
+          <div class="field"><label>功率</label><input type="number" id="edP" value="15" step="0.1" min="0.1"><span class="u">kW</span></div>
+          <div class="field"><label>长度</label><input type="number" id="edLen" value="30" step="1" min="1"><span class="u">m</span></div>
+          <div class="field"><label>环境</label><input type="number" id="edTemp" value="30" step="1" min="20" max="55"><span class="u">℃</span></div>
+        </div>
+        <div class="chips" id="edLoads">
+          <button class="chip active" data-load="motor">Ⓜ 异步电动机</button>
+          <button class="chip" data-load="heat">⌇ 电热负载</button>
+          <button class="chip" data-load="light">☀ 照明回路</button>
+          <button class="chip" data-load="mix">▦ 混合负载</button>
+        </div>
+        <div class="chips" id="edStarts">
+          <span style="font-size:11px;color:var(--mut);align-self:center;letter-spacing:.15em">启动方式</span>
+          <button class="chip sm active" data-start="dol">直接启动 DOL</button>
+          <button class="chip sm" data-start="sd">星三角 Y-Δ</button>
+          <button class="chip sm" data-start="soft">软启动</button>
+          <button class="chip sm" data-start="vfd">变频 VFD</button>
+        </div>
+        <div class="ed-grid" style="grid-template-columns:1fr 1fr;margin-top:10px">
+          <div class="sl-row" style="padding:0"><div class="top"><span>功率因数 cosφ</span><b id="outCos">0.85</b></div><input type="range" id="edCos" min="0.5" max="1" step="0.01" value="0.85"></div>
+          <div class="sl-row" style="padding:0"><div class="top"><span>效率 η</span><b id="outEta">0.88</b></div><input type="range" id="edEta" min="0.5" max="1" step="0.01" value="0.88"></div>
+        </div>
+        <div class="ed-grid" style="grid-template-columns:1fr 1fr;margin-top:10px">
+          <div class="field"><label>电缆截面</label><select id="edCbl"></select></div>
+          <label class="tgl">穿管敷设（载流量 ×0.8）<input type="checkbox" id="edConduit"><span class="sw"></span></label>
+        </div>
+      </div>
+
+      <div class="panel sld-panel">
+        <div class="sec-h"><b>SLD</b>系统单线图 · 当前回路</div>
+        <div class="sld-scroll">
+        <svg id="sld" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200">
+          <style>
+            #sld .bg{fill:#10141b}
+            #sld .wire{stroke:#66748c;stroke-width:2;fill:none}
+            #sld .sym{stroke:#aebdd3;stroke-width:2.2;fill:none}
+            #sld .node{fill:#10141b;stroke:#9fb0c8;stroke-width:2}
+            #sld .tagt{fill:#6b7a90;font-size:11px;letter-spacing:2px;text-anchor:middle;font-family:'Noto Sans SC',sans-serif}
+            #sld .valt{font:700 17px Rajdhani,'Noto Sans SC',sans-serif;fill:#ffb63b;text-anchor:middle}
+            #sld .namet{fill:#54627a;font-size:10.5px;text-anchor:middle;letter-spacing:1px;font-family:'Noto Sans SC',sans-serif}
+            #sld:not(.on) .valt{fill:#39435a}
+            #sld .lever{stroke:#c7d2e2;stroke-width:2.6;stroke-linecap:round;transform:rotate(-34deg);transition:transform .55s cubic-bezier(.3,1.5,.45,1)}
+            #sld.on .lever{transform:rotate(0)}
+            #sld .flow{stroke:#ffb63b;stroke-width:3;fill:none;stroke-dasharray:4 16;stroke-linecap:round;opacity:0;transition:opacity .7s}
+            #sld.on .flow{opacity:.95;animation:sldflow 1.1s linear infinite}
+            #sld.on .src{stroke:#ffb63b}
+            @keyframes sldflow{to{stroke-dashoffset:-20}}
+          </style>
+          <rect class="bg" width="800" height="200"/>
+          <circle class="sym src" cx="50" cy="110" r="20"/>
+          <text x="50" y="117" text-anchor="middle" fill="#aebdd3" font-size="19" font-family="Rajdhani">~</text>
+          <path d="M40 140h20M44 146h12M47.5 152h5" stroke="#66748c" stroke-width="2"/>
+          <text class="tagt" x="50" y="64">电 源</text>
+          <path class="wire" d="M70 110H180M240 110H360M420 110H546M594 110H700"/>
+          <path class="flow" d="M70 110H700"/>
+          <circle class="node" cx="180" cy="110" r="3.6"/><circle class="node" cx="240" cy="110" r="3.6"/>
+          <line class="lever" x1="180" y1="110" x2="240" y2="110" style="transform-origin:180px 110px"/>
+          <text class="tagt" x="210" y="64">QF1 · 断路器</text>
+          <text class="valt" x="210" y="162" id="qfVal">——</text><text class="namet" x="210" y="178" id="qfSub">待选型</text>
+          <circle class="node" cx="360" cy="110" r="3.6"/><circle class="node" cx="420" cy="110" r="3.6"/>
+          <line class="lever" x1="360" y1="110" x2="420" y2="110" style="transform-origin:360px 110px"/>
+          <text class="tagt" x="390" y="64">KM1 · 接触器</text>
+          <text class="valt" x="390" y="162" id="kmVal">——</text><text class="namet" x="390" y="178" id="kmSub">待选型</text>
+          <rect class="sym" x="546" y="95" width="48" height="30" rx="2" fill="#131924"/>
+          <path d="M554 110h7l4-8 6 16 4-8h11" stroke="#8fa0ba" stroke-width="1.6" fill="none"/>
+          <text class="tagt" x="570" y="64">FR1 · 热继</text>
+          <text class="valt" x="570" y="162" id="frVal">——</text><text class="namet" x="570" y="178" id="frSub">待选型</text>
+          <circle class="sym" cx="728" cy="110" r="28" fill="#131924"/>
+          <text x="728" y="112" text-anchor="middle" fill="#c9d5e6" font-size="21" font-weight="bold" font-family="Rajdhani">M</text>
+          <text x="728" y="130" text-anchor="middle" fill="#8fa0ba" font-size="11" font-family="Rajdhani" id="mPhase">3~</text>
+          <text class="tagt" x="728" y="64">M1 · 负载</text>
+          <text class="valt" x="728" y="162" id="mVal">——</text><text class="namet" x="728" y="178" id="mSub">待输入</text>
+        </svg>
+        </div>
+        <div class="mini">
+          <div><div class="k">计算电流 Ie</div><div class="v"><span id="miniIe">—</span><em>A</em></div></div>
+          <div><div class="k">启动电流 Ist</div><div class="v"><span id="miniIst">—</span><em>A</em></div></div>
+          <div><div class="k">校正系数 K</div><div class="v"><span id="miniK">—</span></div></div>
+          <div><div class="k">运行压降 ΔU</div><div class="v"><span id="miniDU">—</span><em>%</em></div></div>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card" style="--ac:var(--amber)">
+          <div class="c-h"><span class="c-tag">QF1</span><span class="c-name">断路器</span></div>
+          <div class="c-model" id="qfModel">——</div>
+          <div class="spec"><span>整定 / 特性</span><b id="qfIn">—</b></div>
+          <div class="spec"><span>分断能力 Icu</span><b id="qfIcu">—</b></div>
+          <div class="spec"><span>手动型号</span><select id="ovQf" class="ovsel"></select></div>
+          <div class="gauge-wrap">
+            <svg width="140" height="86" viewBox="0 0 140 86">
+              <path d="M10 78 A60 60 0 0 1 130 78" fill="none" stroke="#2b3547" stroke-width="7"/>
+              <path d="M10 78 A60 60 0 0 1 100 26" fill="none" stroke="rgba(63,214,140,.5)" stroke-width="7"/>
+              <path d="M100 26 A60 60 0 0 1 130 78" fill="none" stroke="rgba(255,93,93,.55)" stroke-width="7"/>
+              <line id="gaugeNeedle" x1="70" y1="78" x2="70" y2="26" stroke="#ffb63b" stroke-width="2.6" style="transform:rotate(-90deg)"/>
+              <circle cx="70" cy="78" r="4.5" fill="#ffb63b"/>
+            </svg>
+            <div style="font-size:11.5px;color:var(--dim);line-height:1.7">负载率<br><b id="gaugePct" style="font:700 19px var(--num);color:var(--amber2)">—</b></div>
+          </div>
+        </div>
+        <div class="card" style="--ac:var(--copper)">
+          <div class="c-h"><span class="c-tag">KM</span><span class="c-name">接触器 / 驱动</span></div>
+          <div class="c-model" id="kmModel">——</div>
+          <div id="kmExtra"></div>
+          <div class="spec"><span>使用类别</span><b id="kmAc">—</b></div>
+          <div class="spec"><span>手动主接触器</span><select id="ovKm" class="ovsel"></select></div>
+          <div class="c-note" id="kmNote"></div>
+        </div>
+        <div class="card" style="--ac:var(--green)">
+          <div class="c-h"><span class="c-tag">FR1</span><span class="c-name">热过载继电器</span></div>
+          <div class="c-model" id="frModel">——</div>
+          <div class="spec"><span>整定电流</span><b id="frSet">—</b></div>
+          <div class="spec"><span>手动档位</span><select id="ovFr" class="ovsel"></select></div>
+          <div class="c-note">整定取 0.95~1.05×Ie，须落在所选档位可调范围内。</div>
+        </div>
+        <div class="card" style="--ac:var(--blue)">
+          <div class="c-h"><span class="c-tag">WL1</span><span class="c-name">电力电缆</span></div>
+          <div class="c-model" id="cblModel">——</div>
+          <div class="spec"><span>载流量校核</span><b id="cblAmp">—</b></div>
+          <div class="spec"><span>运行压降（限4%）</span><b id="cblDu">—</b></div>
+          <div class="spec"><span>启动压降（限15%）</span><b id="cblDus">—</b></div>
+          <div class="du-bar"><i id="duFill"></i></div>
+        </div>
+      </div>
+
+      <div class="cards2">
+        <div class="panel vp" style="--ac:var(--green)">
+          <div class="c-h"><span class="c-tag" style="background:var(--green)">CHK</span><span class="c-name">保护配合 · GB 50054</span><span class="badge ok" id="coordBadge">—</span></div>
+          <div class="chk" id="chk1"><i>✓</i><span>I<sub>b</sub> ≤ I<sub>n</sub>　负载电流 ≤ 保护整定</span><em>—</em></div>
+          <div class="chk" id="chk2"><i>✓</i><span>I<sub>n</sub> ≤ I<sub>z</sub>　保护整定 ≤ 电缆载流量</span><em>—</em></div>
+          <div class="chk" id="chk3"><i>✓</i><span>I<sub>2</sub> ≤ 1.45·I<sub>z</sub>　约定脱扣校验（I₂=1.3In）</span><em>—</em></div>
+        </div>
+        <div class="panel vp" style="--ac:var(--red)">
+          <div class="c-h"><span class="c-tag" style="background:var(--red)">Ik</span><span class="c-name">短路校验 · IEC 60909 简化</span><span class="badge ok" id="ikBadge">—</span></div>
+          <div class="spec"><span>系统源短路电流（母线处）</span><b id="ikSrc">—</b></div>
+          <div class="spec"><span>回路末端短路电流</span><b id="ikEnd">—</b></div>
+          <div class="spec"><span>断路器分断能力 Icu</span><b id="ikIcu">—</b></div>
+          <div class="c-note" id="ikNote">校验条件：安装点短路电流 ≤ 断路器分断能力。</div>
+        </div>
+      </div>
+
+      <div class="panel advice" id="advicePanel" hidden>
+        <div class="sec-h" style="padding:2px 0 8px"><b>⚠</b>整改建议 <span class="badge bad" id="advBadge">—</span><button class="btn hot" id="btnFix" style="margin-left:10px" title="列出待执行操作，确认后生效">⚡ 一键整改</button></div>
+        <ul id="adviceList"></ul>
+      </div>
+
+      <div class="panel bom">
+        <div class="sec-h" style="padding:0 0 4px"><b>04</b>当前回路选型清单</div>
+        <div class="bom-box" id="bomBox">—</div>
+      </div>
+    </section>
+  </div>
+
+  <footer>⚠ 本工具为简化估算：短路计算忽略电弧与电机反馈，保护配合按约定系数取值；手动指定型号后仍以校验结果为准。<br>正式设计请以 <b>GB 50054《低压配电设计规范》、GB/T 16895 系列、IEC 60909</b> 及产品样本复核。</footer>
+</div>
+
+<div class="modal-mask" id="fixMask" hidden>
+  <div class="modal">
+    <div class="m-h">⚡ 一键整改 · 操作确认</div>
+    <div class="m-b"><ul id="fixList"></ul></div>
+    <div class="m-f"><button class="btn" id="fixCancel">取消</button><button class="btn hot" id="fixOk">确认执行</button></div>
+  </div>
+</div>
+<div id="report" style="display:none"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+/* ═══ 数据表 ═══ */
+const LOADS={
+ motor:{name:'异步电动机',short:'电机',cos:.85,eta:.88,kB:1.25},
+ heat:{name:'电热负载',short:'电热',cos:1,eta:1,kB:1.15},
+ light:{name:'照明回路',short:'照明',cos:.9,eta:1,kB:1.15},
+ mix:{name:'混合负载',short:'混合',cos:.82,eta:.95,kB:1.2}};
+const START={
+ dol:{name:'直接启动',istK:7,curve:'D',ac:'AC-3',km:[{tag:'KM1',k:1.25,role:'主回路'}]},
+ sd:{name:'星三角启动',istK:2.4,curve:'C',ac:'AC-3',km:[{tag:'KM1',k:.75,role:'主(三角)'},{tag:'KM2',k:.45,role:'星接'},{tag:'KM3',k:.75,role:'角接'}]},
+ soft:{name:'软启动',istK:3.5,curve:'C',ac:'AC-3',km:[{tag:'KM1',k:1.2,role:'旁路运行'}],extra:'软启动器'},
+ vfd:{name:'变频启动',istK:1.5,curve:'C',ac:'—',km:[],extra:'变频器'}};
+const BREAK_R=[6,10,16,20,25,32,40,50,63,80,100,125,160,200,250,315,400,500,630];
+const FRAMES=[125,160,250,400,630];
+const IC={125:25,160:25,250:36,400:50,630:50};
+const ICH=50;
+const KM=[[9,'CJX2-0910'],[12,'CJX2-1210'],[18,'CJX2-1810'],[25,'CJX2-2510'],[32,'CJX2-3210'],[40,'CJX2-4011'],[50,'CJX2-5011'],[65,'CJX2-6511'],[80,'CJX2-8011'],[95,'CJX2-9511'],[115,'CJX2-115'],[150,'CJX2-150'],[185,'CJX2-185'],[225,'CJX2-225'],[265,'CJX2-265'],[330,'CJX2-330'],[400,'CJX2-400'],[500,'CJX2-500'],[630,'CJX2-630']];
+const FRR=[[.1,.16],[.16,.25],[.25,.4],[.4,.63],[.63,1],[1,1.6],[1.6,2.5],[2.5,4],[4,6],[5.5,8],[7,10],[9,13],[12,18],[17,25],[23,32],[30,40],[37,50],[48,65],[55,70],[64,80],[80,93]];
+const CBL=[[1.5,18],[2.5,26],[4,35],[6,46],[10,63],[16,85],[25,112],[35,138],[50,168],[70,213],[95,258],[120,299],[150,344],[185,392],[240,461]];
+const STD=[1.5,2.5,4,6,10,16,25,35,50,70,95,120,150,185,240];
+const R20={1.5:12.1,2.5:7.41,4:4.61,6:3.08,10:1.83,16:1.15,25:.727,35:.524,50:.387,70:.268,95:.193,120:.153,150:.124,185:.0991,240:.0754};
+const X=.08;
+const LS_KEY='elec-select-pro-v3';
+
+/* ═══ 型号生成器（默认正泰体系；第二段代码将扩展为多品牌） ═══ */
+function qfModelStr(kind,f,h,In,poles,curve){
+ if(kind==='micro')return `NXB-63 ${poles} ${curve}${In}`;
+ return `NM8-${f}${h?'H':''}/3300 ${poles} ${In}A`;}
+function kmModelStr(i){const m=KM.find(([r])=>r===i);return m?m[1]:('CJX2-'+i)}
+function frModelStr(rg){return `${rg[1]<=22?'JR36-20':rg[1]<=63?'JR36-63':'JR28 系列'} · ${rg[0]}–${rg[1]} A`}
+
+/* ═══ 项目状态与存档 ═══ */
+function newC(n){return{name:'回路'+n,load:'motor',start:'dol',phase:3,p:7.5,cos:.85,eta:.88,len:30,temp:30,conduit:false,cbl:0,qfOv:'',kmOv:'',frOv:''}}
+function _clean(){return JSON.parse(JSON.stringify(proj,(k,v)=>k==='_r'?undefined:v))}
+function _stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');
+ return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())}
+function _safeParse(s){
+ if(!s||!Array.isArray(s.circuits)||!s.circuits.length)return null;
+ s.tx=(s.tx&&isFinite(s.tx.s))?{s:+s.tx.s,uk:+s.tx.uk||6}:{s:1250,uk:6};
+ s.kd=isFinite(s.kd)?Math.min(1,Math.max(.1,+s.kd)):.8;
+ s.name=s.name||'未命名项目';
+ s.circuits=s.circuits.map(c=>Object.assign(newC(0),c));
+ s.active=Math.min(Math.max(0,s.active|0),s.circuits.length-1);
+ return s}
+function loadState(){
+ try{return _safeParse(JSON.parse(localStorage.getItem(LS_KEY)))}catch(e){return null}}
+let _saveTimer=null;
+function save(){
+ clearTimeout(_saveTimer);
+ const tip=$('saveTip');if(tip){tip.textContent='● 正在保存…';tip.style.color='';}
+ _saveTimer=setTimeout(()=>{
+  try{localStorage.setItem(LS_KEY,JSON.stringify(_clean()));
+   if(tip){tip.textContent='● 已自动保存 '+new Date().toTimeString().slice(0,5);tip.style.color='var(--green)';}}
+  catch(e){if(tip){tip.textContent='● 保存失败';tip.style.color='var(--red)';}}},400)}
+window.addEventListener('beforeunload',()=>{try{localStorage.setItem(LS_KEY,JSON.stringify(_clean()))}catch(e){}});
+
+let proj={name:'示例配电项目',tx:{s:1250,uk:6},kd:.8,brand:'chint',active:0,circuits:[
+ {name:'主传动电机',load:'motor',start:'sd',phase:3,p:45,cos:.86,eta:.91,len:40,temp:30,conduit:false,cbl:0,qfOv:'',kmOv:'',frOv:''},
+ {name:'冷却水泵',load:'motor',start:'dol',phase:3,p:15,cos:.85,eta:.88,len:30,temp:30,conduit:false,cbl:0,qfOv:'',kmOv:'',frOv:''},
+ {name:'车间照明',load:'light',start:'dol',phase:1,p:6,cos:.9,eta:1,len:45,temp:30,conduit:true,cbl:0,qfOv:'',kmOv:'',frOv:''}]};
+{const s=loadState();if(s){proj=s;}}
+const ac=()=>proj.circuits[proj.active];
+
+/* ═══ 核心计算 ═══ */
+function duRun(s,Ie,len,cos,p3){const r=R20[s]*1.24,si=Math.sqrt(Math.max(1-cos*cos,0));
+ return (p3?Math.sqrt(3):2)*Ie*(len/1000)*(r*cos+X*si);}
+function compute(c){
+ if(!(c.p>0))return{invalid:true};
+ const ld=LOADS[c.load],isM=c.load==='motor',st=isM?START[c.start]:START.dol;
+ const p3=c.phase===3,U=p3?380:220,up=p3?400:230,poles=p3?'3P':'2P';
+ const r={};
+ r.Ie=p3?c.p*1000/(Math.sqrt(3)*U*c.cos*c.eta):c.p*1000/(U*c.cos*c.eta);
+ r.kT=Math.sqrt(Math.max(70-c.temp,1)/40);r.K=r.kT*(c.conduit?.8:1);
+ r.ist=isM?r.Ie*st.istK:null;r.st=st;r.ld=ld;
+ r.curve=isM?st.curve:'C';
+ const kB=isM?(c.start==='dol'?1.25:1.2):ld.kB;
+ r.In=BREAK_R.find(x=>x>=r.Ie*kB)||null;
+ const Sk=proj.tx.s/(proj.tx.uk/100)/1000,Zs=.16/Sk;
+ r.ikSrc=400/(Math.sqrt(3)*Zs);
+ /* 断路器：手动优先，否则自动（含分断选型） */
+ r.ovQf=!!c.qfOv;r.ovKm=!!c.kmOv;r.ovFr=!!c.frOv;r.frOk=true;
+ r.ic=0;r.hType=false;
+ if(r.ovQf){const q=c.qfOv.split(':');
+  if(q[0]==='micro'){r.In=+q[1];r.ic=6;r.qfModel=qfModelStr('micro',0,false,r.In,poles,r.curve);r.frame='63 壳架·微断(手动)';}
+  else{const f=+q[1],hh=q[0]==='h';r.In=+q[2];r.hType=hh;r.ic=hh?ICH:(IC[f]||0);
+   r.qfModel=qfModelStr('mccb',f,hh,r.In,poles,r.curve);r.frame=f+' 壳架·塑壳(手动)';}}
+ else if(r.In&&r.In<=63&&r.ikSrc<=6000){r.qfModel=qfModelStr('micro',0,false,r.In,poles,r.curve);r.frame='63 壳架·微断';r.ic=6;}
+ else if(r.In){const f=FRAMES.find(f=>f>=r.In);
+  if(IC[f]*1000>=r.ikSrc){r.qfModel=qfModelStr('mccb',f,false,r.In,poles,r.curve);r.frame=f+' 壳架·塑壳';r.ic=IC[f];}
+  else{r.hType=true;r.qfModel=qfModelStr('mccb',f,true,r.In,poles,r.curve);r.frame=f+' 壳架·塑壳(高分断)';r.ic=ICH;}}
+ else{r.qfModel='超出速查范围';r.frame='—';}
+ /* 电缆 */
+ r.manual=!!(c.cbl>0);
+ r.sAmp=null;
+ if(r.manual)r.sAmp=CBL.find(([s])=>s===+c.cbl)||null;
+ else{const need=Math.max(r.Ie,r.In||0);for(const it of CBL)if(it[1]*r.K>=need){r.sAmp=it;break;}}
+ r.pick=null;r.duPct=NaN;r.duAbs=NaN;
+ if(r.sAmp){
+  if(r.manual){r.pick=r.sAmp;r.duAbs=duRun(r.pick[0],r.Ie,c.len,c.cos,p3);r.duPct=r.duAbs/up*100;}
+  else{let i=CBL.indexOf(r.sAmp);
+   for(;i<CBL.length;i++){const s=CBL[i][0];r.duAbs=duRun(s,r.Ie,c.len,c.cos,p3);r.duPct=r.duAbs/up*100;
+    if(r.duPct<=4){r.pick=CBL[i];break;}}
+   if(!r.pick){r.pick=CBL[CBL.length-1];r.duAbs=duRun(r.pick[0],r.Ie,c.len,c.cos,p3);r.duPct=r.duAbs/up*100;}}}
+ if(r.pick){const s=r.pick[0],sn=STD.find(x=>x>=s/2)||s;
+  r.cblSpec=p3?`YJV-0.6/1kV 3×${s}+1×${sn}`:`YJV-0.6/1kV 3×${s}`;r.IzK=r.pick[1]*r.K;}
+ else{r.cblSpec='—';r.IzK=0;}
+ r.dusPct=NaN;
+ if(r.ist&&r.pick){const zl=c.len/1000*Math.hypot(R20[r.pick[0]],X);
+  const dus=p3?Math.sqrt(3)*r.ist*(Zs+zl):2*r.ist*(Zs+zl);r.dusPct=dus/up*100;}
+ const sIk=r.pick?r.pick[0]:(r.sAmp?r.sAmp[0]:null);
+ r.ikEnd=sIk?(p3?400/(Math.sqrt(3)*(Zs+c.len/1000*Math.hypot(R20[sIk],X))):230/(Zs+2*c.len/1000*Math.hypot(R20[sIk],X))):NaN;
+ r.c1=r.In?r.Ie<=r.In:false;
+ r.c2=r.In&&r.IzK?r.In<=r.IzK:false;
+ r.c3=r.In&&r.IzK?1.3*r.In<=1.45*r.IzK:false;
+ r.coordOk=r.c1&&r.c2&&r.c3;
+ r.brkOk=r.ic?r.ikSrc<=r.ic*1000:false;
+ /* 接触器 / 驱动 */
+ r.kmList=st.km.map(t=>{const row=KM.find(([i])=>i>=r.Ie*t.k)||null;
+  return{tag:t.tag,role:t.role,model:row?kmModelStr(row[0]):'超范围',rating:row?row[0]:null};});
+ if(r.ovKm&&r.kmList.length){const i=+c.kmOv;
+  r.kmList[0]={tag:r.kmList[0].tag,role:r.kmList[0].role+'(手动)',model:kmModelStr(i),rating:i};}
+ r.extra=st.extra?(st.extra==='变频器'?`${st.extra} ≥ ${c.p} kW / ${(r.Ie*1.1).toFixed(0)} A`:`${st.extra} ≥ ${(r.Ie*1.2).toFixed(0)} A`):null;
+ r.acClass=isM?st.ac:(c.load==='light'?'AC-5b':'AC-1');
+ /* 热继 */
+ if(r.Ie<=93){const rg=FRR.find(([a,b])=>r.Ie>=a&&r.Ie<=b)||FRR.find(([a,b])=>b>=r.Ie);
+  r.frModel=frModelStr(rg);r.frSet=r.Ie.toFixed(1)+' A';}
+ else{r.frModel='建议 CT + 继电器方案';r.frSet='—';}
+ if(r.ovFr){const rg=c.frOv.split('-').map(Number);
+  r.frModel=frModelStr(rg);r.frSet=r.Ie.toFixed(1)+' A';
+  r.frOk=r.Ie>=rg[0]&&r.Ie<=rg[1];}
+ r.allOk=r.coordOk&&r.brkOk&&r.frOk&&!((isFinite(r.dusPct)&&r.dusPct>15)||(isFinite(r.duPct)&&r.duPct>4));
+ return r;
+}
+
+/* ═══ 整改建议引擎 ═══ */
+function advice(c,r){
+ const a=[];if(r.invalid)return a;
+ if(!r.brkOk&&r.In)
+  a.push(r.ovQf?`<b>分断不足（手动型号）</b>：所选 ${r.qfModel} 的 Icu=${r.ic} kA 小于母线短路 ${(r.ikSrc/1000).toFixed(1)} kA。建议改选更高分断型号或改回自动。`
+              :`<b>分断不足</b>：母线短路 ${(r.ikSrc/1000).toFixed(1)} kA 已超出最高分断 ${ICH} kA。建议限流型断路器、与上级级联或分裂运行；也可点"一键整改"尝试上调变压器 uk%。`);
+ if(r.In&&r.IzK&&!r.c2){
+  const need=CBL.find(([s,iz])=>iz*r.K>=r.In);
+  a.push(need?`<b>配合违规（In＞Iz）</b>：断路器 ${r.In}A 超出电缆允许载流量 ${r.IzK.toFixed(0)}A。建议电缆加大至 <b>${need[0]} mm²</b>（${need[1]}×${r.K.toFixed(2)}=${(need[1]*r.K).toFixed(0)} A）${r.manual?'，或将"电缆截面"改回自动':''}；或降低负载后减小整定。`
+            :`<b>配合违规（In＞Iz）</b>：单根电缆载流量不足，建议双拼电缆或改用母线槽。`);}
+ else if(r.In&&r.IzK&&!r.c3){
+  const needIz=1.3*r.In/1.45,need=CBL.find(([s,iz])=>iz*r.K>=needIz);
+  a.push(need?`<b>约定脱扣校验不满足</b>（1.3In＞1.45Iz）：建议电缆加大至 <b>${need[0]} mm²</b>，使 Iz×K ≥ ${needIz.toFixed(0)} A；若负载允许也可下调断路器整定。`
+            :`<b>约定脱扣校验不满足</b>：建议双拼电缆或母线槽。`);}
+ if(r.ovFr&&!r.frOk)
+  a.push(`<b>热继手动档位不含 Ie</b>（${r.Ie.toFixed(1)} A 不在整定范围）：请改选包含 Ie 的档位，或改回自动。`);
+ if(isFinite(r.dusPct)&&r.dusPct>15)
+  a.push(c.load==='motor'&&c.start==='dol'?`<b>启动压降 ${r.dusPct.toFixed(1)}% 超限</b>（＞15%）：建议改为 星三角 / 软启动 / 变频 启动（可点"一键整改"自动切换），或加大电缆截面。`
+                                           :`<b>启动压降 ${r.dusPct.toFixed(1)}% 超限</b>（＞15%）：建议加大电缆截面或缩短供电距离。`);
+ if(isFinite(r.duPct)&&r.duPct>4)
+  a.push(`<b>运行压降 ${r.duPct.toFixed(1)}% 超限</b>（＞4%）：${r.manual?'当前为手动截面，建议加大截面或改回自动；':'已达速查表最大截面仍不满足，'}建议拆分回路、缩短供电距离或提高电压等级。`);
+ return a;
+}
+
+/* ═══ 一键整改（确认弹窗） ═══ */
+function autoFix(){
+ const plan=[];
+ proj.circuits.forEach((c,i)=>{const r=c._r;if(!r||r.invalid)return;
+  if(r.manual&&(!r.c2||!r.c3||(isFinite(r.duPct)&&r.duPct>4)))plan.push({d:`W${i+1} ${c.name}：电缆改回自动选型`,f:()=>{c.cbl=0;}});
+  if(c.load==='motor'&&c.start==='dol'&&isFinite(r.dusPct)&&r.dusPct>15)plan.push({d:`W${i+1} ${c.name}：直接启动 → 星三角启动`,f:()=>{c.start='sd';}});
+  if(r.ovQf&&!r.brkOk)plan.push({d:`W${i+1} ${c.name}：断路器改回自动（按分断能力重选）`,f:()=>{c.qfOv='';}});
+  if(r.ovFr&&!r.frOk)plan.push({d:`W${i+1} ${c.name}：热继改回自动档位`,f:()=>{c.frOv='';}});
+ });
+ proj.circuits.forEach(c=>c._r=compute(c));
+ const bad=proj.circuits.filter(c=>c._r&&!c._r.invalid&&!c._r.brkOk&&!c._r.ovQf);
+ if(bad.length){
+  const maxIk=Math.max.apply(null,bad.map(c=>c._r.ikSrc));
+  const minIc=Math.min.apply(null,bad.map(c=>c._r.ic||ICH));
+  const needUk=Math.ceil(proj.tx.uk*(maxIk/1000)/minIc/0.5)*0.5;
+  if(needUk<=12&&needUk>proj.tx.uk)plan.push({d:`变压器 uk%：${proj.tx.uk} → ${needUk}（降低系统短路水平）`,f:()=>{proj.tx.uk=needUk;$('txUk').value=needUk;}});
+  else plan.push({d:'⚠ 短路水平过高：需限流型断路器或分裂运行（须人工处理，本项仅提示）',f:()=>{}});
+ }
+ if(!plan.length){showToast('当前没有可自动整改的项目');return}
+ $('fixList').innerHTML=plan.map(p=>`<li>${p.d}</li>`).join('');
+ $('fixMask').hidden=false;
+ $('fixOk').onclick=()=>{plan.forEach(p=>p.f());$('fixMask').hidden=true;refresh();showToast('一键整改已执行 '+plan.length+' 项');};
+}
+
+/* ═══ 渲染 ═══ */
+function num(el,v,d=1){if(!isFinite(v)){el.textContent='—';el._v=0;return}
+ const from=el._v||0;el._v=v;cancelAnimationFrame(el._raf);const t0=performance.now();
+ const step=t=>{const k=Math.min(1,(t-t0)/380),e=1-Math.pow(1-k,3);
+ el.textContent=(from+(v-from)*e).toFixed(d);if(k<1)el._raf=requestAnimationFrame(step)};
+ el._raf=requestAnimationFrame(step)}
+const txt=(el,s)=>el.textContent=s;
+function fillRange(el){el.style.setProperty('--p',((el.value-el.min)/(el.max-el.min)*100)+'%')}
+function showToast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600)}
+function setChk(id,ok,v){const el=$(id);el.className='chk '+(ok?'ok':'bad');
+ el.querySelector('i').textContent=ok?'✓':'✗';el.querySelector('em').textContent=v;}
+
+function buildOvOptions(c,r){
+ const poles=c.phase===3?'3P':'2P';
+ let h='<option value="">自动</option><optgroup label="微断 · 6kA">';
+ BREAK_R.filter(x=>x<=63).forEach(In=>{h+=`<option value="micro:${In}">${qfModelStr('micro',0,false,In,poles,r.curve)} · 6kA</option>`});
+ h+='</optgroup><optgroup label="塑壳标准型">';
+ BREAK_R.forEach(In=>{const f=FRAMES.find(x=>x>=In);h+=`<option value="std:${f}:${In}">${qfModelStr('mccb',f,false,In,poles,r.curve)} · ${IC[f]}kA</option>`});
+ h+='</optgroup><optgroup label="塑壳高分断 · 50kA">';
+ BREAK_R.forEach(In=>{const f=FRAMES.find(x=>x>=In);h+=`<option value="h:${f}:${In}">${qfModelStr('mccb',f,true,In,poles,r.curve)} · 50kA</option>`});
+ h+='</optgroup>';
+ $('ovQf').innerHTML=h;$('ovQf').value=c.qfOv||'';
+ $('ovKm').innerHTML='<option value="">自动</option>'+KM.map(([i])=>`<option value="${i}">${kmModelStr(i)} · ${i}A</option>`).join('');
+ $('ovKm').value=c.kmOv||'';
+ $('ovFr').innerHTML='<option value="">自动</option>'+FRR.map(rg=>`<option value="${rg[0]}-${rg[1]}">${frModelStr(rg)}</option>`).join('');
+ $('ovFr').value=c.frOv||'';
+}
+
+function fillForm(c){
+ $('edId').textContent='W'+(proj.active+1);
+ $('edName').value=c.name;$('edP').value=c.p;$('edLen').value=c.len;$('edTemp').value=c.temp;
+ $('edCos').value=c.cos;$('edEta').value=c.eta;
+ $('outCos').textContent=(+c.cos).toFixed(2);$('outEta').textContent=(+c.eta).toFixed(2);
+ fillRange($('edCos'));fillRange($('edEta'));
+ $('edConduit').checked=!!c.conduit;
+ $('edCbl').value=String(c.cbl||0);
+ document.querySelectorAll('#edPhase button').forEach(b=>b.classList.toggle('active',+b.dataset.ph===c.phase));
+ document.querySelectorAll('#edLoads .chip').forEach(b=>b.classList.toggle('active',b.dataset.load===c.load));
+ document.querySelectorAll('#edStarts [data-start]').forEach(b=>b.classList.toggle('active',b.dataset.start===c.start));
+ $('edStarts').style.display=c.load==='motor'?'flex':'none';
+}
+
+function renderStandby(){
+ ['qfModel','kmModel','frModel','cblModel'].forEach(id=>txt($(id),'——'));
+ ['qfIn','qfIcu','gaugePct','frSet','cblAmp','cblDu','cblDus','kmAc'].forEach(id=>txt($(id),'—'));
+ $('kmExtra').innerHTML='';txt($('kmNote'),'');
+ ['miniIe','miniDU','miniIst','miniK'].forEach(id=>txt($(id),'—'));
+ ['qfVal','kmVal','frVal','mVal'].forEach(id=>txt($(id),'——'));
+ ['qfSub','kmSub','frSub'].forEach(id=>txt($(id),'待选型'));txt($('mSub'),'待输入');
+ ['ovQf','ovKm','ovFr'].forEach(id=>{$(id).innerHTML='<option value="">自动</option>';$(id).value='';});
+ $('sld').classList.remove('on');
+ $('gaugeNeedle').style.transform='rotate(-90deg)';$('duFill').style.width='0';
+ ['chk1','chk2','chk3'].forEach(id=>setChk(id,false,'—'));
+ txt($('coordBadge'),'—');$('coordBadge').className='badge ok';
+ txt($('ikBadge'),'—');$('ikBadge').className='badge ok';
+ ['ikSrc','ikEnd','ikIcu'].forEach(id=>txt($(id),'—'));
+ $('advicePanel').hidden=true;
+ $('bomBox').textContent='请输入有效负载功率（>0）。';
+}
+
+function renderResults(c,r){
+ const p3=c.phase===3;
+ $('sld').classList.add('on');
+ num($('miniIe'),r.Ie,1);txt($('miniIst'),r.ist?r.ist.toFixed(0):'—');
+ txt($('miniK'),r.K.toFixed(2));txt($('miniDU'),isFinite(r.duPct)?r.duPct.toFixed(1):'—');
+ txt($('qfVal'),r.In?`${r.In}A·${r.curve}`:'超限');txt($('qfSub'),r.frame);
+ txt($('kmVal'),r.kmList[0]?(r.kmList[0].rating+'A'):(r.extra?'驱动':'—'));
+ txt($('kmSub'),r.ist?`${r.st.name} Ist≈${r.st.istK}×`:'无启动冲击');
+ txt($('frVal'),r.Ie<=93?`整定 ${r.Ie.toFixed(1)}A`:'CT 方案');txt($('frSub'),'过载保护');
+ txt($('mVal'),c.p+' kW');txt($('mSub'),r.ld.name);txt($('mPhase'),p3?'3~':'1~');
+ txt($('qfModel'),(r.ovQf?'〔手动〕':'')+r.qfModel);txt($('qfIn'),r.In?`${r.In} A · ${r.curve} 型`:'—');txt($('qfIcu'),r.ic?r.ic+' kA':'—');
+ const pct=r.In?r.Ie/r.In*100:0;txt($('gaugePct'),pct?pct.toFixed(0)+' %':'—');
+ $('gaugeNeedle').style.transform=`rotate(${-90+Math.min(pct,150)/150*180}deg)`;
+ txt($('kmModel'),(r.ovKm?'〔手动〕':'')+(r.kmList[0]?r.kmList[0].model:(r.extra?'无接触器方案':'超范围')));
+ $('kmExtra').innerHTML=r.kmList.slice(1).map(k=>`<div class="spec"><span>${k.tag} · ${k.role}</span><b>${k.model}</b></div>`).join('')
+  +(r.extra?`<div class="spec"><span>驱动装置</span><b>${r.extra}</b></div>`:'');
+ txt($('kmAc'),r.acClass);
+ txt($('kmNote'),(c.load==='motor'&&c.start==='sd')?'星三角：KM1/KM3 承载 Ie/√3，KM2 仅启动段通电，均可降档选取。':
+  (c.load==='motor'&&c.start==='dol')?'直接启动冲击约 7×Ie，主接触器按 AC-3 全电流选取。':
+  r.extra?'由驱动装置完成启动，接触器仅承担旁路/检修隔离。':'该类别负载无启动冲击。');
+ txt($('frModel'),(r.ovFr?'〔手动〕':'')+r.frModel);txt($('frSet'),r.frSet);
+ txt($('cblModel'),(r.manual?'〔手动〕':'')+r.cblSpec);
+ txt($('cblAmp'),r.pick?`${r.pick[1]}×${r.K.toFixed(2)} = ${r.IzK.toFixed(0)} A`:'—');
+ txt($('cblDu'),isFinite(r.duPct)?`${r.duAbs.toFixed(1)} V · ${r.duPct.toFixed(1)} %`:'—');
+ txt($('cblDus'),isFinite(r.dusPct)?r.dusPct.toFixed(1)+' %':'—');
+ const f=$('duFill');
+ if(isFinite(r.duPct)){f.style.width=Math.min(r.duPct/6*100,100)+'%';f.style.background=r.duPct<=3?'var(--green)':r.duPct<=4?'var(--amber)':'var(--red)';}
+ else f.style.width='0';
+ const opt0=$('edCbl').options[0];
+ if(opt0)opt0.textContent=r.manual?'自动（推荐）':(r.pick?`自动 → 当前 ${r.pick[0]} mm²`:'自动（推荐）');
+ buildOvOptions(c,r);
+ setChk('chk1',r.c1,r.In?`${r.Ie.toFixed(1)} ≤ ${r.In} A`:'—');
+ setChk('chk2',r.c2,(r.In&&r.IzK)?`${r.In} ≤ ${r.IzK.toFixed(0)} A`:'—');
+ setChk('chk3',r.c3,(r.In&&r.IzK)?`${(1.3*r.In).toFixed(0)} ≤ ${(1.45*r.IzK).toFixed(0)} A`:'—');
+ const cb=$('coordBadge');cb.textContent=r.coordOk?'配合有效':'配合失败';cb.className='badge '+(r.coordOk?'ok':'bad');
+ txt($('ikSrc'),(r.ikSrc/1000).toFixed(1)+' kA');
+ txt($('ikEnd'),isFinite(r.ikEnd)?(r.ikEnd/1000).toFixed(2)+' kA':'—');
+ txt($('ikIcu'),r.ic?r.ic+' kA':'—');
+ const ib=$('ikBadge');ib.textContent=r.brkOk?'分断满足':'分断不足';ib.className='badge '+(r.brkOk?'ok':'bad');
+ txt($('ikNote'),r.brkOk?'母线处短路电流在所选断路器分断能力之内。':'⚠ 短路电流超出分断能力，详见下方整改建议。');
+}
+
+function renderAdvice(c,r){
+ const a=advice(c,r),p=$('advicePanel');
+ p.hidden=false;
+ if(a.length){p.classList.remove('allok');txt($('advBadge'),a.length+' 项');$('advBadge').className='badge bad';
+  $('adviceList').innerHTML=a.map(t=>`<li>${t}</li>`).join('');}
+ else{p.classList.add('allok');txt($('advBadge'),'PASS');$('advBadge').className='badge ok';
+  $('adviceList').innerHTML='<li>保护配合、分断能力与电压降均满足要求，无需调整。</li>';}
+}
+
+function renderList(){
+ $('cktCount').textContent=`（${proj.circuits.length} 条）`;
+ $('cktList').innerHTML=proj.circuits.map((c,i)=>{
+  const r=c._r,ok=r&&!r.invalid?r.allOk:null;
+  return `<div class="ck ${i===proj.active?'active':''}" data-i="${i}">
+   <b class="ck-id">W${i+1}</b>
+   <div class="ck-main"><span class="ck-n">${c.name||'未命名'}</span>
+   <span class="ck-s">${LOADS[c.load].short}${c.load==='motor'?'·'+START[c.start].name:''} · ${c.p}kW · ${r&&!r.invalid?r.Ie.toFixed(1):'—'}A · ${r&&!r.invalid&&r.In?(r.In<=63?r.curve+r.In:r.In+'A'):'—'}</span></div>
+   <i class="ck-b ${ok===null?'na':ok?'ok':'bad'}">${ok===null?'—':ok?'✓':'✗'}</i></div>`;}).join('');
+}
+
+function renderIncoming(){
+ let sp=0,si=0;proj.circuits.forEach(c=>{if(c._r&&!c._r.invalid){sp+=c.p;si+=c._r.Ie}});
+ const ijs=proj.kd*si;
+ txt($('sumP'),sp.toFixed(1)+' kW');txt($('sumIe'),si.toFixed(1)+' A');num($('ijsVal'),ijs,1);
+ const In=BREAK_R.find(x=>x>=ijs*1.1);
+ txt($('incomQf'),In?(In<=63?`NXB-63 3P C${In}`:`NM8-${FRAMES.find(f=>f>=In)||'…'}/3300 整定${In}A`):'超出范围');
+}
+
+function renderBOM(c,r){
+ if(r.invalid){$('bomBox').textContent='请输入有效负载功率（>0）。';return}
+ if(!r.In){$('bomBox').textContent='负载电流超出速查范围，请调整参数。';return}
+ const t=
+`══ W${proj.active+1} · ${c.name} ══
+负载：${r.ld.name}  ${c.p} kW / ${c.phase===3?380:220} V  cosφ=${c.cos}  η=${c.eta}${c.load==='motor'?`   启动：${r.st.name}  Ist≈${r.ist.toFixed(0)}A`:''}
+Ie = ${r.Ie.toFixed(1)} A   K校正 = ${r.K.toFixed(2)}   L = ${c.len} m
+────────────────────
+QF1 断路器：${r.ovQf?'〔手动〕':''}${r.qfModel}（分断 ${r.ic}kA ${r.brkOk?'✔':'✘ 不足'}）
+${r.kmList.map((k,j)=>`${k.tag} 接触器：${(j===0&&r.ovKm)?'〔手动〕':''}${k.model}（${k.role}${k.rating?'，'+k.rating+'A':''}）`).join('\n')}${r.extra?'\n驱动装置：'+r.extra:''}
+FR1 热继　：${r.ovFr?'〔手动〕':''}${r.frModel}｜整定 ${r.frSet}${r.ovFr&&!r.frOk?' ⚠范围不含Ie':''}
+WL1 电缆　：${r.manual?'〔手动指定〕':''}${r.cblSpec}｜ΔU=${isFinite(r.duPct)?r.duPct.toFixed(1):'—'}%${isFinite(r.dusPct)?` · ΔU启动=${r.dusPct.toFixed(1)}%`:''}
+校验：配合${r.coordOk?'✔':'✘'}｜分断${r.brkOk?'✔':'✘'}｜Ik源 ${(r.ikSrc/1000).toFixed(1)}kA · 末端 ${isFinite(r.ikEnd)?(r.ikEnd/1000).toFixed(2):'—'}kA`;
+ $('bomBox').innerHTML=t.replace(/(QF1|KM\d|FR1|WL1)/g,'<b>$1</b>');
+}
+
+function refresh(fromInput){
+ proj.circuits.forEach(c=>c._r=compute(c));
+ const c=ac(),r=c._r;
+ if(!fromInput)fillForm(c);
+ if(r.invalid){renderStandby();renderList();renderIncoming();save();return}
+ renderResults(c,r);renderAdvice(c,r);renderList();renderIncoming();renderBOM(c,r);save();
+}
+
+/* ═══ 导入 / 导出 / 打印 / PNG ═══ */
+function exportJSON(){
+ try{
+  const blob=new Blob([JSON.stringify(_clean(),null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(proj.name||'电气选型项目')+'_'+_stamp()+'.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  showToast('已导出项目 JSON ✓');
+ }catch(e){showToast('导出失败：'+e.message)}}
+
+function importFile(file){
+ const rd=new FileReader();
+ rd.onload=()=>{
+  try{
+   const s=_safeParse(JSON.parse(rd.result));
+   if(!s)throw new Error('文件格式不正确（缺少 circuits 回路数组）');
+   proj=s;
+   $('projName').value=proj.name;
+   $('txS').value=proj.tx.s;$('txUk').value=proj.tx.uk;$('inKd').value=proj.kd;
+   refresh();
+   showToast('导入成功：'+proj.circuits.length+' 条回路 ✓');
+  }catch(e){showToast('导入失败：'+e.message)}};
+ rd.readAsText(file);}
+
+function _injectPrintCSS(){
+ if(document.getElementById('printCSS'))return;
+ const st=document.createElement('style');
+ st.id='printCSS';
+ st.textContent=`
+ @media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff !important}
+  body>*:not(#report){display:none !important}
+  #report{display:block !important;font-family:'Noto Sans SC',sans-serif;color:#111}
+  .rp-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #111;padding-bottom:8px}
+  .rp-head h2{font-size:20px;letter-spacing:4px}
+  .rp-head p{font-size:11px;color:#555}
+  .rp-meta{display:flex;gap:22px;font-size:12px;margin:10px 0;color:#333;flex-wrap:wrap}
+  .rp-meta b{color:#000}
+  .rp-tb{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}
+  .rp-tb th{background:#eee;border:1px solid #888;padding:5px 6px;text-align:left;white-space:nowrap}
+  .rp-tb td{border:1px solid #999;padding:5px 6px;vertical-align:top}
+  .rp-tb .bad{color:#c00;font-weight:bold}
+  .rp-tb .ok{color:#0a7d43;font-weight:bold}
+  .rp-sec{font-size:13px;font-weight:bold;margin:16px 0 4px;border-left:4px solid #111;padding-left:8px;page-break-after:avoid}
+  .rp-bom{font-size:11px;line-height:1.9;white-space:pre-wrap;background:#f6f6f6;border:1px solid #ccc;padding:8px 10px;page-break-inside:avoid}
+  .rp-foot{margin-top:18px;font-size:10px;color:#666;line-height:1.7;border-top:1px solid #999;padding-top:8px}}`;
+ document.head.appendChild(st);}
+
+function printReport(){
+ try{
+  _injectPrintCSS();
+  proj.circuits.forEach(c=>c._r=compute(c));
+  const d=new Date();
+  let sp=0,si=0;
+  proj.circuits.forEach(c=>{if(c._r&&!c._r.invalid){sp+=c.p;si+=c._r.Ie}});
+  const ijs=proj.kd*si,incIn=BREAK_R.find(x=>x>=ijs*1.1);
+  const rows=proj.circuits.map((c,i)=>{
+   const r=c._r;
+   if(!r||r.invalid)return `<tr><td>W${i+1}</td><td>${c.name}</td><td colspan="8">参数无效</td></tr>`;
+   return `<tr><td>W${i+1}</td><td>${c.name}</td>
+    <td>${r.ld.short}${c.load==='motor'?'·'+r.st.name:''}<br>${c.phase===3?'380V':'220V'} · L=${c.len}m</td>
+    <td>${c.p} kW</td><td>${r.Ie.toFixed(1)} A</td><td>${r.ovQf?'〔手动〕':''}${r.qfModel}</td><td>${r.manual?'〔手动〕':''}${r.cblSpec}</td>
+    <td>${isFinite(r.duPct)?r.duPct.toFixed(1):'—'}${isFinite(r.dusPct)?' / '+r.dusPct.toFixed(1):''}</td>
+    <td class="${r.coordOk?'ok':'bad'}">${r.coordOk?'✔':'✘'}</td>
+    <td class="${r.brkOk?'ok':'bad'}">${r.brkOk?'✔':'✘'} (${(r.ikSrc/1000).toFixed(1)}kA)</td></tr>`;}).join('');
+  const details=proj.circuits.map((c,i)=>{
+   const r=c._r;if(!r||r.invalid)return '';
+   const adv=advice(c,r);
+   return `<div class="rp-sec">W${i+1} · ${c.name}</div>
+<div class="rp-bom">QF1 断路器：${r.ovQf?'〔手动〕':''}${r.qfModel}（Icu ${r.ic}kA）
+${r.kmList.map((k,j)=>`${k.tag} 接触器：${(j===0&&r.ovKm)?'〔手动〕':''}${k.model}（${k.role}${k.rating?'，'+k.rating+'A':''}）`).join('\n')}${r.extra?'\n驱动装置：'+r.extra:''}
+FR1 热继　：${r.ovFr?'〔手动〕':''}${r.frModel}｜整定 ${r.frSet}
+WL1 电缆　：${r.manual?'〔手动指定〕':''}${r.cblSpec}｜ΔU=${isFinite(r.duPct)?r.duPct.toFixed(1):'—'}%${isFinite(r.dusPct)?` · 启动ΔU=${r.dusPct.toFixed(1)}%`:''}
+${adv.length?'⚠ 整改建议：\n  '+adv.map(t=>t.replace(/<[^>]+>/g,'')).join('\n  '):'✔ 校验全部通过'}</div>`;}).join('');
+  $('report').innerHTML=`
+   <div class="rp-head"><h2>低压配电回路选型书</h2>
+    <p>生成于 ${d.toLocaleDateString('zh-CN')} ${d.toTimeString().slice(0,5)} · 电气选型工作台 Pro</p></div>
+   <div class="rp-meta">
+    <span>项目：<b>${proj.name}</b></span>
+    <span>变压器：<b>${proj.tx.s} kVA / uk=${proj.tx.uk}%</b></span>
+    <span>装机容量：<b>${sp.toFixed(1)} kW</b></span>
+    <span>Kd=<b>${proj.kd}</b>　Ijs=<b>${ijs.toFixed(1)} A</b></span>
+    <span>进线建议：<b>${incIn?(incIn<=63?`NXB-63 3P C${incIn}`:`NM8-${FRAMES.find(f=>f>=incIn)||'…'} ${incIn}A`):'超出范围'}</b></span>
+   </div>
+   <table class="rp-tb">
+    <tr><th>编号</th><th>名称</th><th>类型 / 启动</th><th>功率</th><th>Ie</th><th>断路器</th><th>电缆</th><th>ΔU% / 启动%</th><th>配合</th><th>分断</th></tr>
+    ${rows}
+   </table>
+   ${details}
+   <div class="rp-foot">本选型书由简化估算工具生成，仅供参考；正式设计请以 GB 50054《低压配电设计规范》、GB/T 16895 系列、IEC 60909 及产品样本复核。<br>设计：＿＿＿＿＿＿　　审核：＿＿＿＿＿＿　　日期：＿＿＿＿＿＿</div>`;
+  window.print();
+ }catch(e){showToast('打印失败：'+e.message)}}
+
+function exportPNG(){
+ try{
+  const clone=$('sld').cloneNode(true);
+  clone.setAttribute('width',1600);clone.setAttribute('height',400);
+  const xml=new XMLSerializer().serializeToString(clone);
+  const url=URL.createObjectURL(new Blob([xml],{type:'image/svg+xml;charset=utf-8'}));
+  const img=new Image();
+  img.onload=()=>{
+   const cv=document.createElement('canvas');
+   cv.width=1600;cv.height=400;
+   const ctx=cv.getContext('2d');
+   ctx.fillStyle='#10141b';ctx.fillRect(0,0,1600,400);
+   ctx.drawImage(img,0,0,1600,400);
+   URL.revokeObjectURL(url);
+   cv.toBlob(b=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download=`单线图_W${proj.active+1}_${ac().name||''}.png`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    showToast('单线图 PNG 已导出 ✓');
+   },'image/png');};
+  img.onerror=()=>{URL.revokeObjectURL(url);showToast('导出失败：浏览器不支持 SVG 渲染')};
+  img.src=url;
+ }catch(e){showToast('导出失败：'+e.message)}}
+
+/* ═══ 交互绑定 ═══ */
+$('cktList').addEventListener('click',e=>{const el=e.target.closest('.ck');if(!el)return;
+ proj.active=+el.dataset.i;refresh();});
+$('btnAdd').onclick=()=>{proj.circuits.push(newC(proj.circuits.length+1));proj.active=proj.circuits.length-1;refresh();showToast('已新增回路');};
+$('btnDup').onclick=()=>{const c=JSON.parse(JSON.stringify(ac()));c.name+=' 副本';
+ proj.circuits.splice(proj.active+1,0,c);proj.active++;refresh();showToast('已复制回路');};
+$('btnDel').onclick=()=>{if(proj.circuits.length<=1){showToast('至少保留一条回路');return}
+ proj.circuits.splice(proj.active,1);proj.active=Math.max(0,proj.active-1);refresh();showToast('已删除');};
+$('edLoads').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;
+ ac().load=b.dataset.load;if(ac().load!=='motor')ac().start='dol';refresh();});
+$('edStarts').addEventListener('click',e=>{const b=e.target.closest('[data-start]');if(!b)return;
+ ac().start=b.dataset.start;refresh();});
+$('edPhase').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ ac().phase=+b.dataset.ph;refresh();});
+[['edP','p'],['edLen','len'],['edTemp','temp']].forEach(([id,k])=>$(id).addEventListener('input',e=>{ac()[k]=parseFloat(e.target.value)||0;refresh(true);}));
+$('edName').addEventListener('input',e=>{ac().name=e.target.value;renderList();save();});
+$('edCos').addEventListener('input',e=>{ac().cos=+e.target.value;$('outCos').textContent=(+e.target.value).toFixed(2);fillRange(e.target);refresh(true);});
+$('edEta').addEventListener('input',e=>{ac().eta=+e.target.value;$('outEta').textContent=(+e.target.value).toFixed(2);fillRange(e.target);refresh(true);});
+$('edConduit').addEventListener('change',e=>{ac().conduit=e.target.checked;refresh(true);});
+$('edCbl').onchange=e=>{ac().cbl=+e.target.value;refresh(true);};
+$('ovQf').onchange=e=>{ac().qfOv=e.target.value;refresh(true);};
+$('ovKm').onchange=e=>{ac().kmOv=e.target.value;refresh(true);};
+$('ovFr').onchange=e=>{ac().frOv=e.target.value;refresh(true);};
+$('txS').onchange=e=>{proj.tx.s=+e.target.value;refresh(true);};
+$('txUk').oninput=e=>{proj.tx.uk=+e.target.value||6;refresh(true);};
+$('inKd').oninput=e=>{proj.kd=+e.target.value||.8;renderIncoming();save();};
+$('projName').oninput=e=>{proj.name=e.target.value;save();};
+$('btnFix').onclick=autoFix;
+$('fixCancel').onclick=()=>$('fixMask').hidden=true;
+$('fixMask').onclick=e=>{if(e.target===$('fixMask'))$('fixMask').hidden=true;};
+$('btnExport').onclick=exportJSON;
+$('btnPrint').onclick=printReport;
+$('btnPng').onclick=exportPNG;
+$('btnImport').onclick=()=>$('fileImport').click();
+$('fileImport').onchange=e=>{if(e.target.files[0])importFile(e.target.files[0]);e.target.value='';};
+setInterval(()=>{$('roF').textContent=(50+(Math.random()-.5)*.02).toFixed(2);
+ $('roU').textContent=((ac().phase===3?380:220)+(Math.random()-.5)*1.2).toFixed(1);},900);
+
+/* ═══ 初始化 ═══ */
+$('edCbl').innerHTML='<option value="0">自动（推荐）</option>'+CBL.map(([s])=>`<option value="${s}">${s} mm²</option>`).join('');
+$('projName').value=proj.name;$('txS').value=proj.tx.s;$('txUk').value=proj.tx.uk;$('inKd').value=proj.kd;
+refresh();
+console.log('%c⚡ 电气选型工作台 Pro v5 · 主模块加载完成','color:#ffb63b;font-weight:bold');
+</script>
+</body>
+</html>
+<script>
+/* ══════════════════════════════════════════════════════
+   第二段 · 品牌型号体系（正泰 / 德力西 / 施耐德 / ABB）
+   直接追加在文件末尾即可，无需改动上文任何内容。
+   型号为近似对照，采购请以厂家样本为准。
+   ══════════════════════════════════════════════════════ */
+function qfModelStr(kind,f,h,In,poles,curve){
+ const b=proj.brand||'chint';
+ if(b==='delixi')return kind==='micro'?`DZ47s ${poles} ${curve}${In}`:`CDM3-${f}${h?'H':''}/3300 ${poles} ${In}A`;
+ if(b==='schneider'){if(kind==='micro')return `iC65N ${poles} ${curve}${In}`;
+  const nf=f<=100?100:f<=160?160:f<=250?250:f<=400?400:630;return `NSX${nf} ${h?'H':'F'} ${poles}P ${In}A`;}
+ if(b==='abb'){if(kind==='micro')return `S20${poles==='3P'?3:2} ${curve}${In}`;
+  const t=f<=160?3:f<=250?4:f<=400?5:6;return `T${t} ${h?'H':'N'} ${poles} ${In}A`;}
+ return kind==='micro'?`NXB-63 ${poles} ${curve}${In}`:`NM8-${f}${h?'H':''}/3300 ${poles} ${In}A`;
+}
+function kmModelStr(i){
+ const b=proj.brand||'chint';
+ if(b==='delixi')return `CDC1-${i}`;
+ if(b==='schneider')return `LC1D${i}`;
+ if(b==='abb')return `AF${i}-30-00`;
+ const m=KM.find(([r])=>r===i);return m?m[1]:('CJX2-'+i);
+}
+function frModelStr(rg){
+ const b=proj.brand||'chint';
+ const rr=`${rg[0]}–${rg[1]} A`;
+ if(b==='delixi')return `JRS1-${rg[1]<=25?25:rg[1]<=63?63:93} · ${rr}`;
+ if(b==='schneider')return `LRD · ${rr}`;
+ if(b==='abb')return `EF${rg[1]<=20?20:rg[1]<=45?45:96} · ${rr}`;
+ return `${rg[1]<=22?'JR36-20':rg[1]<=63?'JR36-63':'JR28 系列'} · ${rr}`;
+}
+(function(){
+ const lab=document.createElement('label');
+ lab.innerHTML='品牌 <select id="brandSel"><option value="chint">正泰</option><option value="delixi">德力西</option><option value="schneider">施耐德</option><option value="abb">ABB</option></select>';
+ const sel=lab.querySelector('select');
+ sel.style.cssText='background:#10151f;border:1px solid var(--line2);color:var(--tx);border-radius:4px;padding:6px 8px;font:600 13px Rajdhani,sans-serif;outline:none';
+ $('saveTip').parentNode.insertBefore(lab,$('saveTip'));
+ sel.value=proj.brand||'chint';
+ sel.onchange=e=>{proj.brand=e.target.value;refresh(true);
+  showToast('已切换 '+e.target.selectedOptions[0].text+' 型号体系（近似对照）');};
+})();
+console.log('%c⚡ 品牌型号体系模块已加载','color:#58b6ff;font-weight:bold');
+</script>

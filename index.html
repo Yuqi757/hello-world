@@ -31,6 +31,7 @@
     overflow-x:hidden;
     position:relative;
   }
+  body.booting{overflow:hidden}
 
   /* 细网格底纹 */
   body::before{
@@ -50,7 +51,49 @@
   @keyframes float1{to{transform:translate(-60px,50px) scale(1.1)}}
   @keyframes float2{to{transform:translate(70px,-40px) scale(1.08)}}
 
+  /* ⑥ 粒子星座画布 */
+  #stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+
   .mono{font-family:Consolas,"Courier New",monospace}
+
+  /* ⑤ 开机自检遮罩 */
+  #boot{
+    position:fixed;inset:0;z-index:100;
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .6s ease;
+  }
+  #boot.done{opacity:0;pointer-events:none}
+  #bootText{
+    min-width:min(340px,86vw);
+    font-size:13px;letter-spacing:1px;line-height:2.1;
+    color:var(--accent);text-shadow:0 0 8px var(--glow);
+    white-space:pre-wrap;
+  }
+  #bootText::after{content:"_";animation:blink 1s infinite}
+
+  /* ⑫ Konami 彩蛋 */
+  #secret{
+    position:fixed;inset:0;z-index:90;
+    display:flex;align-items:center;justify-content:center;
+    pointer-events:none;opacity:0;transition:opacity .3s;
+    font-size:clamp(18px,4vw,40px);letter-spacing:6px;
+    color:var(--accent);text-shadow:0 0 24px var(--glow),0 0 60px var(--glow);
+  }
+  #secret.show{opacity:1}
+  @keyframes glitchShake{
+    0%,100%{transform:translate(0,0)}
+    20%{transform:translate(-6px,3px) skewX(2deg)}
+    40%{transform:translate(5px,-4px)}
+    60%{transform:translate(-4px,-3px) skewX(-2deg)}
+    80%{transform:translate(4px,3px)}
+  }
+  body.glitching header,
+  body.glitching main,
+  body.glitching footer{
+    animation:glitchShake .5s steps(2,end) 1;
+    filter:hue-rotate(100deg) saturate(1.6);
+  }
 
   /* 顶栏 */
   header{
@@ -137,7 +180,7 @@
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
     transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease;
   }
-  .unit::after{ /* 悬停扫光 */
+  .unit::after{
     content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;
     background:linear-gradient(100deg,transparent,rgba(255,255,255,.09),transparent);
     transform:skewX(-20deg);transition:left .6s ease;pointer-events:none;
@@ -203,20 +246,28 @@
   }
 </style>
 </head>
-<body>
+<body class="booting">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
+  <canvas id="stars" aria-hidden="true"></canvas>
+
+  <!-- ⑤ 开机自检遮罩 -->
+  <div id="boot" class="mono" aria-hidden="true">
+    <div id="bootText"></div>
+  </div>
+
+  <!-- ⑫ 彩蛋文字 -->
+  <div id="secret" class="mono" aria-hidden="true">ACCESS GRANTED // KONAMI PROTOCOL</div>
 
   <header>
     <div class="brand">
-      <!-- 新 Logo：六边形能量核 -->
       <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M24 4l17 10v20L24 44 7 34V14z" stroke="currentColor" stroke-width="2"/>
         <path d="M24 14l9 5v10l-9 5-9-5V19z" fill="rgba(0,212,255,.15)" stroke="currentColor" stroke-width="1.5"/>
         <circle cx="24" cy="24" r="3.5" fill="currentColor"/>
       </svg>
       <span class="brand-name mono">SYS.NAV</span>
-      <span class="ver mono">v4.0 HOLO</span>
+      <span class="ver mono">v4.1 HOLO</span>
     </div>
     <div class="top-right mono">
       <div class="sys-dot"><span class="led"></span> SYSTEM ONLINE</div>
@@ -260,12 +311,15 @@
   </main>
 
   <footer class="mono">
-    <span>© SYS.NAV v4.0 // HOLO-DECK INTERFACE</span>
-    <span>DESIGN: GLASS COMMAND // DEPLOY: GITHUB PAGES</span>
+    <span>© SYS.NAV v4.1 // HOLO-DECK INTERFACE</span>
+    <span>KONAMI: ↑↑↓↓←→←→BA // DEPLOY: GITHUB PAGES</span>
   </footer>
 
   <script>
-    /* ========= 模块清单（icon 为每个模块专属的 SVG 图标） ========= */
+    const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const BOOT_ENABLED = true;   /* 不想看开机动画改成 false */
+
+    /* ========= 模块清单 ========= */
     const MODULES = [
       {
         id:'01', type:'PLC', title:'PLC 控制模块', file:'PLC.html',
@@ -345,6 +399,151 @@
       document.getElementById('stUp').textContent = p(Math.floor(s/60))+':'+p(s%60);
     }
     tick(); setInterval(tick, 1000);
+
+    /* ========= ⑥ 粒子星座背景 ========= */
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, parts = [], bursts = [];
+    const mouse = { x:-9999, y:-9999 };
+
+    function resize(){
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width  = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function initParts(){
+      const count = Math.min(90, Math.floor(W * H / 16000));
+      parts = [];
+      for (let i = 0; i < count; i++){
+        parts.push({
+          x: Math.random()*W, y: Math.random()*H,
+          vx:(Math.random()-.5)*.35, vy:(Math.random()-.5)*.35,
+          r: Math.random()*1.6+.6,
+          c: Math.random()<.25 ? '139,92,255' : '0,212,255'
+        });
+      }
+    }
+    function drawScene(){
+      ctx.clearRect(0,0,W,H);
+      const L = 110;
+      for (let i = 0; i < parts.length; i++){
+        const a = parts[i];
+        for (let j = i+1; j < parts.length; j++){
+          const b = parts[j];
+          const dx = a.x-b.x, dy = a.y-b.y;
+          const d = Math.hypot(dx,dy);
+          if (d < L){
+            ctx.strokeStyle = 'rgba(0,212,255,' + (0.22*(1-d/L)).toFixed(3) + ')';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+          }
+        }
+      }
+      parts.forEach(pt => {
+        ctx.fillStyle = 'rgba(' + pt.c + ',.8)';
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI*2); ctx.fill();
+      });
+      bursts = bursts.filter(b => b.life > 0);
+      bursts.forEach(b => {
+        ctx.fillStyle = 'rgba(0,212,255,' + b.life.toFixed(3) + ')';
+        ctx.beginPath(); ctx.arc(b.x, b.y, 2, 0, Math.PI*2); ctx.fill();
+      });
+    }
+    function step(){
+      parts.forEach(pt => {
+        pt.x += pt.vx; pt.y += pt.vy;
+        const dx = pt.x-mouse.x, dy = pt.y-mouse.y;
+        const dm = Math.hypot(dx,dy);
+        if (dm < 120 && dm > 0.001){
+          const f = (120-dm)/120*0.12;
+          pt.vx += dx/dm*f; pt.vy += dy/dm*f;
+        }
+        const sp = Math.hypot(pt.vx,pt.vy);
+        if (sp > 1){ pt.vx /= sp; pt.vy /= sp; }
+        if (pt.x < -10) pt.x = W+10; if (pt.x > W+10) pt.x = -10;
+        if (pt.y < -10) pt.y = H+10; if (pt.y > H+10) pt.y = -10;
+      });
+      bursts.forEach(b => {
+        b.x += b.vx; b.y += b.vy;
+        b.vx *= .98; b.vy *= .98;
+        b.life -= .015;
+      });
+    }
+    function loop(){ step(); drawScene(); requestAnimationFrame(loop); }
+
+    resize(); initParts();
+    window.addEventListener('resize', () => { resize(); initParts(); if (REDUCED) drawScene(); });
+    if (REDUCED){
+      drawScene();                       /* 减少动态：只画一帧静态 */
+    } else {
+      window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+      loop();
+    }
+    function spawnBurst(){
+      for (let k = 0; k < 70; k++){
+        const ang = Math.random()*Math.PI*2;
+        const sp  = 2 + Math.random()*5;
+        bursts.push({ x:W/2, y:H/2, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, life:1 });
+      }
+    }
+
+    /* ========= ⑤ 开机自检 ========= */
+    const BOOT_LINES = [
+      '> SYS.NAV BIOS v4.1',
+      '> MEM CHECK ............ 64K OK',
+      '> HOLO-DECK RENDER ..... OK',
+      '> LINK MODULES ......... ' + MODULES.length + ' FOUND',
+      '> PARTICLE FIELD ....... ' + (REDUCED ? 'SKIP' : 'ON'),
+      '> WELCOME, ADMIN'
+    ];
+    const bootEl = document.getElementById('boot');
+    const bootText = document.getElementById('bootText');
+    let bootDone = false;
+    function finishBoot(){
+      if (bootDone) return;
+      bootDone = true;
+      bootEl.classList.add('done');
+      document.body.classList.remove('booting');
+      setTimeout(() => bootEl.remove(), 700);
+    }
+    if (!BOOT_ENABLED || REDUCED){
+      finishBoot();
+    } else {
+      let bi = 0;
+      (function nextLine(){
+        if (bi >= BOOT_LINES.length){ setTimeout(finishBoot, 350); return; }
+        const line = document.createElement('div');
+        line.textContent = BOOT_LINES[bi++];
+        bootText.appendChild(line);
+        setTimeout(nextLine, 140 + Math.random()*120);
+      })();
+      setTimeout(finishBoot, 4000);      /* 保险丝：最多 4 秒强制结束 */
+    }
+
+    /* ========= ⑫ Konami 彩蛋 ========= */
+    const KONAMI = ['arrowup','arrowup','arrowdown','arrowdown','arrowleft','arrowright','arrowleft','arrowright','b','a'];
+    let ki = 0;
+    window.addEventListener('keydown', e => {
+      const k = (e.key || '').toLowerCase();
+      if (k === KONAMI[ki]){
+        ki++;
+        if (ki === KONAMI.length){ ki = 0; triggerKonami(); }
+      } else {
+        ki = (k === KONAMI[0]) ? 1 : 0;
+      }
+    });
+    function triggerKonami(){
+      const sec = document.getElementById('secret');
+      sec.classList.add('show');
+      setTimeout(() => sec.classList.remove('show'), 2200);
+      if (!REDUCED){
+        document.body.classList.add('glitching');
+        setTimeout(() => document.body.classList.remove('glitching'), 600);
+        spawnBurst();
+      }
+    }
   </script>
 </body>
 </html>

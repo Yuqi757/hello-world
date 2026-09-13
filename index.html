@@ -51,8 +51,8 @@
   @keyframes float1{to{transform:translate(-60px,50px) scale(1.1)}}
   @keyframes float2{to{transform:translate(70px,-40px) scale(1.08)}}
 
-  /* 粒子星座画布 */
-  #stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+  /* 粒子画布：尺寸由 JS 显式控制，保证坐标 1:1 */
+  #stars{position:fixed;top:0;left:0;z-index:0;pointer-events:none}
 
   .mono{font-family:Consolas,"Courier New",monospace}
 
@@ -267,7 +267,7 @@
         <circle cx="24" cy="24" r="3.5" fill="currentColor"/>
       </svg>
       <span class="brand-name mono">SYS.NAV</span>
-      <span class="ver mono">v4.2</span>
+      <span class="ver mono">v4.3</span>
     </div>
     <div class="top-right mono">
       <div class="sys-dot"><span class="led"></span> SYSTEM ONLINE</div>
@@ -311,7 +311,7 @@
   </main>
 
   <footer class="mono">
-    <span>© SYS.NAV v4.2 // COMMAND INTERFACE</span>
+    <span>© SYS.NAV v4.3 // COMMAND INTERFACE</span>
     <span>KONAMI: ↑↑↓↓←→←→BA // DEPLOY: GITHUB PAGES</span>
   </footer>
 
@@ -400,20 +400,29 @@
     }
     tick(); setInterval(tick, 1000);
 
-    /* ========= 粒子星座背景（鼠标交互加强版） ========= */
+    /* ========= 粒子星座背景（坐标精确对齐版） ========= */
     const canvas = document.getElementById('stars');
     const ctx = canvas.getContext('2d');
     let W = 0, H = 0, parts = [], bursts = [];
     const mouse = { x:-9999, y:-9999, on:false };
-    const MOUSE_R = 150;   /* 鼠标影响半径 */
-    const LINK_L  = 110;   /* 粒子互连距离 */
+    let rect = { left:0, top:0, width:1, height:1 };
+    const MOUSE_R = 150;
+    const LINK_L  = 110;
+
+    /* 读取画布在屏幕上的真实位置/尺寸，作为坐标换算基准 */
+    function updateRect(){ rect = canvas.getBoundingClientRect(); }
 
     function resize(){
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = window.innerWidth; H = window.innerHeight;
+      /* 用可视区尺寸（不含滚动条），并把 CSS 尺寸显式写死，保证 1:1 */
+      W = document.documentElement.clientWidth;
+      H = document.documentElement.clientHeight;
+      canvas.style.width  = W + 'px';
+      canvas.style.height = H + 'px';
       canvas.width  = Math.floor(W * dpr);
       canvas.height = Math.floor(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      updateRect();
     }
     function initParts(){
       const count = Math.min(90, Math.floor(W * H / 16000));
@@ -421,32 +430,38 @@
       for (let i = 0; i < count; i++){
         parts.push({
           x: Math.random()*W, y: Math.random()*H,
-          bx:(Math.random()-.5)*.35, by:(Math.random()-.5)*.35,  /* 基础漂移 */
-          ix:0, iy:0,                                            /* 鼠标冲量 */
+          bx:(Math.random()-.5)*.35, by:(Math.random()-.5)*.35,
+          ix:0, iy:0,
           r: Math.random()*1.6+.6,
           c: Math.random()<.25 ? '139,92,255' : '0,212,255'
         });
       }
     }
-    function setMouse(x, y){ mouse.x = x; mouse.y = y; mouse.on = true; }
+    /* 鼠标屏幕坐标 → 画布逻辑坐标（任何缩放/偏移下都精确） */
+    function setMouseFromEvent(cx, cy){
+      mouse.x = (cx - rect.left) * (W / (rect.width  || 1));
+      mouse.y = (cy - rect.top ) * (H / (rect.height || 1));
+      mouse.on = true;
+    }
     function clearMouse(){ mouse.on = false; mouse.x = -9999; mouse.y = -9999; }
-    window.addEventListener('mousemove', e => setMouse(e.clientX, e.clientY), { passive:true });
+    window.addEventListener('mousemove', e => setMouseFromEvent(e.clientX, e.clientY), { passive:true });
     window.addEventListener('touchmove', e => {
-      if (e.touches && e.touches[0]) setMouse(e.touches[0].clientX, e.touches[0].clientY);
+      if (e.touches && e.touches[0]) setMouseFromEvent(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive:true });
     document.documentElement.addEventListener('mouseleave', clearMouse);
     window.addEventListener('blur', clearMouse);
+    window.addEventListener('scroll', updateRect, { passive:true });
 
     function step(){
       parts.forEach(pt => {
         const dx = pt.x - mouse.x, dy = pt.y - mouse.y;
         const dm = Math.hypot(dx, dy);
         if (mouse.on && dm < MOUSE_R && dm > 0.001){
-          const f = (1 - dm/MOUSE_R) * 0.9;     /* 斥力：比旧版强 7 倍以上 */
+          const f = (1 - dm/MOUSE_R) * 0.9;
           pt.ix += dx/dm * f;
           pt.iy += dy/dm * f;
         }
-        pt.ix *= 0.90; pt.iy *= 0.90;           /* 冲量衰减：鼠标走后回稳 */
+        pt.ix *= 0.90; pt.iy *= 0.90;
         const is = Math.hypot(pt.ix, pt.iy);
         if (is > 7){ pt.ix = pt.ix/is*7; pt.iy = pt.iy/is*7; }
         pt.x += pt.bx + pt.ix;
@@ -470,7 +485,6 @@
             ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
           }
         }
-        /* 光标连线：鼠标与附近粒子之间的紫色线，交互可视化 */
         if (mouse.on){
           const dm = Math.hypot(a.x-mouse.x, a.y-mouse.y);
           if (dm < MOUSE_R){
@@ -480,13 +494,18 @@
           }
         }
       }
-      /* 鼠标光环 */
+      /* 鼠标光环 + 十字准星（准星中心应精确贴在指针上） */
       if (mouse.on){
         ctx.strokeStyle = 'rgba(0,212,255,.18)';
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(mouse.x, mouse.y, MOUSE_R, 0, Math.PI*2); ctx.stroke();
-        ctx.fillStyle = 'rgba(0,212,255,.5)';
-        ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 2.5, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = 'rgba(0,212,255,.65)';
+        ctx.beginPath();
+        ctx.moveTo(mouse.x-9, mouse.y); ctx.lineTo(mouse.x-3, mouse.y);
+        ctx.moveTo(mouse.x+3, mouse.y); ctx.lineTo(mouse.x+9, mouse.y);
+        ctx.moveTo(mouse.x, mouse.y-9); ctx.lineTo(mouse.x, mouse.y-3);
+        ctx.moveTo(mouse.x, mouse.y+3); ctx.lineTo(mouse.x, mouse.y+9);
+        ctx.stroke();
       }
       parts.forEach(pt => {
         ctx.fillStyle = 'rgba(' + pt.c + ',.8)';
@@ -513,11 +532,12 @@
 
     /* ========= 开机自检 ========= */
     const BOOT_LINES = [
-      '> SYS.NAV BIOS v4.2',
+      '> SYS.NAV BIOS v4.3',
       '> MEM CHECK ............ 64K OK',
       '> INTERFACE RENDER ..... OK',
       '> LINK MODULES ......... ' + MODULES.length + ' FOUND',
       '> PARTICLE FIELD ....... ' + (REDUCED ? 'SKIP' : 'ON'),
+      '> CALIBRATE POINTER .... OK',
       '> WELCOME, ADMIN'
     ];
     const bootEl = document.getElementById('boot');
@@ -541,7 +561,7 @@
         bootText.appendChild(line);
         setTimeout(nextLine, 140 + Math.random()*120);
       })();
-      setTimeout(finishBoot, 4000);      /* 保险丝 */
+      setTimeout(finishBoot, 4000);
     }
 
     /* ========= Konami 彩蛋 ========= */

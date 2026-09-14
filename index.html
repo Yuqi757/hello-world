@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="SYS.NAV：PLC、BOM、选型、游戏与电路仿真模块统一入口">
+<meta name="description" content="SYS.NAV：PLC、BOM、选型、游戏、电路仿真、星三角与 NPN/PNP 模块统一入口">
 <meta name="theme-color" content="#070b14">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><path d='M24 4l17 10v20L24 44 7 34V14z' fill='none' stroke='%2300d4ff' stroke-width='3'/><circle cx='24' cy='24' r='5' fill='%2300d4ff'/></svg>">
 <title>SYS.NAV // COMMAND CENTER</title>
@@ -51,7 +51,7 @@
   @keyframes float1{to{transform:translate(-60px,50px) scale(1.1)}}
   @keyframes float2{to{transform:translate(70px,-40px) scale(1.08)}}
 
-  /* 粒子画布：尺寸由 JS 显式控制，保证坐标 1:1 */
+  /* 粒子画布 */
   #stars{position:fixed;top:0;left:0;z-index:0;pointer-events:none}
 
   .mono{font-family:Consolas,"Courier New",monospace}
@@ -267,7 +267,7 @@
         <circle cx="24" cy="24" r="3.5" fill="currentColor"/>
       </svg>
       <span class="brand-name mono">SYS.NAV</span>
-      <span class="ver mono">v4.4</span>
+      <span class="ver mono">v4.5</span>
     </div>
     <div class="top-right mono">
       <div class="sys-dot"><span class="led"></span> SYSTEM ONLINE</div>
@@ -311,7 +311,7 @@
   </main>
 
   <footer class="mono">
-    <span>© SYS.NAV v4.4 // COMMAND INTERFACE</span>
+    <span>© SYS.NAV v4.5 // COMMAND INTERFACE</span>
     <span>KONAMI: ↑↑↓↓←→←→BA // DEPLOY: GITHUB PAGES</span>
   </footer>
 
@@ -319,7 +319,7 @@
     const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const BOOT_ENABLED = true;   /* 不想看开机动画改成 false */
 
-    /* ========= 模块清单（与仓库文件一一对应） ========= */
+    /* ========= 模块清单（与仓库文件一一对应，共 7 个） ========= */
     const MODULES = [
       {
         id:'01', type:'PLC', title:'PLC 控制模块', file:'PLC.html',
@@ -345,6 +345,16 @@
         id:'05', type:'SIM', title:'Circuit 电路仿真', file:'Circuit.html',
         desc:'电路仿真项目：搭建电路、观察运行波形与仿真结果。',
         icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2.5-6 4 12 2.5-6H21"/></svg>'
+      },
+      {
+        id:'06', type:'SIM', title:'星三角启动模拟', file:'star-delta.html',
+        desc:'电机星三角启动时序：接触器动作、切换死区与电流曲线。',
+        icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6M12 9l-5 4M12 9l5 4"/><path d="M12 14l4.5 7h-9z"/></svg>'
+      },
+      {
+        id:'07', type:'I/O', title:'NPN/PNP 接线', file:'npn-pnp.html',
+        desc:'源型/漏型接线动画演示：电流路径与 S/S 接法对照。',
+        icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h9M13 9l-3-3M13 9l-3 3"/><path d="M20 15h-9M7 15l3-3M7 15l3 3"/></svg>'
       },
     ];
 
@@ -408,7 +418,7 @@
     }
     tick(); setInterval(tick, 1000);
 
-    /* ========= 粒子星座背景（坐标精确对齐版） ========= */
+    /* ========= 粒子星座背景 ========= */
     const canvas = document.getElementById('stars');
     const ctx = canvas.getContext('2d');
     let W = 0, H = 0, parts = [], bursts = [];
@@ -536,7 +546,7 @@
 
     /* ========= 开机自检 ========= */
     const BOOT_LINES = [
-      '> SYS.NAV BIOS v4.4',
+      '> SYS.NAV BIOS v4.5',
       '> MEM CHECK ............ 64K OK',
       '> INTERFACE RENDER ..... OK',
       '> LINK MODULES ......... ' + MODULES.length + ' FOUND',

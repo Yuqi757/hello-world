@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLC 传感器接线实验室 (完全版)</title>
+<style>
+  :root {
+    --bg: #05080f; --panel: #0f1420; --border: #1e293b;
+    --text: #e2e8f0; --dim: #64748b; --accent: #00d4ff;
+    --ok: #10b981; --err: #ef4444; --warn: #f59e0b;
+    --wire-brown: #d97706; --wire-blue: #2563eb; --wire-black: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  
+  header { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; background: var(--panel); z-index: 10; justify-content: space-between; }
+  .logo { font-weight: 700; font-size: 16px; color: var(--accent); }
+  .controls { display: flex; gap: 10px; }
+  
+  .main-container { display: flex; flex: 1; overflow: hidden; }
+  .canvas-area { flex: 1; position: relative; background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020408 100%); overflow: hidden; display: flex; justify-content: center; align-items: center; cursor: crosshair; }
+  .sidebar { width: 340px; border-left: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow-y: auto; z-index: 20; }
+  
+  /* 控件 */
+  .control-group { padding: 15px; border-bottom: 1px solid var(--border); }
+  .control-group h3 { font-size: 11px; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+  .control-group h3::before { content: ''; width: 3px; height: 12px; background: var(--accent); border-radius: 2px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btn { padding: 8px 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text); border-radius: 4px; cursor: pointer; font-size: 12px; transition: 0.2s; flex: 1; text-align: center; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.05); }
+  .btn.active { border-color: var(--accent); background: rgba(0,212,255,0.15); color: var(--accent); box-shadow: 0 0 10px rgba(0,212,255,0.2); }
+  .btn.danger { border-color: rgba(239,68,68,0.3); color: var(--err); }
+  .btn.danger:hover { border-color: var(--err); background: rgba(239,68,68,0.1); }
+  .btn.danger.active { background: rgba(239,68,68,0.2); border-color: var(--err); box-shadow: 0 0 10px rgba(239,68,68,0.2); }
+  .btn-trigger { width: 100%; padding: 12px; background: rgba(245,158,11,0.1); border-color: var(--warn); color: var(--warn); font-weight: bold; margin-top: 10px; flex: none; }
+  .btn-trigger:active, .btn-trigger.active { background: var(--warn); color: #000; box-shadow: 0 0 15px var(--warn); }
+  .btn-next { width: 100%; margin-top: 10px; background: rgba(16,185,129,0.1); border-color: var(--ok); color: var(--ok); flex: none; }
+  .btn-next:hover { background: rgba(16,185,129,0.2); }
+
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.3); }
+  .tab { flex: 1; padding: 12px; text-align: center; font-size: 11px; color: var(--dim); cursor: pointer; border-bottom: 2px solid transparent; transition: 0.2s; }
+  .tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0,212,255,0.05); }
+  .tab-content { display: none; padding: 15px; flex: 1; overflow-y: auto; }
+  .tab-content.active { display: block; }
+
+  /* SVG 样式 */
+  svg { width: 100%; height: 100%; max-width: 1200px; }
+  
+  .wire { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; transition: all 0.3s; }
+  .wire-brown { stroke: var(--wire-brown); }
+  .wire-blue { stroke: var(--wire-blue); }
+  .wire-black { stroke: var(--wire-black); }
+  .wire-ss { stroke: var(--accent); stroke-dasharray: 6 4; }
+  .wire-error { stroke: var(--err); animation: flash 1s infinite; stroke-width: 4; }
+  @keyframes flash { 50% { opacity: 0.3; } }
+
+  .flow { stroke-dasharray: 12 12; animation: flowAnim 1s linear infinite; stroke-width: 4; filter: drop-shadow(0 0 5px currentColor); }
+  @keyframes flowAnim { to { stroke-dashoffset: -24; } }
+  
+  .box { fill: rgba(15, 20, 32, 0.9); stroke: #334155; stroke-width: 2; rx: 6; transition: 0.3s; }
+  .box-highlight { stroke: var(--accent); stroke-width: 3; filter: drop-shadow(0 0 10px var(--accent)); }
+  .text-main { fill: var(--text); font-size: 14px; font-weight: 600; font-family: system-ui; pointer-events: none; }
+  .text-sub { fill: var(--dim); font-size: 10px; font-family: monospace; pointer-events: none; }
+  
+  .terminal-group { cursor: pointer; }
+  .terminal-dot { fill: #1e293b; stroke: #64748b; stroke-width: 2; transition: 0.2s; }
+  .terminal-group:hover .terminal-dot { fill: var(--accent); stroke: var(--accent); r: 8; }
+  .terminal-group.active .terminal-dot { fill: var(--ok); stroke: var(--ok); r: 9; filter: drop-shadow(0 0 8px var(--ok)); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 50% { r: 11; opacity: 0.8; } }
+  .terminal-label { fill: var(--dim); font-size: 10px; pointer-events: none; font-weight: 600; }
+
+  /* 万用表 */
+  .multimeter { position: absolute; background: #1e293b; border: 2px solid var(--accent); border-radius: 8px; padding: 12px; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 100; display: none; min-width: 100px; }
+  .multimeter.show { display: block; animation: popIn 0.2s ease-out; }
+  @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .mm-screen { background: #0f172a; padding: 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 18px; color: var(--ok); text-align: right; margin-bottom: 6px; border: 1px solid #334155; font-weight: bold; }
+  .mm-label { font-size: 9px; color: var(--dim); text-align: center; letter-spacing: 1px; }
+
+  /* 故障警告条 */
+  .fault-banner { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(239,68,68,0.9); color: #fff; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: bold; display: none; z-index: 50; box-shadow: 0 4px 15px rgba(239,68,68,0.4); }
+  .fault-banner.show { display: block; animation: slideDown 0.3s ease-out; }
+  @keyframes slideDown { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--border); padding: 12px 24px; border-radius: 20px; font-size: 13px; z-index: 1000; opacity: 0; transition: 0.3s; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+  .toast.success { border-color: var(--ok); color: var(--ok); }
+  .toast.error { border-color: var(--err); color: var(--err); }
+  
+  .step-item { padding: 10px; margin-bottom: 8px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid var(--border); font-size: 12px; transition: 0.3s; cursor: pointer; }
+  .step-item:hover { background: rgba(255,255,255,0.06); }
+  .step-item.active { border-left-color: var(--accent); background: rgba(0,212,255,0.1); color: var(--accent); font-weight: 600; }
+  .step-item.done { border-left-color: var(--ok); opacity: 0.6; }
+  .step-item.done::after { content: ' ✓'; color: var(--ok); }
+
+  select { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding: 6px 10px; border-radius: 4px; font-size: 12px; outline: none; cursor: pointer; }
+  select:focus { border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PLC WIRING LAB <span style="font-size:10px; color:var(--dim); font-weight:400;">COMPLETE</span></div>
+  <div class="controls">
+    <select id="plcBrand">
+      <option value="mitsubishi">三菱 FX (S/S, X0)</option>
+      <option value="siemens">西门子 S7-1200 (1M, I0.0)</option>
+    </select>
+  </div>
+</header>
+
+<div class="main-container">
+  <div class="canvas-area" id="canvasArea">
+    <div class="fault-banner" id="faultBanner">⚠️ 检测到接线错误！</div>
+    <svg id="mainSvg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="multimeter" id="multimeter">
+      <div class="mm-screen" id="mmValue">0.00 V</div>
+      <div class="mm-label">DC VOLTAGE</div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="tabs">
+      <div class="tab active" data-tab="config">⚙️ 配置</div>
+      <div class="tab" data-tab="fault">⚠️ 故障</div>
+      <div class="tab" data-tab="guide"> 引导</div>
+    </div>
+
+    <!-- 配置 Tab -->
+    <div class="tab-content active" id="tab-config">
+      <div class="control-group">
+        <h3>传感器类型</h3>
+        <div class="btn-row">
+          <button class="btn active" data-type="NPN">NPN (漏型)</button>
+          <button class="btn" data-type="PNP">PNP (源型)</button>
+        </div>
+      </div>
+      <div class="control-group">
+        <h3>模拟操作</h3>
+        <button class="btn btn-trigger" id="btnTrigger">⚡ 按住模拟触发</button>
+        <p style="font-size:10px; color:var(--dim); margin-top:10px; text-align:center; line-height:1.5;">
+          💡 <b style="color:var(--accent)">双击画布</b>开启万用表<br>点击端子测量电压
+        </p>
+      </div>
+      <div class="control-group">
+        <h3>图例说明</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px; color:var(--dim);">
+          <div style="display:flex; align-items:center; gap:6px;"><div style="width:16px; height:3px; background:var(--wire-brown);"></div> 棕 (+24V)</div>
+          <div style="display:flex; align-items:center; gap:6px;"><div style="width:16px; height:3px; background:var(--wire-blue);"></div> 蓝 (0V)</div>
+          <div style="display:flex; align-items:center; gap:6px;"><div style="width:16px; height:3px; background:var(--wire-black);"></div> 黑 (信号)</div>
+          <div style="display:flex; align-items:center; gap:6px;"><div style="width:16px; height:3px; background:var(--accent); border-top:2px dashed var(--accent);"></div> S/S (公共端)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 故障 Tab -->
+    <div class="tab-content" id="tab-fault">
+      <div class="control-group" style="border:none; padding:0;">
+        <h3>模拟常见错误</h3>
+        <p style="font-size:11px; color:var(--dim); margin-bottom:12px; line-height:1.5;">选择一种错误接线，观察现象并理解原因。点击“恢复正常”清除。</p>
+        <div class="btn-row" style="flex-direction:column;">
+          <button class="btn danger" data-fault="ss_wrong">❌ S/S 电位接反</button>
+          <button class="btn danger" data-fault="short">❌ 信号线短路到电源</button>
+          <button class="btn danger" data-fault="power_reverse">❌ 传感器电源接反</button>
+          <button class="btn" data-fault="none" style="margin-top:8px; border-color:var(--ok); color:var(--ok);">✅ 恢复正常接线</button>
+        </div>
+        <div id="faultDesc" style="margin-top:16px; padding:12px; background:rgba(239,68,68,0.1); border:1px solid var(--err); border-radius:6px; font-size:12px; line-height:1.6; color:#fca5a5; display:none;">
+        </div>
+      </div>
+    </div>
+
+    <!-- 引导 Tab -->
+    <div class="tab-content" id="tab-guide">
+      <div class="control-group" style="border:none; padding:0;">
+        <h3>接线步骤引导</h3>
+        <p style="font-size:11px; color:var(--dim); margin-bottom:12px;">点击“开始”或“下一步”，图中会高亮显示当前应接的端子。</p>
+        <button class="btn" id="btnStartGuide" style="width:100%; margin-bottom:12px; background:rgba(0,212,255,0.1); border-color:var(--accent); color:var(--accent);">▶️ 开始引导</button>
+        <div id="stepList"></div>
+        <button class="btn btn-next" id="btnNextStep" style="display:none;">下一步 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= 状态管理 =================
+const State = { 
+  type: 'NPN', 
+  brand: 'mitsubishi', 
+  triggered: false, 
+  fault: 'none', 
+  guideStep: -1, 
+  mmMode: false 
+};
+
+const Brands = { 
+  mitsubishi: { common: 'S/S', inputs: ['X0'] }, 
+  siemens: { common: '1M', inputs: ['I0.0'] } 
+};
+
+const FaultInfo = {
+  none: { msg: '', desc: '' },
+  ss_wrong: { 
+    msg: '⚠️ S/S 电位错误：PLC 无法检测信号！', 
+    desc: '<b>现象：</b>按下触发，PLC 指示灯不亮。<br><b>原因：</b>NPN 传感器输出 0V，若 S/S 也接 0V，X0 与 S/S 之间无电压差，无法形成电流回路。<br><b>解决：</b>NPN 的 S/S 必须接 +24V。' 
+  },
+  short: { 
+    msg: '⚠️ 危险：信号线短路！', 
+    desc: '<b>现象：</b>电源可能烧毁或保护断电。<br><b>原因：</b>黑色信号线直接短接到 +24V。当 NPN 传感器导通时，+24V 直接连到 0V，造成电源短路。<br><b>解决：</b>检查黑线接线，确保只接 PLC 输入端。' 
+  },
+  power_reverse: { 
+    msg: '⚠️ 电源极性接反！', 
+    desc: '<b>现象：</b>传感器不工作，可能损坏。<br><b>原因：</b>棕色线接到了 0V，蓝色线接到了 +24V。<br><b>解决：</b>棕接 +24V，蓝接 0V。' 
+  }
+};
+
+const Steps = [
+  { text: '1. 棕色线：接电源 +24V', target: 'senB' },
+  { text: '2. 蓝色线：接电源 0V', target: 'senL' },
+  { text: '3. 黑色线：接 PLC 输入端 (X0)', target: 'senK' },
+  { text: '4. S/S 端：NPN接+24V，PNP接0V', target: 'plcCom' },
+  { text: '5. 完成！按住触发按钮测试', target: null }
+];
+
+// ================= 布局坐标 =================
+const Layout = {
+  pwr24: { x: 200, y: 200 }, pwr0: { x: 200, y: 400 },
+  senB: { x: 400, y: 200 }, senK: { x: 400, y: 300 }, senL: { x: 400, y: 400 },
+  plcIn: { x: 700, y: 250 }, plcCom: { x: 700, y: 350 }
+};
+
+// ================= SVG 渲染 =================
+function render() {
+  const svg = document.getElementById('mainSvg');
+  const t = Layout;
+  const b = Brands[State.brand];
+  const isNPN = State.type === 'NPN';
+  const trig = State.triggered;
+  const fault = State.fault;
+  
+  // S/S 目标端子
+  let ssTargetY = isNPN ? t.pwr24.y : t.pwr0.y;
+  if (fault === 'ss_wrong') ssTargetY = isNPN ? t.pwr0.y : t.pwr24.y;
+  
+  const offset = 20; // 路径错开距离
+  let html = '';
+  
+  // === 1. 线层 ===
+  html += '<g id="layer-wires">';
+  
+  // 棕线
+  let pathBrown = `M ${t.pwr24.x} ${t.pwr24.y} L ${t.senB.x} ${t.senB.y}`;
+  let brownClass = 'wire wire-brown';
+  if (fault === 'power_reverse') {
+    pathBrown = `M ${t.pwr24.x} ${t.pwr24.y} L ${t.pwr24.x} ${t.pwr0.y} L ${t.senB.x} ${t.senB.y}`;
+    brownClass = 'wire wire-blue'; // 视觉变蓝
+  }
+  if (trig && fault === 'none') brownClass += ' flow';
+  html += `<path d="${pathBrown}" class="${brownClass}" />`;
+
+  // 蓝线
+  let pathBlue = `M ${t.pwr0.x} ${t.pwr0.y} L ${t.senL.x} ${t.senL.y}`;
+  let blueClass = 'wire wire-blue';
+  if (trig && fault === 'none') blueClass += ' flow';
+  html += `<path d="${pathBlue}" class="${blueClass}" />`;
+
+  // 黑线
+  let pathBlack = `M ${t.senK.x} ${t.senK.y} L ${t.plcIn.x} ${t.plcIn.y}`;
+  let blackClass = 'wire wire-black';
+  if (fault === 'short') {
+    html += `<path d="${pathBlack}" class="wire wire-black" />`;
+    html += `<path d="M ${t.senK.x + 60} ${t.senK.y} L ${t.senK.x + 60} ${t.pwr24.y} L ${t.pwr24.x} ${t.pwr24.y}" class="wire wire-error" />`;
+    html += `<text x="${t.senK.x + 70}" y="${(t.senK.y + t.pwr24.y)/2}" fill="var(--err)" font-size="12" font-weight="bold">短路!</text>`;
+  } else {
+    if (trig && fault === 'none') blackClass += ' flow';
+    html += `<path d="${pathBlack}" class="${blackClass}" />`;
+  }
+
+  // S/S 线 (错开路径)
+  const ssRouteY = ssTargetY === t.pwr24.y ? t.pwr24.y - offset : t.pwr0.y + offset;
+  let ssPath = `M ${t.plcCom.x} ${t.plcCom.y} L 850 ${t.plcCom.y} L 850 ${ssRouteY} L ${t.pwr24.x} ${ssRouteY}`;
+  let ssClass = 'wire wire-ss';
+  if (fault === 'ss_wrong') ssClass = 'wire wire-error';
+  if (trig && fault === 'none') ssClass += ' flow';
+  html += `<path d="${ssPath}" class="${ssClass}" />`;
+  
+  html += '</g>';
+
+  // === 2. 组件层 ===
+  html += '<g id="layer-boxes">';
+  // 电源
+  html += `<rect x="120" y="150" width="120" height="300" class="box" />`;
+  html += `<text x="180" y="180" class="text-main" text-anchor="middle">24V 电源</text>`;
+  html += `<text x="215" y="${t.pwr24.y + 4}" class="text-sub" fill="var(--wire-brown)">+24V</text>`;
+  html += `<text x="215" y="${t.pwr0.y + 4}" class="text-sub" fill="var(--wire-blue)">0V</text>`;
+  
+  // 传感器
+  const senClass = trig ? 'box box-highlight' : 'box';
+  html += `<rect x="340" y="150" width="120" height="300" class="${senClass}" />`;
+  html += `<text x="400" y="180" class="text-main" text-anchor="middle">传感器</text>`;
+  html += `<text x="400" y="200" class="text-sub" text-anchor="middle">(${State.type} 型)</text>`;
+  
+  // 内部开关
+  const switchY = isNPN ? 360 : 240;
+  const targetY = isNPN ? t.senL.y : t.senB.y;
+  html += `<line x1="${t.senK.x}" y1="${t.senK.y}" x2="${t.senK.x + 40}" y2="${t.senK.y}" stroke="#64748b" stroke-width="2" />`;
+  html += `<line x1="${t.senK.x + 40}" y1="${t.senK.y}" x2="${t.senK.x + 40}" y2="${switchY}" stroke="${trig ? 'var(--ok)' : '#64748b'}" stroke-width="2" stroke-dasharray="4 3" />`;
+  html += `<line x1="${t.senK.x + 40}" y1="${switchY}" x2="${t.senK.x}" y2="${targetY}" stroke="${trig ? 'var(--ok)' : '#64748b'}" stroke-width="2" stroke-dasharray="4 3" />`;
+  html += `<text x="${t.senK.x + 50}" y="${switchY + 4}" class="text-sub">内部开关</text>`;
+
+  // PLC
+  html += `<rect x="640" y="150" width="120" height="300" class="box" />`;
+  html += `<text x="700" y="180" class="text-main" text-anchor="middle">PLC 输入</text>`;
+  
+  // LED
+  const ledColor = (trig && fault === 'none') ? 'var(--ok)' : '#334155';
+  html += `<circle cx="730" cy="210" r="8" fill="${ledColor}" stroke="#475569" stroke-width="2" />`;
+  html += `<text x="730" y="230" class="text-sub" text-anchor="middle">LED</text>`;
+  
+  // 内部回路示意
+  html += `<path d="M 700 250 L 715 250 L 715 210 L 722 210" fill="none" stroke="#475569" stroke-width="2" />`;
+  html += `<path d="M 738 210 L 750 210 L 750 350 L 700 350" fill="none" stroke="#475569" stroke-width="2" />`;
+  
+  html += '</g>';
+
+  // === 3. 端子层 (最高层级) ===
+  html += '<g id="layer-terminals">';
+  const terminals = [
+    { id: 'pwr24', x: t.pwr24.x, y: t.pwr24.y, label: '+24V', color: 'var(--wire-brown)', lx: 15, ly: 4, anchor: 'start' },
+    { id: 'pwr0', x: t.pwr0.x, y: t.pwr0.y, label: '0V', color: 'var(--wire-blue)', lx: 15, ly: 4, anchor: 'start' },
+    { id: 'senB', x: t.senB.x, y: t.senB.y, label: '棕(+)', color: 'var(--wire-brown)', lx: -15, ly: 4, anchor: 'end' },
+    { id: 'senK', x: t.senK.x, y: t.senK.y, label: '黑(OUT)', color: 'var(--wire-black)', lx: -15, ly: 4, anchor: 'end' },
+    { id: 'senL', x: t.senL.x, y: t.senL.y, label: '蓝(-)', color: 'var(--wire-blue)', lx: -15, ly: 4, anchor: 'end' },
+    { id: 'plcIn', x: t.plcIn.x, y: t.plcIn.y, label: b.inputs[0], color: 'var(--wire-black)', lx: -15, ly: 4, anchor: 'end' },
+    { id: 'plcCom', x: t.plcCom.x, y: t.plcCom.y, label: b.common, color: 'var(--accent)', lx: -15, ly: 4, anchor: 'end' }
+  ];
+  
+  terminals.forEach(term => {
+    const isActive = State.guideStep >= 0 && State.guideStep < Steps.length && Steps[State.guideStep].target === term.id;
+    html += `<g class="terminal-group ${isActive ? 'active' : ''}" data-node="${term.id}" transform="translate(${term.x}, ${term.y})">`;
+    html += `<circle r="7" class="terminal-dot" />`;
+    html += `<text x="${term.lx}" y="${term.ly}" class="terminal-label" fill="${term.color}" text-anchor="${term.anchor}">${term.label}</text>`;
+    html += `</g>`;
+  });
+  html += '</g>';
+
+  svg.innerHTML = html;
+  
+  // 绑定端子点击
+  svg.querySelectorAll('.terminal-group').forEach(el => {
+    el.onclick = (e) => handleTerminalClick(e, el.dataset.node);
+  });
+
+  // 更新故障横幅
+  const banner = document.getElementById('faultBanner');
+  if (fault !== 'none') {
+    banner.textContent = FaultInfo[fault].msg;
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+// ================= 万用表 =================
+function handleTerminalClick(e, node) {
+  if (!State.mmMode) return;
+  e.stopPropagation();
+  
+  const mm = document.getElementById('multimeter');
+  const mmVal = document.getElementById('mmValue');
+  
+  let v = 0;
+  const isNPN = State.type === 'NPN';
+  const trig = State.triggered;
+  const fault = State.fault;
+  
+  // 电压计算逻辑
+  switch(node) {
+    case 'pwr24': v = fault === 'power_reverse' ? 0 : 24; break;
+    case 'pwr0': v = fault === 'power_reverse' ? 24 : 0; break;
+    case 'senB': v = fault === 'power_reverse' ? 0 : 24; break;
+    case 'senL': v = fault === 'power_reverse' ? 24 : 0; break;
+    case 'senK':
+      if (fault === 'short') v = 24;
+      else if (isNPN) v = trig ? 0 : 24; // NPN: ON->0V, OFF->24V(上拉)
+      else v = trig ? 24 : 0; // PNP: ON->24V, OFF->0V(下拉)
+      break;
+    case 'plcIn':
+      if (fault === 'short') v = 24;
+      else if (isNPN) v = trig ? 0 : 24;
+      else v = trig ? 24 : 0;
+      break;
+    case 'plcCom':
+      if (isNPN) v = fault === 'ss_wrong' ? 0 : 24;
+      else v = fault === 'ss_wrong' ? 24 : 0;
+      break;
+  }
+  
+  mmVal.textContent = v.toFixed(1) + ' V';
+  mmVal.style.color = v > 10 ? 'var(--warn)' : 'var(--ok)';
+  
+  const rect = e.currentTarget.getBoundingClientRect();
+  const canvasRect = document.getElementById('canvasArea').getBoundingClientRect();
+  mm.style.left = (rect.right - canvasRect.left + 15) + 'px';
+  mm.style.top = (rect.top - canvasRect.top - 10) + 'px';
+  mm.classList.add('show');
+  
+  clearTimeout(window.mmTimer);
+  window.mmTimer = setTimeout(() => mm.classList.remove('show'), 2500);
+}
+
+// ================= 引导 =================
+function renderGuide() {
+  const list = document.getElementById('stepList');
+  const btnNext = document.getElementById('btnNextStep');
+  
+  if (State.guideStep === -1) {
+    list.innerHTML = '<p style="font-size:11px; color:var(--dim); text-align:center; padding:20px;">点击“开始引导”查看接线步骤</p>';
+    btnNext.style.display = 'none';
+    return;
+  }
+  
+  list.innerHTML = Steps.map((s, i) => {
+    let cls = 'step-item';
+    if (i < State.guideStep) cls += ' done';
+    if (i === State.guideStep) cls += ' active';
+    return `<li class="${cls}">${s.text}</li>`;
+  }).join('');
+  
+  btnNext.style.display = 'block';
+  btnNext.textContent = State.guideStep < Steps.length - 1 ? '下一步 →' : '完成引导 ✓';
+}
+
+document.getElementById('btnStartGuide').onclick = () => {
+  State.guideStep = 0;
+  renderGuide();
+  render();
+  showToast('引导开始：绿色发光端子为当前步骤', 'success');
+};
+
+document.getElementById('btnNextStep').onclick = () => {
+  if (State.guideStep < Steps.length - 1) {
+    State.guideStep++;
+  } else {
+    State.guideStep = -1;
+    showToast('引导完成！', 'success');
+  }
+  renderGuide();
+  render();
+};
+
+// ================= 事件绑定 =================
+// Tab 切换
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  };
+});
+
+// 类型切换
+document.querySelectorAll('[data-type]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    State.type = btn.dataset.type;
+    render();
+  };
+});
+
+// 故障切换
+document.querySelectorAll('[data-fault]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('[data-fault]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    State.fault = btn.dataset.fault;
+    
+    const desc = document.getElementById('faultDesc');
+    if (State.fault !== 'none') {
+      desc.style.display = 'block';
+      desc.innerHTML = FaultInfo[State.fault].desc;
+    } else {
+      desc.style.display = 'none';
+      showToast('已恢复正常接线', 'success');
+    }
+    render();
+  };
+});
+
+// 触发按钮
+const btnTrig = document.getElementById('btnTrigger');
+const setTrig = (v) => { State.triggered = v; btnTrig.classList.toggle('active', v); render(); };
+btnTrig.onmousedown = () => setTrig(true);
+btnTrig.onmouseup = () => setTrig(false);
+btnTrig.onmouseleave = () => setTrig(false);
+btnTrig.ontouchstart = (e) => { e.preventDefault(); setTrig(true); };
+btnTrig.ontouchend = () => setTrig(false);
+
+// 品牌切换
+document.getElementById('plcBrand').onchange = (e) => { State.brand = e.target.value; render(); };
+
+// 双击开启万用表
+document.getElementById('canvasArea').ondblclick = (e) => {
+  if (e.target.closest('.terminal-group')) return;
+  State.mmMode = !State.mmMode;
+  showToast(State.mmMode ? '万用表模式开启：点击端子测量电压' : '万用表模式已关闭', State.mmMode ? 'success' : '');
+  document.getElementById('canvasArea').style.cursor = State.mmMode ? 'pointer' : 'crosshair';
+};
+
+// Toast
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// 初始化
+render();
+renderGuide();
+</script>
+</body>
+</html>

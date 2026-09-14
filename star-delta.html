@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星三角启动模拟 // 教学版</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><path d='M24 4l17 10v20L24 44 7 34V14z' fill='none' stroke='%2300d4ff' stroke-width='3'/><circle cx='24' cy='24' r='5' fill='%2300d4ff'/></svg>">
+<style>
+  :root {
+    --bg: #070b14; --text: #e8ecf4; --dim: #8b93a7; --line: rgba(255,255,255,.09);
+    --glass: rgba(255,255,255,.045); --accent: #00d4ff; --accent2: #8b5cff;
+    --ok: #3ddc84; --err: #ff4d5e; --warn: #ffc531; --torque: #ff9f43;
+    --glow: rgba(0,212,255,.35); --tutorial: #a855f7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(rgba(0,212,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,.045) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 75%);
+  }
+  .mono { font-family: Consolas, "Courier New", monospace; }
+  header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: rgba(7,11,20,.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+  .back { color: var(--accent); text-decoration: none; font-size: 12px; letter-spacing: 2px; border: 1px solid rgba(0,212,255,.35); padding: 6px 12px; border-radius: 999px; background: rgba(0,212,255,.08); transition: .2s; }
+  .back:hover { background: var(--accent); color: #06121a; }
+  .ttl { font-size: 15px; letter-spacing: 3px; font-weight: 700; }
+  .ttl small { color: var(--dim); font-weight: 400; letter-spacing: 2px; margin-left: 8px; font-size: 11px; }
+  .sys { margin-left: auto; display: flex; align-items: center; gap: 7px; color: var(--dim); font-size: 11px; }
+  .led { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); animation: blink 1.5s infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+
+  main { max-width: 1400px; margin: 0 auto; padding: 24px 20px 40px; position: relative; z-index: 1; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding: 0 4px; }
+  .tab { padding: 10px 20px; background: transparent; border: none; color: var(--dim); cursor: pointer; font-size: 13px; letter-spacing: 1px; border-bottom: 2px solid transparent; transition: .2s; position: relative; bottom: -1px; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab.tutorial { color: var(--tutorial); }
+  .tab.tutorial.active { border-bottom-color: var(--tutorial); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .panel { border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.02)); backdrop-filter: blur(8px); padding: 20px; margin-bottom: 20px; }
+  .panel h3 { font-size: 12px; letter-spacing: 3px; color: var(--dim); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .panel h3::before { content: ""; width: 18px; height: 2px; background: var(--accent); }
+  .panel.tutorial h3::before { background: var(--tutorial); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+  .btn-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+  @media (max-width: 600px) { .btn-group { grid-template-columns: repeat(2, 1fr); } }
+
+  .btn { cursor: pointer; border: 1px solid var(--line); background: var(--glass); color: var(--text); padding: 10px 8px; border-radius: 10px; font-size: 13px; letter-spacing: 1px; transition: .2s; text-align: center; width: 100%; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .btn:active { transform: translateY(1px); }
+  .btn.green { border-color: rgba(61,220,132,.5); color: var(--ok); background: rgba(61,220,132,.08); }
+  .btn.green:hover { background: var(--ok); color: #06121a; }
+  .btn.red { border-color: rgba(255,77,94,.5); color: var(--err); background: rgba(255,77,94,.08); }
+  .btn.red:hover { background: var(--err); color: #fff; }
+  .btn.amber { border-color: rgba(255,197,49,.5); color: var(--warn); background: rgba(255,197,49,.08); }
+  .btn.amber:hover { background: var(--warn); color: #06121a; }
+  .btn.purple { border-color: rgba(168,85,247,.5); color: var(--tutorial); background: rgba(168,85,247,.08); }
+  .btn.purple:hover { background: var(--tutorial); color: #fff; }
+
+  .lamps { display: flex; flex-wrap: wrap; gap: 18px; margin: 16px 0; }
+  .lampbox { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); letter-spacing: 1px; }
+  .lamp { width: 12px; height: 12px; border-radius: 50%; background: #3a434e; transition: .2s; }
+  .lamp.on { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+  .lamp.run { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+  .lamp.trip { background: var(--err); box-shadow: 0 0 10px var(--err); }
+
+  .state { font-size: 26px; letter-spacing: 3px; color: var(--accent); text-shadow: 0 0 12px var(--glow); margin: 6px 0; min-height: 36px; }
+  .cd { color: var(--warn); font-size: 14px; min-height: 20px; }
+  .slider-group { margin: 10px 0; color: var(--dim); font-size: 13px; display: flex; align-items: center; gap: 12px; }
+  input[type=range] { accent-color: var(--accent); width: 100%; max-width: 200px; vertical-align: middle; cursor: pointer; }
+
+  .swg { transition: transform .25s ease-out; }
+  .swg line { stroke: #8b93a7; stroke-width: 2.5; transition: stroke .2s; }
+  .swg.on line { stroke: var(--accent); filter: drop-shadow(0 0 4px var(--glow)); }
+  .wire { stroke: #5a6470; stroke-width: 2; }
+  .rotor { transform-origin: 60px 156px; }
+  .rotor.slow { animation: spin 2s linear infinite; }
+  .rotor.fast { animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .log { height: 180px; overflow-y: auto; font-size: 12px; line-height: 1.9; color: var(--dim); padding-right: 8px; }
+  .log::-webkit-scrollbar { width: 4px; }
+  .log::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+  .log div { border-bottom: 1px dashed rgba(255,255,255,.06); padding: 2px 0; }
+  .log div:first-child { color: var(--text); border-bottom: 1px solid var(--accent); }
+
+  .chart-container { position: relative; width: 100%; height: 180px; margin-top: 8px; }
+  canvas { width: 100%; height: 100%; display: block; }
+  .legend { display: flex; gap: 16px; font-size: 11px; color: var(--dim); margin-top: 8px; justify-content: flex-end; }
+  .legend span::before { content: "■"; margin-right: 4px; }
+  .legend .l-cur::before { color: var(--accent); }
+  .legend .l-trq::before { color: var(--torque); }
+
+  #amps { font-size: 20px; color: var(--warn); margin-top: 8px; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: baseline; }
+  #amps small { font-size: 12px; color: var(--dim); }
+
+  .snapshots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px; }
+  @media (max-width: 900px) { .snapshots { grid-template-columns: 1fr; } }
+  .snapshot { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: rgba(255,255,255,.02); position: relative; }
+  .snapshot h4 { font-size: 11px; letter-spacing: 2px; color: var(--dim); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .snapshot h4::before { content: ""; width: 10px; height: 10px; border-radius: 50%; }
+  .snapshot.star h4::before { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .snapshot.dead h4::before { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+  .snapshot.delta h4::before { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .snapshot canvas { height: 120px; }
+  .snapshot-info { font-size: 11px; color: var(--dim); margin-top: 8px; line-height: 1.6; }
+  .snapshot-info strong { color: var(--text); }
+  .snapshot .zoom-btn { position: absolute; top: 12px; right: 12px; padding: 4px 8px; background: var(--glass); border: 1px solid var(--line); border-radius: 6px; color: var(--dim); font-size: 10px; cursor: pointer; transition: .2s; }
+  .snapshot .zoom-btn:hover { background: var(--accent); color: var(--bg); }
+
+  .modal { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.9); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 40px; }
+  .modal.active { display: flex; }
+  .modal-content { background: var(--bg); border: 1px solid var(--line); border-radius: 16px; padding: 24px; max-width: 1200px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-header h3 { font-size: 18px; color: var(--accent); }
+  .modal-close { padding: 8px 16px; background: var(--glass); border: 1px solid var(--line); border-radius: 8px; color: var(--text); cursor: pointer; transition: .2s; }
+  .modal-close:hover { background: var(--err); color: #fff; }
+  .modal canvas { height: 400px; }
+  .modal-info { margin-top: 20px; padding: 16px; background: rgba(255,255,255,.03); border-radius: 8px; font-size: 13px; line-height: 1.8; color: var(--dim); }
+  .modal-info strong { color: var(--text); }
+
+  .tutorial-content { line-height: 1.8; color: var(--text); }
+  .tutorial-content h4 { color: var(--tutorial); margin: 20px 0 12px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .tutorial-content h4::before { content: "▸"; color: var(--accent); font-size: 12px; }
+  .tutorial-content p { margin-bottom: 12px; color: var(--dim); }
+  .tutorial-content strong { color: var(--text); }
+  .tutorial-content .highlight { background: rgba(0,212,255,.1); border-left: 3px solid var(--accent); padding: 12px 16px; margin: 12px 0; border-radius: 0 8px 8px 0; }
+  .tutorial-content .warning { background: rgba(255,77,94,.1); border-left: 3px solid var(--err); padding: 12px 16px; margin: 12px 0; border-radius: 0 8px 8px 0; }
+  .tutorial-content ul { margin: 12px 0; padding-left: 24px; color: var(--dim); }
+  .tutorial-content li { margin-bottom: 6px; }
+  .tutorial-content table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  .tutorial-content th, .tutorial-content td { border: 1px solid var(--line); padding: 10px; text-align: left; }
+  .tutorial-content th { background: rgba(0,212,255,.08); color: var(--accent); }
+  .tutorial-content td { color: var(--dim); }
+
+  .accordion { margin: 16px 0; }
+  .accordion-item { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+  .accordion-header { padding: 14px 16px; background: rgba(255,255,255,.03); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: .2s; font-size: 13px; letter-spacing: 1px; }
+  .accordion-header:hover { background: rgba(255,255,255,.06); }
+  .accordion-header::after { content: "▼"; font-size: 10px; transition: .2s; }
+  .accordion-item.active .accordion-header::after { transform: rotate(180deg); }
+  .accordion-content { max-height: 0; overflow: hidden; transition: max-height .3s ease; padding: 0 16px; }
+  .accordion-item.active .accordion-content { max-height: 500px; padding: 16px; }
+
+  .quiz-container { margin-top: 20px; }
+  .quiz-question { background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .quiz-question h4 { color: var(--accent); margin-bottom: 16px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .quiz-question h4::before { content: attr(data-num); background: var(--accent); color: var(--bg); width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-option { padding: 12px 16px; background: var(--glass); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; transition: .2s; font-size: 13px; display: flex; align-items: center; gap: 10px; }
+  .quiz-option:hover { border-color: var(--accent); background: rgba(0,212,255,.08); }
+  .quiz-option.correct { border-color: var(--ok); background: rgba(61,220,132,.15); }
+  .quiz-option.wrong { border-color: var(--err); background: rgba(255,77,94,.15); }
+  .quiz-option.disabled { pointer-events: none; opacity: .6; }
+  .quiz-feedback { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 13px; display: none; }
+  .quiz-feedback.show { display: block; animation: fadeIn .3s; }
+  .quiz-feedback.correct { background: rgba(61,220,132,.1); border-left: 3px solid var(--ok); }
+  .quiz-feedback.wrong { background: rgba(255,77,94,.1); border-left: 3px solid var(--err); }
+  .quiz-score { text-align: center; padding: 20px; background: rgba(168,85,247,.1); border: 1px solid var(--tutorial); border-radius: 12px; margin-top: 20px; }
+  .quiz-score h3 { color: var(--tutorial); font-size: 18px; margin-bottom: 8px; }
+  .quiz-score p { color: var(--dim); font-size: 14px; }
+  .hint { font-size: 12px; color: var(--warn); margin-top: 8px; font-style: italic; }
+</style>
+</head>
+<body>
+<header>
+  <a class="back mono" href="./index.html">← BACK</a>
+  <div class="ttl mono">STAR-DELTA<small>星三角启动教学模拟器</small></div>
+  <div class="sys mono"><span class="led"></span> READY</div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('simulator')">⚡ 模拟器</button>
+    <button class="tab tutorial" onclick="switchTab('tutorial')">📖 学习指南</button>
+    <button class="tab" onclick="switchTab('quiz')">📝 小测验</button>
+  </div>
+
+  <div id="simulator" class="tab-content active">
+    <div class="grid2">
+      <section class="panel">
+        <h3>CONTROL / 控制面板</h3>
+        <div class="btn-group">
+          <button class="btn green mono" id="bStart">SB2 启动</button>
+          <button class="btn red mono" id="bStop">SB1 停止</button>
+          <button class="btn amber mono" id="bTrip">FR 过载测试</button>
+          <button class="btn mono" id="bReset">复位</button>
+        </div>
+        <div class="slider-group">
+          <span>星形运行时间:</span>
+          <input type="range" id="ts" min="2" max="10" step="1" value="5">
+          <span class="mono" id="tsVal" style="color:var(--accent); min-width: 30px;">5s</span>
+        </div>
+        <div class="lamps mono">
+          <span class="lampbox"><span class="lamp" id="lKM1"></span>KM1 主</span>
+          <span class="lampbox"><span class="lamp" id="lKMY"></span>KM-Y 星</span>
+          <span class="lampbox"><span class="lamp" id="lKMD"></span>KM-Δ 角</span>
+          <span class="lampbox"><span class="lamp" id="lRUN"></span>RUN</span>
+          <span class="lampbox"><span class="lamp" id="lTRIP"></span>TRIP</span>
+        </div>
+        <div class="state mono" id="stateTxt">STOP</div>
+        <div class="cd mono" id="cd"></div>
+      </section>
+
+      <section class="panel">
+        <h3>DIAGRAM / 主回路示意图</h3>
+        <svg viewBox="0 0 240 300" style="width:100%;max-width:340px;display:block;margin:0 auto">
+          <text x="70" y="18" fill="#8b93a7" font-size="11" class="mono">3~ 380V</text>
+          <line class="wire" x1="60" y1="8" x2="60" y2="40"/>
+          <line class="wire" x1="60" y1="40" x2="60" y2="72"/>
+          <circle cx="60" cy="40" r="2.5" fill="#8b93a7"/>
+          <g class="swg" id="swKM1"><circle cx="60" cy="72" r="2.5" fill="#8b93a7"/><line x1="60" y1="72" x2="60" y2="100"/></g>
+          <line class="wire" x1="60" y1="100" x2="60" y2="132"/>
+          <circle cx="60" cy="100" r="2.5" fill="#8b93a7"/>
+          <circle cx="60" cy="156" r="24" fill="rgba(0,212,255,.06)" stroke="#8b93a7" stroke-width="2"/>
+          <g class="rotor" id="rotor"><line x1="60" y1="140" x2="60" y2="172" stroke="#00d4ff" stroke-width="2"/></g>
+          <text x="52" y="161" fill="#e8ecf4" font-size="12" class="mono">M</text>
+          <line class="wire" x1="60" y1="180" x2="60" y2="214"/>
+          <circle cx="60" cy="214" r="2.5" fill="#8b93a7"/>
+          <g class="swg" id="swKMY"><circle cx="60" cy="214" r="2.5" fill="#8b93a7"/><line x1="60" y1="214" x2="60" y2="242"/></g>
+          <path d="M60 246 l-8 12 M60 246 l0 14 M60 246 l8 12" stroke="#8b93a7" stroke-width="2" fill="none"/>
+          <text x="76" y="262" fill="#8b93a7" font-size="11" class="mono">Y</text>
+          <line class="wire" x1="60" y1="214" x2="150" y2="214"/>
+          <g class="swg" id="swKMD"><circle cx="150" cy="214" r="2.5" fill="#8b93a7"/><line x1="150" y1="214" x2="150" y2="186"/></g>
+          <polyline class="wire" points="150,186 150,100 64,100" fill="none"/>
+          <text x="160" y="150" fill="#8b93a7" font-size="11" class="mono">Δ</text>
+        </svg>
+      </section>
+    </div>
+
+    <div class="grid2">
+      <section class="panel">
+        <h3>CURRENT & TORQUE / 电流与转矩曲线</h3>
+        <div class="chart-container">
+          <canvas id="chart"></canvas>
+        </div>
+        <div class="legend mono">
+          <span class="l-cur">电流 (I/Ie)</span>
+          <span class="l-trq">转矩 (T/Tn)</span>
+        </div>
+        <div id="amps" class="mono">
+          <span>0.0 <small>×Ie</small></span>
+          <span style="color:var(--torque); font-size:16px;">0.0 <small>×Tn</small></span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>LOG / 动作日志</h3>
+        <div id="log" class="log mono"></div>
+      </section>
+    </div>
+
+    <div class="panel">
+      <h3>PHASE SNAPSHOTS / 阶段快照对比（点击放大查看细节）</h3>
+      <div class="snapshots">
+        <div class="snapshot star">
+          <h4>星形启动阶段</h4>
+          <button class="zoom-btn" onclick="openModal('star')">放大</button>
+          <canvas id="snapStar"></canvas>
+          <div class="snapshot-info">
+            <strong>持续时间：</strong>0 ~ <span id="snapStarTime">5</span>秒<br>
+            <strong>电流特征：</strong>从2.5倍衰减至1.5倍<br>
+            <strong>转矩特征：</strong>只有额定值的1/3
+          </div>
+        </div>
+        <div class="snapshot dead">
+          <h4>死区切换阶段</h4>
+          <button class="zoom-btn" onclick="openModal('dead')">放大</button>
+          <canvas id="snapDead"></canvas>
+          <div class="snapshot-info">
+            <strong>持续时间：</strong>0.5秒<br>
+            <strong>电流特征：</strong>迅速衰减至0（主回路断开）<br>
+            <strong>关键作用：</strong>防止KM-Y和KM-Δ同时吸合短路
+          </div>
+        </div>
+        <div class="snapshot delta">
+          <h4>角形运行阶段</h4>
+          <button class="zoom-btn" onclick="openModal('delta')">放大</button>
+          <canvas id="snapDelta"></canvas>
+          <div class="snapshot-info">
+            <strong>切换瞬间：</strong>电流尖峰可达4.5倍<br>
+            <strong>稳定后：</strong>电流回落至1.0倍（额定）<br>
+            <strong>原因：</strong>反电动势与电源电压叠加
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tutorial" class="tab-content">
+    <div class="grid2">
+      <section class="panel tutorial">
+        <h3>🎓 核心原理讲解</h3>
+        <div class="tutorial-content">
+          <h4>为什么要用星三角启动？</h4>
+          <p>想象你开手动挡汽车起步：如果直接挂5档猛踩油门，车子会<strong>剧烈抖动甚至熄火</strong>。正确做法是：<strong>先挂1档起步，速度起来后再换高档</strong>。</p>
+          <p>电机也一样！直接启动时电流会达到额定值的<strong>5-7倍</strong>，会导致电网电压波动、电机发热。星三角启动就是电机的"1档起步"方案。</p>
+          <div class="highlight">
+            <strong>核心思想：</strong>启动时先给电机"降压"（星形接法），等转速起来了，再恢复"全压"（角形接法）。
+          </div>
+          <h4>星形(Y) vs 角形(Δ) 的本质区别</h4>
+          <table>
+            <tr><th>接法</th><th>线圈承受电压</th><th>电流/转矩</th><th>用途</th></tr>
+            <tr><td><strong>星形 (Y)</strong></td><td>220V (380V÷1.732)</td><td>只有1/3</td><td>启动阶段（1档）</td></tr>
+            <tr><td><strong>角形 (Δ)</strong></td><td>380V (满电压)</td><td>100%全功率</td><td>正常运行（高档）</td></tr>
+          </table>
+          <div class="warning">
+            <strong>⚠️ 致命弱点：</strong>星形接法时转矩只有1/3！因此<strong>只适用于空载或轻载启动</strong>（如风机、水泵）。如果带重载启动，电机会转不起来而烧毁！
+          </div>
+        </div>
+      </section>
+
+      <section class="panel tutorial">
+        <h3> 启动过程详解</h3>
+        <div class="accordion">
+          <div class="accordion-item active">
+            <div class="accordion-header" onclick="toggleAccordion(this)">阶段1：星形启动（0-5秒）</div>
+            <div class="accordion-content">
+              <p><strong>操作：</strong>点击"SB2 启动"按钮</p>
+              <p><strong>现象：</strong>KM1(主) 和 KM-Y(星) 灯亮起，转子缓慢旋转</p>
+              <p><strong>看图表：</strong>电流曲线最高只到 <strong>2.5倍</strong>（直接启动会到7倍！），转矩曲线较低（只有1/3力气）</p>
+              <p class="hint">💡 这就是"降压启动"的效果，保护电网和电机</p>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">阶段2：死区切换（0.5秒）</div>
+            <div class="accordion-content">
+              <p><strong>现象：</strong>KM-Y 熄灭，但 KM-Δ 还没亮，状态显示 "SWITCHING"</p>
+              <p><strong>为什么需要死区？</strong>防止短路爆炸！如果 KM-Y 还没完全断开，KM-Δ 就闭合，380V电源会直接短路。</p>
+              <p><strong>看图表：</strong>电流迅速归零（主回路断开），转子靠惯性继续旋转</p>
+              <p class="hint">💡 这0.5秒是留给接触器彻底断开的"安全缓冲期"</p>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">阶段3：角形运行（切换后）</div>
+            <div class="accordion-content">
+              <p><strong>现象：</strong>KM-Δ 灯亮起，转子飞速旋转</p>
+              <p><strong>看图表（重点）：</strong>电流曲线会出现一个<strong>剧烈的向上尖峰</strong>（冲到4.5倍），然后迅速回落到 <strong>1.0倍</strong>（额定电流）</p>
+              <p><strong>为什么有尖峰？</strong>死区时电机靠惯性转，内部产生"反电动势"。突然接入380V全压，两者叠加产生短暂冲击。这是正常现象！</p>
+              <p class="hint">💡 转矩也同时恢复到100%，电机进入全功率运行</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="panel tutorial">
+      <h3>🎯 实操练习任务</h3>
+      <div class="tutorial-content">
+        <p>切换到"模拟器"标签页，完成以下任务：</p>
+        <ul>
+          <li><strong>任务1：</strong>启动电机，观察星形阶段的电流曲线（应该低于3倍）</li>
+          <li><strong>任务2：</strong>观察死区切换时的0.5秒停顿，思考为什么需要这个停顿</li>
+          <li><strong>任务3：</strong>观察角形切换瞬间的电流尖峰，理解反电动势的影响</li>
+          <li><strong>任务4：</strong>调整"星形运行时间"滑块，看看不同时间设置对启动过程的影响</li>
+          <li><strong>任务5：</strong>点击"FR 过载测试"，观察故障保护机制如何工作</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="quiz" class="tab-content">
+    <div class="grid2">
+      <section class="panel">
+        <h3>📝 知识测验</h3>
+        <div class="quiz-container">
+          <div class="quiz-question" data-q="1">
+            <h4>如果星形启动时间设置过长（比如10秒），在轻载情况下会发生什么？</h4>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="checkAnswer(1, 0, this)">A. 电机会因为电流过大而烧毁</div>
+              <div class="quiz-option" onclick="checkAnswer(1, 1, this)">B. 电机会长时间低速运行，效率低下但不会损坏</div>
+              <div class="quiz-option" onclick="checkAnswer(1, 2, this)">C. 电机会自动切换到角形，不受时间设置影响</div>
+            </div>
+            <div class="quiz-feedback" id="feedback-1"></div>
+          </div>
+          <div class="quiz-question" data-q="2">
+            <h4>为什么在控制电路里，KM-Y 和 KM-Δ 要互相串联对方的"常闭触点"（互锁）？</h4>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="checkAnswer(2, 0, this)">A. 为了节省电线</div>
+              <div class="quiz-option" onclick="checkAnswer(2, 1, this)">B. 防止两个接触器同时吸合造成电源短路</div>
+              <div class="quiz-option" onclick="checkAnswer(2, 2, this)">C. 为了让切换更快速</div>
+            </div>
+            <div class="quiz-feedback" id="feedback-2"></div>
+          </div>
+          <div class="quiz-question" data-q="3">
+            <h4>一台电机铭牌写着"380V Δ接法"，能否使用星三角启动？</h4>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="checkAnswer(3, 0, this)">A. 可以，启动时接成星形，运行时接成角形</div>
+              <div class="quiz-option" onclick="checkAnswer(3, 1, this)">B. 不可以，会烧毁电机</div>
+              <div class="quiz-option" onclick="checkAnswer(3, 2, this)">C. 可以，但需要额外加装变压器</div>
+            </div>
+            <div class="quiz-feedback" id="feedback-3"></div>
+          </div>
+          <div class="quiz-question" data-q="4">
+            <h4>星三角启动的致命弱点是什么？</h4>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="checkAnswer(4, 0, this)">A. 启动电流太大</div>
+              <div class="quiz-option" onclick="checkAnswer(4, 1, this)">B. 启动转矩只有1/3，不能带重载启动</div>
+              <div class="quiz-option" onclick="checkAnswer(4, 2, this)">C. 切换过程太复杂</div>
+            </div>
+            <div class="quiz-feedback" id="feedback-4"></div>
+          </div>
+          <div class="quiz-question" data-q="5">
+            <h4>死区（Dead Time）的主要作用是什么？</h4>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="checkAnswer(5, 0, this)">A. 让电机休息一会儿</div>
+              <div class="quiz-option" onclick="checkAnswer(5, 1, this)">B. 等待KM-Y接触器彻底断开，防止短路</div>
+              <div class="quiz-option" onclick="checkAnswer(5, 2, this)">C. 节省电能</div>
+            </div>
+            <div class="quiz-feedback" id="feedback-5"></div>
+          </div>
+          <div class="quiz-score" id="quizScore" style="display:none;">
+            <h3>测验完成！</h3>
+            <p id="scoreText"></p>
+            <button class="btn purple mono" onclick="resetQuiz()" style="margin-top:12px;">重新测验</button>
+          </div>
+        </div>
+      </section>
+      <section class="panel">
+        <h3> 提示与解析</h3>
+        <div class="tutorial-content">
+          <p>答题时如果不确定，可以：</p>
+          <ul>
+            <li>切换到<strong>"模拟器"</strong>标签页实际操作观察现象</li>
+            <li>切换到<strong>"学习指南"</strong>标签页查看详细讲解</li>
+            <li>注意观察电流曲线和转矩曲线的变化</li>
+          </ul>
+          <div class="highlight" style="margin-top:20px;">
+            <strong>🎓 学习建议：</strong><br>
+            1. 先阅读"学习指南"了解原理<br>
+            2. 在"模拟器"中实际操作观察现象<br>
+            3. 最后完成"小测验"检验学习成果<br>
+            4. 如果答错，不要灰心，回去重新观察模拟器！
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">阶段详情</h3>
+      <button class="modal-close" onclick="closeModal()">关闭</button>
+    </div>
+    <canvas id="modalChart"></canvas>
+    <div class="modal-info" id="modalInfo"></div>
+  </div>
+</div>
+
+<script>
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(tabName).classList.add('active');
+  event.target.classList.add('active');
+  if (tabName === 'simulator' && window.sim) window.sim.resizeCanvas();
+}
+
+function toggleAccordion(header) {
+  const item = header.parentElement;
+  item.classList.toggle('active');
+}
+
+let quizAnswers = {};
+const correctAnswers = {
+  1: { ans: 1, feedback: '正确！星形启动时电流只有2.5倍左右，长时间运行不会烧毁，但效率低（只有1/3转矩）。应该尽快切换到角形。', correct: 'B' },
+  2: { ans: 1, feedback: '正确！这就是"电气互锁"。如果KM-Y和KM-Δ同时吸合，380V电源会通过它们直接短路，瞬间炸毁设备！', correct: 'B' },
+  3: { ans: 0, feedback: '正确！铭牌写"380V Δ"说明正常运行需要380V角形接法。启动时可以临时接成星形（每相线圈承受220V），启动后再切回角形（380V）。', correct: 'A' },
+  4: { ans: 1, feedback: '正确！转矩与电压平方成正比。星形时电压降到58%，转矩就降到(0.58)²≈1/3。所以只能空载或轻载启动！', correct: 'B' },
+  5: { ans: 1, feedback: '正确！机械接触器断开需要时间（几毫秒到几十毫秒）。死区确保KM-Y彻底断开后，KM-Δ才闭合，避免短路。', correct: 'B' }
+};
+
+function checkAnswer(qNum, selected, element) {
+  if (quizAnswers[qNum] !== undefined) return;
+  quizAnswers[qNum] = selected;
+  const question = document.querySelector(`.quiz-question[data-q="${qNum}"]`);
+  const options = question.querySelectorAll('.quiz-option');
+  const feedback = document.getElementById(`feedback-${qNum}`);
+  const correct = correctAnswers[qNum];
+  options.forEach(opt => opt.classList.add('disabled'));
+  if (selected === correct.ans) {
+    element.classList.add('correct');
+    feedback.className = 'quiz-feedback correct show';
+  } else {
+    element.classList.add('wrong');
+    options[correct.ans].classList.add('correct');
+    feedback.className = 'quiz-feedback wrong show';
+  }
+  feedback.textContent = correct.feedback;
+  if (Object.keys(quizAnswers).length === 5) showScore();
+}
+
+function showScore() {
+  let correct = 0;
+  for (let q in quizAnswers) if (quizAnswers[q] === correctAnswers[q].ans) correct++;
+  const scoreDiv = document.getElementById('quizScore');
+  const scoreText = document.getElementById('scoreText');
+  scoreDiv.style.display = 'block';
+  const percentage = (correct / 5) * 100;
+  let message = percentage === 100 ? '🎉 完美！你已经完全掌握了星三角启动！' : percentage >= 80 ? '👍 很棒！理解得很好！' : percentage >= 60 ? '👌 不错！建议再复习一下错题。' : ' 建议重新学习"学习指南"部分，然后重试。';
+  scoreText.innerHTML = `得分：<strong style="color:var(--accent); font-size:24px;">${correct}/5</strong> (${percentage}%)<br><br>${message}`;
+  scoreDiv.scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetQuiz() {
+  quizAnswers = {};
+  document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('correct', 'wrong', 'disabled'));
+  document.querySelectorAll('.quiz-feedback').forEach(fb => { fb.classList.remove('show'); fb.textContent = ''; });
+  document.getElementById('quizScore').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openModal(phase) {
+  const modal = document.getElementById('modal');
+  const title = document.getElementById('modalTitle');
+  const info = document.getElementById('modalInfo');
+  const phaseInfo = {
+    star: { title: '星形启动阶段详解', info: `<strong>持续时间：</strong>0 ~ ${window.sim.state.set}秒<br><strong>电流特征：</strong>从2.5倍指数衰减至1.5倍<br><strong>转矩特征：</strong>只有额定值的1/3（0.4~0.6倍）<br><strong>物理原理：</strong>星形接法时，每相线圈承受220V（380V÷√3），电压降低导致电流和转矩都大幅减小` },
+    dead: { title: '死区切换阶段详解', info: `<strong>持续时间：</strong>0.5秒<br><strong>电流特征：</strong>迅速指数衰减至0（主回路完全断开）<br><strong>关键作用：</strong>防止KM-Y和KM-Δ同时吸合造成电源短路<br><strong>物理原理：</strong>机械接触器断开需要时间，死区确保KM-Y彻底断开后KM-Δ才闭合` },
+    delta: { title: '角形运行阶段详解', info: `<strong>切换瞬间（0~0.5秒）：</strong>电流尖峰可达4.5倍<br><strong>稳定后（0.5秒后）：</strong>电流回落至1.0倍（额定电流）<br><strong>尖峰原因：</strong>死区时电机靠惯性旋转，内部产生"反电动势"。突然接入380V全压，反电动势与电源电压叠加，产生短暂冲击电流` }
+  };
+  const data = phaseInfo[phase];
+  title.textContent = data.title;
+  info.innerHTML = data.info;
+  modal.classList.add('active');
+  setTimeout(() => window.sim.drawModalChart(phase), 100);
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+document.getElementById('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
+
+class StarDeltaSim {
+  constructor() {
+    this.state = { mode: 'STOP', t: 0, set: 5, cur: 0, trq: 0, samples: new Array(300).fill({ cur: 0, trq: 0 }), phaseStart: 0 };
+    this.contacts = { km1: false, kmy: false, kmd: false, trip: false };
+    this.lastTime = performance.now();
+    this.rafId = null;
+    this.audioCtx = null;
+    this.snapshots = { star: { cur: [], trq: [], time: [] }, dead: { cur: [], trq: [], time: [] }, delta: { cur: [], trq: [], time: [] } };
+    this.currentPhase = null;
+    this.initDOM();
+    this.bindEvents();
+    this.log('系统就绪，等待启动指令');
+    this.startLoop();
+  }
+
+  initDOM() {
+    this.el = id => document.getElementById(id);
+    [['swKM1',60,72], ['swKMY',60,214], ['swKMD',150,214]].forEach(a => {
+      const g = this.el(a[0]); g.style.transformOrigin = `${a[1]}px ${a[2]}px`; g.style.transform = 'rotate(-32deg)';
+    });
+    this.canvas = this.el('chart');
+    this.resizeCanvas();
+    window.addEventListener('resize', () => this.resizeCanvas());
+  }
+
+  resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = 180 * dpr;
+    this.ctx = this.canvas.getContext('2d');
+    this.ctx.scale(dpr, dpr);
+    this.width = rect.width;
+    this.height = 180;
+    ['snapStar', 'snapDead', 'snapDelta'].forEach(id => {
+      const c = this.el(id);
+      const r = c.parentElement.getBoundingClientRect();
+      c.width = r.width * dpr;
+      c.height = 120 * dpr;
+      const ctx = c.getContext('2d');
+      ctx.scale(dpr, dpr);
+    });
+  }
+
+  bindEvents() {
+    this.el('bStart').onclick = () => this.handleStart();
+    this.el('bStop').onclick = () => this.handleStop();
+    this.el('bTrip').onclick = () => this.handleTrip();
+    this.el('bReset').onclick = () => this.handleReset();
+    this.el('ts').oninput = (e) => { 
+      this.state.set = +e.target.value; 
+      this.el('tsVal').textContent = `${this.state.set}s`;
+      this.el('snapStarTime').textContent = this.state.set;
+    };
+  }
+
+  initAudio() {
+    if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+  }
+
+  playSound(type) {
+    if (!this.audioCtx) return;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    const now = this.audioCtx.currentTime;
+    if (type === 'click') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+      osc.start(now); osc.stop(now + 0.05);
+    } else if (type === 'trip') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.linearRampToValueAtTime(0, now + 0.3);
+      osc.start(now); osc.stop(now + 0.3);
+    }
+  }
+
+  handleStart() {
+    this.initAudio();
+    if (this.contacts.trip) { this.log('FR 未复位，拒绝启动'); this.playSound('trip'); return; }
+    if (this.state.mode !== 'STOP') return;
+    this.snapshots = { star: { cur: [], trq: [], time: [] }, dead: { cur: [], trq: [], time: [] }, delta: { cur: [], trq: [], time: [] } };
+    this.state.mode = 'STAR'; this.state.t = 0; this.state.phaseStart = 0;
+    this.currentPhase = 'star';
+    this.contacts.km1 = true; this.contacts.kmy = true; this.contacts.kmd = false;
+    this.playSound('click');
+    this.log('按下 SB2 → KM1、KM-Y 吸合，星形降压启动');
+  }
+
+  handleStop() {
+    this.initAudio();
+    if (this.state.mode === 'STOP') return;
+    this.state.mode = 'STOP'; this.state.t = 0;
+    this.currentPhase = null;
+    this.contacts.km1 = false; this.contacts.kmy = false; this.contacts.kmd = false;
+    this.playSound('click');
+    this.log('按下 SB1 → 全部接触器断开，自由停机');
+  }
+
+  handleTrip() {
+    this.initAudio();
+    if (this.state.mode === 'STOP') return;
+    this.contacts.trip = true; this.state.mode = 'TRIP'; this.state.t = 0;
+    this.currentPhase = null;
+    this.contacts.km1 = false; this.contacts.kmy = false; this.contacts.kmd = false;
+    this.playSound('trip');
+    this.log('⚠️ FR 热继电器动作 → 全回路跳闸！');
+  }
+
+  handleReset() {
+    this.initAudio();
+    if (!this.contacts.trip) return;
+    this.contacts.trip = false; this.state.mode = 'STOP'; this.state.t = 0;
+    this.playSound('click');
+    this.log('FR 故障已复位，系统就绪');
+  }
+
+  updatePhysics(dt) {
+    dt = Math.min(dt, 0.1);
+    const S = this.state;
+    
+    // 状态机逻辑
+    if (S.mode === 'STAR') {
+      S.t += dt;
+      if (S.t >= S.set) {
+        S.mode = 'DEAD'; S.t = 0; S.phaseStart = S.set;
+        this.currentPhase = 'dead';
+        this.contacts.kmy = false;
+        this.playSound('click');
+        this.log('时间继电器到时 → KM-Y 断开，进入切换死区');
+      }
+    } else if (S.mode === 'DEAD') {
+      S.t += dt;
+      if (S.t >= 0.5) {
+        S.mode = 'DELTA'; S.t = 0; S.phaseStart = S.set + 0.5;
+        this.currentPhase = 'delta';
+        this.contacts.kmd = true;
+        
+        // 【修复】合闸瞬间直接赋予尖峰初始值
+        S.cur = 4.5; 
+        S.trq = 1.5;
+        
+        this.playSound('click');
+        this.log('KM-Δ 吸合 → 切换至角形全压运行');
+      }
+    } else if (S.mode === 'DELTA') {
+      // 【关键修复】DELTA 阶段必须增加时间，否则曲线不会衰减
+      S.t += dt;
+    }
+
+    // 物理计算
+    let targetCur = 0, targetTrq = 0;
+    if (S.mode === 'STAR') {
+      targetCur = 1.5 + 1.0 * Math.exp(-S.t / 0.8);
+      targetTrq = 0.4 + 0.2 * Math.exp(-S.t / 0.8);
+    } else if (S.mode === 'DEAD') {
+      targetCur = S.cur * Math.exp(-S.t / 0.05);
+      targetTrq = S.trq * Math.exp(-S.t / 0.05);
+    } else if (S.mode === 'DELTA') {
+      if (S.t < 0.5) {
+        targetCur = 1.0 + 3.5 * Math.exp(-S.t / 0.15);
+        targetTrq = 1.0 + 0.5 * Math.exp(-S.t / 0.15);
+      } else {
+        targetCur = 1.0 + 0.1 * Math.exp(-(S.t - 0.5) / 1.0);
+        targetTrq = 1.0;
+      }
+    }
+
+    targetCur += (Math.random() - 0.5) * 0.08;
+    targetTrq += (Math.random() - 0.5) * 0.02;
+    const filterFactor = Math.min(dt * 8, 1);
+    S.cur += (targetCur - S.cur) * filterFactor;
+    S.trq += (targetTrq - S.trq) * filterFactor;
+    S.cur = Math.max(0, S.cur);
+    S.trq = Math.max(0, S.trq);
+    
+    S.samples.push({ cur: S.cur, trq: S.trq });
+    S.samples.shift();
+    
+    if (this.currentPhase) {
+      const snap = this.snapshots[this.currentPhase];
+      snap.cur.push(S.cur);
+      snap.trq.push(S.trq);
+      snap.time.push(S.phaseStart + S.t);
+      if (snap.cur.length > 500) { snap.cur.shift(); snap.trq.shift(); snap.time.shift(); }
+    }
+  }
+
+  render() {
+    const S = this.state;
+    const C = this.contacts;
+    const setSw = (id, closed) => {
+      const g = this.el(id);
+      g.style.transform = closed ? 'rotate(0deg)' : 'rotate(-32deg)';
+      g.classList.toggle('on', closed);
+    };
+    setSw('swKM1', C.km1); setSw('swKMY', C.kmy); setSw('swKMD', C.kmd);
+    const setLamp = (id, cls, on) => { this.el(id).className = 'lamp' + (on ? ` ${cls}` : ''); };
+    setLamp('lKM1', 'on', C.km1); setLamp('lKMY', 'on', C.kmy); setLamp('lKMD', 'on', C.kmd);
+    setLamp('lRUN', 'run', ['STAR', 'DEAD', 'DELTA'].includes(S.mode));
+    setLamp('lTRIP', 'trip', C.trip);
+    this.el('stateTxt').textContent = S.mode === 'DEAD' ? 'SWITCHING' : S.mode;
+    this.el('cd').textContent = S.mode === 'STAR' ? `切换倒计时 ${(S.set - S.t).toFixed(1)}s` : (S.mode === 'DEAD' ? `死区 ${(0.5 - S.t).toFixed(1)}s` : '');
+    const rotor = this.el('rotor');
+    rotor.className.baseVal = 'rotor' + (['STAR', 'DEAD'].includes(S.mode) ? ' slow' : S.mode === 'DELTA' ? ' fast' : '');
+    this.el('amps').innerHTML = `
+      <span>${S.cur.toFixed(1)} <small>×Ie</small></span>
+      <span style="color:var(--torque); font-size:16px;">${S.trq.toFixed(1)} <small>×Tn</small></span>
+    `;
+    this.drawChart();
+    this.drawSnapshots();
+  }
+
+  drawChart() {
+    const ctx = this.ctx;
+    const w = this.width;
+    const h = this.height;
+    const samples = this.state.samples;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    ctx.lineWidth = 1;
+    for (let i = 1; i <= 4; i++) {
+      const y = h - (i / 4) * (h - 20) - 10;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.3)';
+      ctx.font = '10px Consolas';
+      ctx.fillText((i * 1.0).toFixed(0), 4, y + 3);
+    }
+    // 转矩 (橙色)
+    ctx.strokeStyle = '#ff9f43';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    samples.forEach((v, i) => {
+      const px = (i / (samples.length - 1)) * w;
+      const py = h - Math.min(v.trq, 2.0) / 2.0 * (h - 20) - 10;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+    // 电流 (青色)
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    samples.forEach((v, i) => {
+      const px = (i / (samples.length - 1)) * w;
+      const py = h - Math.min(v.cur, 5.0) / 5.0 * (h - 20) - 10;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+  }
+
+  drawSnapshots() {
+    this.drawSnapshot('snapStar', this.snapshots.star, 5.0, '星形');
+    this.drawSnapshot('snapDead', this.snapshots.dead, 5.0, '死区');
+    this.drawSnapshot('snapDelta', this.snapshots.delta, 5.0, '角形');
+  }
+
+  drawSnapshot(canvasId, data, maxCur, label) {
+    const canvas = this.el(canvasId);
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+    ctx.clearRect(0, 0, w, h);
+    if (data.cur.length === 0) {
+      ctx.fillStyle = 'rgba(255,255,255,.2)';
+      ctx.font = '12px Consolas';
+      ctx.textAlign = 'center';
+      ctx.fillText('等待数据...', w/2, h/2);
+      return;
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    ctx.lineWidth = 1;
+    for (let i = 1; i <= 4; i++) {
+      const y = h - (i / 4) * (h - 20) - 10;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+    
+    // 电流曲线 (青色)
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    data.cur.forEach((v, i) => {
+      const px = (i / (data.cur.length - 1)) * w;
+      const py = h - Math.min(v, maxCur) / maxCur * (h - 20) - 10;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+    
+    // 转矩曲线 (橙色)
+    ctx.strokeStyle = '#ff9f43';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    data.trq.forEach((v, i) => {
+      const px = (i / (data.trq.length - 1)) * w;
+      const py = h - Math.min(v, 2.0) / 2.0 * (h - 20) - 10;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+  }
+
+  drawModalChart(phase) {
+    const canvas = this.el('modalChart');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = 400 * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const w = rect.width;
+    const h = 400;
+    const data = this.snapshots[phase];
+    ctx.clearRect(0, 0, w, h);
+    if (data.cur.length === 0) {
+      ctx.fillStyle = 'rgba(255,255,255,.3)';
+      ctx.font = '16px Consolas';
+      ctx.textAlign = 'center';
+      ctx.fillText('暂无数据，请先启动电机', w/2, h/2);
+      return;
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx.lineWidth = 1;
+    for (let i = 1; i <= 5; i++) {
+      const y = h - (i / 5) * (h - 40) - 20;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.4)';
+      ctx.font = '12px Consolas';
+      ctx.textAlign = 'left';
+      ctx.fillText((i * 1.0).toFixed(1), 8, y + 4);
+    }
+    const timeLabels = 5;
+    for (let i = 0; i <= timeLabels; i++) {
+      const x = (i / timeLabels) * w;
+      const t = data.time[0] + (i / timeLabels) * (data.time[data.time.length-1] - data.time[0]);
+      ctx.fillStyle = 'rgba(255,255,255,.4)';
+      ctx.font = '11px Consolas';
+      ctx.textAlign = 'center';
+      ctx.fillText(t.toFixed(2) + 's', x, h - 4);
+    }
+    // 转矩 (橙色)
+    ctx.strokeStyle = '#ff9f43';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    data.trq.forEach((v, i) => {
+      const px = (i / (data.trq.length - 1)) * w;
+      const py = h - Math.min(v, 2.0) / 2.0 * (h - 40) - 20;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+    // 电流 (青色)
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    data.cur.forEach((v, i) => {
+      const px = (i / (data.cur.length - 1)) * w;
+      const py = h - Math.min(v, 5.0) / 5.0 * (h - 40) - 20;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+    ctx.fillStyle = '#00d4ff';
+    ctx.fillRect(w - 150, 20, 20, 3);
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    ctx.font = '12px Consolas';
+    ctx.textAlign = 'left';
+    ctx.fillText('电流 (I/Ie)', w - 120, 24);
+    ctx.fillStyle = '#ff9f43';
+    ctx.fillRect(w - 150, 40, 20, 3);
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    ctx.fillText('转矩 (T/Tn)', w - 120, 44);
+  }
+
+  log(msg) {
+    const d = new Date();
+    const t = `${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}.${Math.floor(d.getMilliseconds()/100)}`;
+    const div = document.createElement('div');
+    div.textContent = `[${t}] ${msg}`;
+    const box = this.el('log');
+    box.prepend(div);
+    while (box.children.length > 40) box.removeChild(box.lastChild);
+  }
+
+  startLoop() {
+    const loop = (now) => {
+      const dt = (now - this.lastTime) / 1000;
+      this.lastTime = now;
+      this.updatePhysics(dt);
+      this.render();
+      this.rafId = requestAnimationFrame(loop);
+    };
+    this.rafId = requestAnimationFrame(loop);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => { window.sim = new StarDeltaSim(); });
+</script>
+</body>
+</html>

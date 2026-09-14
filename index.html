@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="SYS.NAV：PLC、BOM、选型与游戏模块统一入口">
+<meta name="description" content="SYS.NAV：PLC、BOM、选型、游戏与电路仿真模块统一入口">
 <meta name="theme-color" content="#070b14">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><path d='M24 4l17 10v20L24 44 7 34V14z' fill='none' stroke='%2300d4ff' stroke-width='3'/><circle cx='24' cy='24' r='5' fill='%2300d4ff'/></svg>">
 <title>SYS.NAV // COMMAND CENTER</title>
@@ -267,7 +267,7 @@
         <circle cx="24" cy="24" r="3.5" fill="currentColor"/>
       </svg>
       <span class="brand-name mono">SYS.NAV</span>
-      <span class="ver mono">v4.3</span>
+      <span class="ver mono">v4.4</span>
     </div>
     <div class="top-right mono">
       <div class="sys-dot"><span class="led"></span> SYSTEM ONLINE</div>
@@ -311,7 +311,7 @@
   </main>
 
   <footer class="mono">
-    <span>© SYS.NAV v4.3 // COMMAND INTERFACE</span>
+    <span>© SYS.NAV v4.4 // COMMAND INTERFACE</span>
     <span>KONAMI: ↑↑↓↓←→←→BA // DEPLOY: GITHUB PAGES</span>
   </footer>
 
@@ -319,7 +319,7 @@
     const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const BOOT_ENABLED = true;   /* 不想看开机动画改成 false */
 
-    /* ========= 模块清单 ========= */
+    /* ========= 模块清单（与仓库文件一一对应） ========= */
     const MODULES = [
       {
         id:'01', type:'PLC', title:'PLC 控制模块', file:'PLC.html',
@@ -341,11 +341,19 @@
         desc:'射击小游戏：点击进入游戏页面。',
         icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><path d="M12 2.5v3.5M12 18v3.5M2.5 12H6M18 12h3.5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>'
       },
+      {
+        id:'05', type:'SIM', title:'Circuit 电路仿真', file:'Circuit.html',
+        desc:'电路仿真项目：搭建电路、观察运行波形与仿真结果。',
+        icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2.5-6 4 12 2.5-6H21"/></svg>'
+      },
     ];
+
+    /* 文件名 → URL（自动编码空格/中文等特殊字符） */
+    const fileUrl = f => './' + encodeURIComponent(f);
 
     /* 渲染卡片 */
     document.getElementById('grid').innerHTML = MODULES.map(m => `
-      <a class="unit" href="./${m.file}">
+      <a class="unit" href="${fileUrl(m.file)}">
         <span class="unit-num">${m.id}</span>
         <div class="unit-icon">${m.icon}</div>
         <h2>${m.title}</h2>
@@ -371,7 +379,7 @@
       const led = document.querySelector('.mod-led[data-file="'   + m.file + '"]');
       const st  = document.querySelector('.mod-state[data-file="' + m.file + '"]');
       if (!led || !st) return;
-      fetch('./' + m.file, { method:'HEAD', cache:'no-store' })
+      fetch(fileUrl(m.file), { method:'HEAD', cache:'no-store' })
         .then(r => {
           if (r.ok) {
             led.classList.add('ok');  led.title = '模块在线';
@@ -409,12 +417,10 @@
     const MOUSE_R = 150;
     const LINK_L  = 110;
 
-    /* 读取画布在屏幕上的真实位置/尺寸，作为坐标换算基准 */
     function updateRect(){ rect = canvas.getBoundingClientRect(); }
 
     function resize(){
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      /* 用可视区尺寸（不含滚动条），并把 CSS 尺寸显式写死，保证 1:1 */
       W = document.documentElement.clientWidth;
       H = document.documentElement.clientHeight;
       canvas.style.width  = W + 'px';
@@ -437,7 +443,6 @@
         });
       }
     }
-    /* 鼠标屏幕坐标 → 画布逻辑坐标（任何缩放/偏移下都精确） */
     function setMouseFromEvent(cx, cy){
       mouse.x = (cx - rect.left) * (W / (rect.width  || 1));
       mouse.y = (cy - rect.top ) * (H / (rect.height || 1));
@@ -494,7 +499,6 @@
           }
         }
       }
-      /* 鼠标光环 + 十字准星（准星中心应精确贴在指针上） */
       if (mouse.on){
         ctx.strokeStyle = 'rgba(0,212,255,.18)';
         ctx.lineWidth = 1;
@@ -532,7 +536,7 @@
 
     /* ========= 开机自检 ========= */
     const BOOT_LINES = [
-      '> SYS.NAV BIOS v4.3',
+      '> SYS.NAV BIOS v4.4',
       '> MEM CHECK ............ 64K OK',
       '> INTERFACE RENDER ..... OK',
       '> LINK MODULES ......... ' + MODULES.length + ' FOUND',

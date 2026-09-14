@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电路模拟器 Pro</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#0a0e17;color:#e0e0e0;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+.header{background:linear-gradient(135deg,#0d1520,#162033);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e3a5f;z-index:100;flex-shrink:0}
+.header h1{font-size:18px;font-weight:600;background:linear-gradient(90deg,#4fc3f7,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:8px}
+.ha{display:flex;gap:5px;flex-wrap:wrap}
+.btn{padding:5px 10px;border:1px solid #2a4a6b;background:rgba(30,58,95,.5);color:#8bb8e0;border-radius:5px;cursor:pointer;font-size:11px;transition:all .2s;white-space:nowrap}
+.btn:hover{background:rgba(30,58,95,.9);color:#4fc3f7;border-color:#4fc3f7}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-danger{border-color:#5a2a2a;color:#e07070}
+.btn-success{border-color:#2a5a3a;color:#70e090}
+.btn-warn{border-color:#5a4a2a;color:#e0c070}
+.btn.active{background:rgba(79,195,247,.2);border-color:#4fc3f7;color:#4fc3f7}
+.main{display:flex;flex:1;overflow:hidden}
+.toolbar{width:210px;min-width:210px;background:linear-gradient(180deg,#0d1520,#111b2a);border-right:1px solid #1e3a5f;padding:10px 8px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;overflow-x:hidden;flex-shrink:0}
+.tg-title{font-size:10px;text-transform:uppercase;color:#5a7a9a;letter-spacing:1px;margin:6px 0 2px 4px;font-weight:600;border-bottom:1px solid #1a2a3a;padding-bottom:3px}
+.tg-title:first-child{margin-top:0}
+.cb{display:flex;align-items:center;gap:8px;padding:5px 6px;background:rgba(20,35,55,.6);border:1px solid #1e3a5f;border-radius:6px;cursor:grab;transition:all .2s;user-select:none}
+.cb:hover{background:rgba(30,58,95,.6);border-color:#4fc3f7;transform:translateX(2px)}
+.cb:active{cursor:grabbing;transform:scale(.97)}
+.cb-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(10,20,35,.5);border-radius:4px}
+.cb-icon svg{width:32px;height:32px}
+.cb-txt{display:flex;flex-direction:column;min-width:0;flex:1}
+.cb-n{font-size:11px;font-weight:500;color:#c0d8f0}
+.cb-d{font-size:9px;color:#5a7a9a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc{flex:1;position:relative;overflow:hidden;background:#0a0e17;cursor:default}
+.cc.panning{cursor:grabbing}
+.zoom-wrapper{position:absolute;top:0;left:0;width:100%;height:100%;transform-origin:0 0}
+.canvas-bg{position:absolute;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(26,42,58,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(26,42,58,.3) 1px,transparent 1px);background-size:20px 20px}
+#wl{position:absolute;top:0;left:0;width:100%;height:100%;z-index:5}
+#wl .wh{pointer-events:stroke;cursor:pointer;stroke:transparent;stroke-width:12;fill:none}
+#wl .wp{pointer-events:none;fill:none}
+#wl .wpt{cursor:move;pointer-events:all}
+#wl .wpt:hover{r:6;fill:#4fc3f7}
+.co{position:absolute;z-index:10;cursor:move;user-select:none;transition:filter .2s}
+.co:hover{filter:brightness(1.2)}
+.co.sel{filter:brightness(1.3) drop-shadow(0 0 8px rgba(79,195,247,.5))}
+.cbd{position:relative;display:flex;align-items:center;justify-content:center;transition:transform .3s ease}
+.pt{position:absolute;width:12px;height:12px;background:#1a3050;border:2px solid #4fc3f7;border-radius:50%;cursor:crosshair;z-index:20;transition:all .2s}
+.pt:hover{background:#4fc3f7;transform:scale(1.4);box-shadow:0 0 10px rgba(79,195,247,.6)}
+.pt.con{background:#00e5ff;animation:pp .8s infinite}
+.pl{position:absolute;font-size:8px;color:#6a8aaa;pointer-events:none;z-index:21;white-space:nowrap}
+@keyframes pp{0%,100%{box-shadow:0 0 5px rgba(0,229,255,.4)}50%{box-shadow:0 0 15px rgba(0,229,255,.8)}}
+.rh{position:absolute;top:-26px;left:50%;transform:translateX(-50%);width:20px;height:20px;background:rgba(30,58,95,.9);border:1px solid #4fc3f7;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:10px;z-index:30;color:#4fc3f7;line-height:20px;text-align:center}
+.co.sel .rh{display:flex}
+.rh:hover{background:#4fc3f7;color:#fff;transform:translateX(-50%) scale(1.2)}
+.ip{width:220px;background:linear-gradient(180deg,#0d1520,#111b2a);border-left:1px solid #1e3a5f;padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex-shrink:0}
+.is{background:rgba(20,35,55,.4);border:1px solid #1e3a5f;border-radius:8px;padding:10px}
+.is h3{font-size:10px;color:#4fc3f7;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.ir{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px}
+.il{color:#6a8aaa}.iv{color:#c0d8f0;font-weight:500}
+.si{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.son{background:#70e090;box-shadow:0 0 6px #70e090}.soff{background:#e07070;box-shadow:0 0 6px #e07070}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);background:rgba(30,58,95,.95);border:1px solid #4fc3f7;color:#e0f0ff;padding:10px 24px;border-radius:8px;font-size:13px;z-index:1000;opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#tw{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:15}
+.cm{position:fixed;background:rgba(15,25,40,.98);border:1px solid #2a4a6b;border-radius:8px;padding:4px 0;z-index:1000;min-width:170px;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.cmi{padding:7px 14px;font-size:12px;cursor:pointer;color:#b0c8e0;transition:all .15s;display:flex;align-items:center;gap:8px}
+.cmi:hover{background:rgba(79,195,247,.15);color:#4fc3f7}
+.cmi.dng{color:#e07070}
+.cmd{height:1px;background:#1e3a5f;margin:3px 0}
+.ov{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:2000;display:none;align-items:center;justify-content:center}
+.ov.show{display:flex}
+.ovb{background:#111b2a;border:1px solid #2a4a6b;border-radius:12px;padding:28px;max-width:580px;width:90%;max-height:80vh;overflow-y:auto}
+.ovb h2{color:#4fc3f7;margin-bottom:14px}
+.ovb h3{color:#70e090;margin:12px 0 8px;font-size:14px}
+.ovb p,.ovb li{color:#8bb8e0;font-size:13px;line-height:1.8}
+.ovb ul{padding-left:20px;margin:6px 0}
+.ovb kbd{background:#1e3a5f;padding:2px 6px;border-radius:3px;font-size:11px;border:1px solid #2a4a6b}
+.mb{background:#111b2a;border:1px solid #2a4a6b;border-radius:12px;padding:24px;min-width:320px;max-width:500px}
+.mb h3{color:#4fc3f7;margin-bottom:14px}
+.mb label{display:block;font-size:12px;color:#8bb8e0;margin-bottom:4px}
+.mb input[type="number"],.mb select,.mb textarea{width:100%;padding:7px 10px;background:#0a0e17;border:1px solid #2a4a6b;border-radius:6px;color:#e0e0e0;font-size:13px;margin-bottom:10px;outline:none;font-family:inherit}
+.mb textarea{min-height:150px;resize:vertical;font-family:monospace;font-size:11px}
+.mb input:focus,.mb select:focus{border-color:#4fc3f7}
+.ma{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.eg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.eb{padding:12px;background:rgba(20,35,55,.6);border:1px solid #1e3a5f;border-radius:8px;cursor:pointer;text-align:left;transition:all .2s}
+.eb:hover{background:rgba(30,58,95,.6);border-color:#4fc3f7}
+.eb h4{color:#4fc3f7;font-size:12px;margin-bottom:4px}
+.eb p{color:#6a8aaa;font-size:10px;line-height:1.4}
+.zoom-controls{position:absolute;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:100}
+.zoom-btn{width:40px;height:40px;border-radius:8px;border:1px solid #2a4a6b;background:rgba(30,58,95,.9);color:#4fc3f7;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.zoom-btn:hover{background:rgba(79,195,247,.2);border-color:#4fc3f7;transform:scale(1.1)}
+.zoom-level{background:rgba(30,58,95,.9);border:1px solid #2a4a6b;border-radius:6px;padding:6px 12px;color:#4fc3f7;font-size:12px;text-align:center;min-width:60px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>电路模拟器 Pro</h1>
+  <div class="ha">
+    <button class="btn" onclick="undo()" id="undoBtn" disabled>↶ 撤销</button>
+    <button class="btn" onclick="redo()" id="redoBtn" disabled>↷ 重做</button>
+    <button class="btn btn-warn" onclick="showEx()">📚 示例</button>
+    <button class="btn" onclick="saveCkt()">💾 保存</button>
+    <button class="btn" onclick="loadCkt()">📂 加载</button>
+    <button class="btn active" onclick="togSnap()" id="snapBtn">📏 吸附</button>
+    <button class="btn" onclick="showHelp()">📖 帮助</button>
+    <button class="btn btn-success" onclick="runSim()">▶ 运行</button>
+    <button class="btn" onclick="stopSim()">⏸ 暂停</button>
+    <button class="btn btn-danger" onclick="clearAll()">🗑 清空</button>
+  </div>
+</div>
+<div class="main">
+  <div class="toolbar" id="toolbar"></div>
+  <div class="cc" id="cvs">
+    <div class="zoom-wrapper" id="zoomWrap">
+      <div class="canvas-bg"></div>
+      <svg id="wl"><defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs></svg>
+      <svg id="tw"></svg>
+    </div>
+    <!-- 缩放控制 -->
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomIn()" title="放大">+</button>
+      <div class="zoom-level" id="zoomLevel">100%</div>
+      <button class="zoom-btn" onclick="zoomOut()" title="缩小">−</button>
+      <button class="zoom-btn" onclick="resetZoom()" title="重置" style="font-size:14px">⟲</button>
+    </div>
+  </div>
+  <div class="ip">
+    <div class="is"><h3>电路状态</h3>
+      <div class="ir"><span class="il"><span class="si soff" id="sDot"></span>状态</span><span class="iv" id="sTxt">已停止</span></div>
+      <div class="ir"><span class="il">元件</span><span class="iv" id="cCnt">0</span></div>
+      <div class="ir"><span class="il">导线</span><span class="iv" id="wCnt">0</span></div>
+    </div>
+    <div class="is"><h3>电路参数</h3>
+      <div class="ir"><span class="il">电压</span><span class="iv" id="tV">0 V</span></div>
+      <div class="ir"><span class="il">电阻</span><span class="iv" id="tR">∞ Ω</span></div>
+      <div class="ir"><span class="il">电流</span><span class="iv" id="tI">0 mA</span></div>
+    </div>
+    <div class="is" id="selI" style="display:none"><h3>选中元件</h3>
+      <div class="ir"><span class="il">类型</span><span class="iv" id="sT">-</span></div>
+      <div class="ir"><span class="il">参数</span><span class="iv" id="sP">-</span></div>
+      <div class="ir"><span class="il">角度</span><span class="iv" id="sR">0°</span></div>
+    </div>
+    <div class="is"><h3>快捷键</h3>
+      <p style="font-size:10px;color:#6a8aaa;line-height:1.6"><kbd>R</kbd> 旋转 <kbd>Del</kbd> 删除<br><kbd>Ctrl+Z</kbd> 撤销 <kbd>Ctrl+Y</kbd> 重做<br><kbd>Ctrl+S</kbd> 保存 <kbd>Esc</kbd> 取消<br><kbd>Ctrl+滚轮</kbd> 缩放 <kbd>中键拖拽</kbd> 平移</p>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="cm" id="ctxM"></div>
+<div class="ov" id="helpO" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="ovb"><h2>📖 使用指南</h2>
+    <h3>🔌 25种元件</h3>
+    <ul>
+      <li><b>电源：</b>电池、接地、交流电源</li>
+      <li><b>被动：</b>电阻、电容、电感</li>
+      <li><b>半导体：</b>二极管、LED、NPN、PNP、N-MOSFET</li>
+      <li><b>负载：</b>灯泡、电机、蜂鸣器、电磁阀、扬声器</li>
+      <li><b>控制：</b>开关、按钮、电位器、干簧管</li>
+      <li><b>保护：</b>保险丝、断路器</li>
+      <li><b>电力电子：</b>继电器、整流桥、稳压器、变压器</li>
+      <li><b>测量：</b>电流表、电压表</li>
+    </ul>
+    <h3>🔍 缩放与平移</h3>
+    <ul>
+      <li><b>Ctrl + 鼠标滚轮</b>：放大/缩小画布</li>
+      <li><b>鼠标中键拖拽</b>：平移视图</li>
+      <li><b>右下角按钮</b>：快速缩放控制</li>
+    </ul>
+    <h3>🔧 操作</h3>
+    <ul>
+      <li>拖拽元件到画布 | 点击端口连线</li>
+      <li>点击导线添加拐点 | 拖拽拐点调整</li>
+      <li>双击开关/按钮切换 | 双击元件改参数</li>
+    </ul>
+    <br><button class="btn" onclick="this.closest('.ov').classList.remove('show')" style="width:100%">知道了</button>
+  </div>
+</div>
+<div class="ov" id="exO" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="ovb"><h2>📚 预设电路</h2>
+    <div class="eg">
+      <div class="eb" onclick="loadEx('led')"><h4>💡 LED指示灯</h4><p>电池+电阻+LED</p></div>
+      <div class="eb" onclick="loadEx('relay')"><h4>🔲 继电器控制</h4><p>小电流控大电流</p></div>
+      <div class="eb" onclick="loadEx('bridge')"><h4>⚡ 桥式整流</h4><p>整流桥+滤波</p></div>
+      <div class="eb" onclick="loadEx('regulator')"><h4>🔋 稳压电源</h4><p>整流+稳压输出</p></div>
+      <div class="eb" onclick="loadEx('mosfet')"><h4>🔲 MOSFET开关</h4><p>场效应管驱动</p></div>
+      <div class="eb" onclick="loadEx('meter')"><h4>📊 电表测量</h4><p>电流表+电压表</p></div>
+    </div>
+    <br><button class="btn" onclick="this.closest('.ov').classList.remove('show')" style="width:100%">关闭</button>
+  </div>
+</div>
+<div class="ov" id="editO">
+  <div class="mb"><h3 id="editT">编辑参数</h3><div id="editB"></div>
+    <div class="ma"><button class="btn" onclick="document.getElementById('editO').classList.remove('show')">取消</button><button class="btn btn-success" onclick="saveEdit()">保存</button></div>
+  </div>
+</div>
+<div class="ov" id="slO">
+  <div class="mb"><h3 id="slT">保存电路</h3><div id="slB"></div>
+    <div class="ma"><button class="btn" onclick="document.getElementById('slO').classList.remove('show')">取消</button><button class="btn btn-success" onclick="confirmSL()">确定</button></div>
+  </div>
+</div>
+<script>
+// ===== 缩放状态 =====
+const Z={scale:1,min:.1,max:5,px:0,py:0,pan:false,sx:0,sy:0};
+
+const S={comps:[],wires:[],nid:1,selC:null,selW:null,conn:null,run:false,afid:null,parts:[],drag:null,ctx:null,wpD:null,snap:true,hist:[],hIdx:-1,slM:null};
+const cvs=document.getElementById('cvs'),WL=document.getElementById('wl'),TW=document.getElementById('tw'),ZW=document.getElementById('zoomWrap');
+
+// ===== 坐标转换工具 =====
+// 屏幕坐标 -> 画布坐标
+function s2c(sx,sy){
+  var r=cvs.getBoundingClientRect();
+  return {x:(sx-r.left-Z.px)/Z.scale, y:(sy-r.top-Z.py)/Z.scale};
+}
+
+const C={
+battery:{n:'电池',w:100,h:50,ports:[{x:0,y:25,l:'+'},{x:100,y:25,l:'-'}],p:{voltage:9},r:rBat,d:'直流电源'},
+ground:{n:'接地',w:40,h:50,ports:[{x:20,y:0}],p:{},r:rGnd,d:'参考地'},
+acSource:{n:'交流电源',w:100,h:50,ports:[{x:0,y:25,l:'L'},{x:100,y:25,l:'N'}],p:{voltage:220,freq:50},r:rAC,d:'AC市电'},
+resistor:{n:'电阻',w:100,h:40,ports:[{x:0,y:20},{x:100,y:20}],p:{resistance:1000},r:rRes,d:'限制电流'},
+capacitor:{n:'电容',w:80,h:40,ports:[{x:0,y:20},{x:80,y:20}],p:{capacitance:100},r:rCap,d:'储存电荷'},
+inductor:{n:'电感',w:100,h:40,ports:[{x:0,y:20},{x:100,y:20}],p:{inductance:10},r:rInd,d:'储存磁能'},
+diode:{n:'二极管',w:80,h:40,ports:[{x:0,y:20},{x:80,y:20}],p:{fv:0.7},r:rDio,d:'单向导通'},
+led:{n:'LED',w:80,h:50,ports:[{x:0,y:25},{x:80,y:25}],p:{color:'#ff4444',fv:2},r:rLED,d:'发光二极管'},
+bulb:{n:'灯泡',w:70,h:70,ports:[{x:0,y:35},{x:70,y:35}],p:{resistance:100},r:rBulb,d:'白炽灯'},
+motor:{n:'电机',w:70,h:70,ports:[{x:0,y:35},{x:70,y:35}],p:{resistance:50},r:rMot,d:'直流电机'},
+buzzer:{n:'蜂鸣器',w:80,h:50,ports:[{x:0,y:25},{x:80,y:25}],p:{resistance:100},r:rBuz,d:'发声元件'},
+solenoid:{n:'电磁阀',w:90,h:50,ports:[{x:0,y:25},{x:90,y:25}],p:{resistance:80},r:rSol,d:'电控阀门'},
+speaker:{n:'扬声器',w:70,h:60,ports:[{x:0,y:30},{x:70,y:30}],p:{resistance:8},r:rSpk,d:'电声转换'},
+switch:{n:'开关',w:90,h:40,ports:[{x:0,y:20},{x:90,y:20}],p:{closed:false},r:rSw,d:'手动控制'},
+button:{n:'按钮',w:70,h:50,ports:[{x:0,y:25},{x:70,y:25}],p:{pressed:false},r:rBtn,d:'瞬时开关'},
+reed:{n:'干簧管',w:80,h:36,ports:[{x:0,y:18},{x:80,y:18}],p:{closed:false},r:rReed,d:'磁控开关'},
+potentiometer:{n:'电位器',w:100,h:50,ports:[{x:0,y:25},{x:100,y:25},{x:50,y:0,l:'W'}],p:{resistance:10000,position:50},r:rPot,d:'可变电阻'},
+npn:{n:'NPN晶体管',w:60,h:70,ports:[{x:0,y:35,l:'B'},{x:30,y:0,l:'C'},{x:30,y:70,l:'E'}],p:{on:false},r:rNPN,d:'NPN三极管'},
+pnp:{n:'PNP晶体管',w:60,h:70,ports:[{x:0,y:35,l:'B'},{x:30,y:0,l:'C'},{x:30,y:70,l:'E'}],p:{on:false},r:rPNP,d:'PNP三极管'},
+nmos:{n:'N-MOSFET',w:60,h:70,ports:[{x:0,y:35,l:'G'},{x:30,y:0,l:'D'},{x:30,y:70,l:'S'}],p:{on:false},r:rNMOS,d:'场效应管'},
+relay:{n:'继电器',w:140,h:90,ports:[{x:0,y:25,l:'A1'},{x:0,y:65,l:'A2'},{x:140,y:20,l:'COM'},{x:140,y:45,l:'NO'},{x:140,y:70,l:'NC'}],p:{coilR:100,activated:false},r:rRelay,d:'电磁开关'},
+fuse:{n:'保险丝',w:90,h:36,ports:[{x:0,y:18},{x:90,y:18}],p:{rating:1,blown:false},r:rFuse,d:'过流保护'},
+breaker:{n:'断路器',w:90,h:44,ports:[{x:0,y:22},{x:90,y:22}],p:{rating:10,tripped:false},r:rBrk,d:'可复位保护'},
+bridge:{n:'整流桥',w:100,h:100,ports:[{x:0,y:30,l:'AC1'},{x:0,y:70,l:'AC2'},{x:100,y:30,l:'DC+'},{x:100,y:70,l:'DC-'}],p:{},r:rBridge,d:'桥式整流'},
+regulator:{n:'稳压器',w:90,h:60,ports:[{x:0,y:15,l:'IN'},{x:90,y:15,l:'OUT'},{x:45,y:60,l:'GND'}],p:{outputV:5},r:rReg,d:'三端稳压'},
+transformer:{n:'变压器',w:110,h:80,ports:[{x:0,y:20,l:'P1'},{x:0,y:60,l:'P2'},{x:110,y:20,l:'S1'},{x:110,y:60,l:'S2'}],p:{ratio:1},r:rTrans,d:'电压变换'},
+ammeter:{n:'电流表',w:60,h:60,ports:[{x:0,y:30,l:'+'},{x:60,y:30,l:'-'}],p:{reading:0},r:rAmm,d:'测电流'},
+voltmeter:{n:'电压表',w:60,h:60,ports:[{x:0,y:30,l:'+'},{x:60,y:30,l:'-'}],p:{reading:0},r:rVol,d:'测电压'}
+};
+
+const GR=[
+{t:'电源',i:['battery','ground','acSource']},
+{t:'被动元件',i:['resistor','capacitor','inductor']},
+{t:'半导体',i:['diode','led','npn','pnp','nmos']},
+{t:'负载',i:['bulb','motor','buzzer','solenoid','speaker']},
+{t:'控制',i:['switch','button','reed','potentiometer']},
+{t:'保护器件',i:['fuse','breaker']},
+{t:'电力电子',i:['relay','bridge','regulator','transformer']},
+{t:'测量仪表',i:['ammeter','voltmeter']}
+];
+
+const TH={
+battery:'<line x1="5" y1="20" x2="14" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="14" y1="10" x2="14" y2="30" stroke="#4fc3f7" stroke-width="3"/><line x1="20" y1="14" x2="20" y2="26" stroke="#4fc3f7" stroke-width="2"/><line x1="26" y1="10" x2="26" y2="30" stroke="#4fc3f7" stroke-width="3"/><line x1="26" y1="20" x2="35" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+ground:'<line x1="20" y1="5" x2="20" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="10" y1="20" x2="30" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="13" y1="25" x2="27" y2="25" stroke="#4fc3f7" stroke-width="2"/><line x1="16" y1="30" x2="24" y2="30" stroke="#4fc3f7" stroke-width="2"/>',
+acSource:'<line x1="5" y1="20" x2="12" y2="20" stroke="#4fc3f7" stroke-width="2"/><circle cx="20" cy="20" r="8" fill="none" stroke="#4fc3f7" stroke-width="2"/><path d="M14,20 Q17,14 20,20 Q23,26 26,20" fill="none" stroke="#4fc3f7" stroke-width="1.5"/><line x1="28" y1="20" x2="35" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+resistor:'<line x1="2" y1="20" x2="8" y2="20" stroke="#4fc3f7" stroke-width="2"/><polyline points="8,20 12,10 16,30 20,10 24,30 28,10 32,20" fill="none" stroke="#ff9800" stroke-width="2"/><line x1="32" y1="20" x2="38" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+capacitor:'<line x1="2" y1="20" x2="16" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="16" y1="10" x2="16" y2="30" stroke="#4fc3f7" stroke-width="2.5"/><line x1="24" y1="10" x2="24" y2="30" stroke="#4fc3f7" stroke-width="2.5"/><line x1="24" y1="20" x2="38" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+inductor:'<line x1="2" y1="20" x2="8" y2="20" stroke="#4fc3f7" stroke-width="2"/><path d="M8,20 Q11,12 14,20 Q17,28 20,20 Q23,12 26,20 Q29,28 32,20" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="32" y1="20" x2="38" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+diode:'<line x1="2" y1="20" x2="14" y2="20" stroke="#4fc3f7" stroke-width="2"/><polygon points="14,12 14,28 26,20" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="26" y1="12" x2="26" y2="28" stroke="#4fc3f7" stroke-width="2"/><line x1="26" y1="20" x2="38" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+led:'<line x1="2" y1="20" x2="14" y2="20" stroke="#4fc3f7" stroke-width="2"/><polygon points="14,12 14,28 26,20" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="26" y1="12" x2="26" y2="28" stroke="#4fc3f7" stroke-width="2"/><line x1="26" y1="20" x2="38" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="28" y1="10" x2="33" y2="5" stroke="#ffeb3b" stroke-width="1.5"/>',
+bulb:'<line x1="2" y1="20" x2="12" y2="20" stroke="#4fc3f7" stroke-width="2"/><circle cx="20" cy="20" r="8" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="15" y1="15" x2="25" y2="25" stroke="#4fc3f7" stroke-width="1.5"/><line x1="25" y1="15" x2="15" y2="25" stroke="#4fc3f7" stroke-width="1.5"/><line x1="28" y1="20" x2="38" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+motor:'<line x1="2" y1="20" x2="12" y2="20" stroke="#4fc3f7" stroke-width="2"/><circle cx="20" cy="20" r="8" fill="none" stroke="#4fc3f7" stroke-width="2"/><text x="20" y="24" fill="#4fc3f7" font-size="10" text-anchor="middle" font-weight="bold">M</text><line x1="28" y1="20" x2="38" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+buzzer:'<line x1="2" y1="20" x2="12" y2="20" stroke="#4fc3f7" stroke-width="2"/><rect x="12" y="12" width="16" height="16" rx="2" fill="none" stroke="#4fc3f7" stroke-width="2"/><path d="M28,14 Q32,20 28,26" fill="none" stroke="#4fc3f7" stroke-width="1.5"/><line x1="28" y1="20" x2="38" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+solenoid:'<line x1="2" y1="20" x2="10" y2="20" stroke="#4fc3f7" stroke-width="2"/><path d="M10,20 Q13,12 16,20 Q19,28 22,20 Q25,12 28,20" fill="none" stroke="#4fc3f7" stroke-width="2"/><rect x="28" y="12" width="10" height="16" rx="1" fill="none" stroke="#ff9800" stroke-width="1.5"/>',
+speaker:'<line x1="2" y1="20" x2="12" y2="20" stroke="#4fc3f7" stroke-width="2"/><polygon points="12,14 12,26 20,26 28,32 28,8 20,14" fill="none" stroke="#4fc3f7" stroke-width="2"/><path d="M30,14 Q34,20 30,26" fill="none" stroke="#4fc3f7" stroke-width="1.5"/>',
+switch:'<line x1="2" y1="20" x2="12" y2="20" stroke="#4fc3f7" stroke-width="2"/><circle cx="14" cy="20" r="2" fill="#4fc3f7"/><line x1="14" y1="20" x2="28" y2="12" stroke="#4fc3f7" stroke-width="2"/><circle cx="28" cy="20" r="2" fill="none" stroke="#4fc3f7" stroke-width="1.5"/><line x1="28" y1="20" x2="38" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+button:'<line x1="2" y1="25" x2="12" y2="25" stroke="#4fc3f7" stroke-width="2"/><circle cx="14" cy="25" r="2" fill="#4fc3f7"/><circle cx="26" cy="25" r="2" fill="none" stroke="#4fc3f7" stroke-width="1.5"/><line x1="26" y1="25" x2="38" y2="25" stroke="#4fc3f7" stroke-width="2"/><line x1="20" y1="25" x2="20" y2="12" stroke="#4fc3f7" stroke-width="2"/><rect x="15" y="8" width="10" height="5" rx="1" fill="none" stroke="#4fc3f7" stroke-width="1.5"/>',
+reed:'<line x1="2" y1="18" x2="12" y2="18" stroke="#4fc3f7" stroke-width="2"/><rect x="12" y="10" width="16" height="16" rx="3" fill="none" stroke="#70e090" stroke-width="1.5" stroke-dasharray="3,2"/><line x1="15" y1="18" x2="25" y2="14" stroke="#4fc3f7" stroke-width="1.5"/><line x1="28" y1="18" x2="38" y2="18" stroke="#4fc3f7" stroke-width="2"/>',
+potentiometer:'<line x1="2" y1="20" x2="8" y2="20" stroke="#4fc3f7" stroke-width="2"/><polyline points="8,20 12,10 16,30 20,10 24,30 28,10 32,20" fill="none" stroke="#ff9800" stroke-width="2"/><line x1="32" y1="20" x2="38" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="19" y1="8" x2="19" y2="4" stroke="#4fc3f7" stroke-width="1.5"/><polygon points="17,4 21,4 19,2" fill="#4fc3f7"/>',
+npn:'<line x1="2" y1="20" x2="14" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="14" y1="10" x2="14" y2="30" stroke="#4fc3f7" stroke-width="2.5"/><line x1="14" y1="14" x2="28" y2="6" stroke="#4fc3f7" stroke-width="2"/><line x1="14" y1="26" x2="28" y2="34" stroke="#4fc3f7" stroke-width="2"/><polygon points="24,30 28,34 24,34" fill="#4fc3f7"/>',
+pnp:'<line x1="2" y1="20" x2="14" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="14" y1="10" x2="14" y2="30" stroke="#4fc3f7" stroke-width="2.5"/><line x1="14" y1="14" x2="28" y2="6" stroke="#4fc3f7" stroke-width="2"/><line x1="14" y1="26" x2="28" y2="34" stroke="#4fc3f7" stroke-width="2"/><polygon points="18,10 14,14 18,14" fill="#4fc3f7"/>',
+nmos:'<line x1="2" y1="20" x2="14" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="14" y1="10" x2="14" y2="30" stroke="#4fc3f7" stroke-width="1.5" stroke-dasharray="4,2"/><line x1="18" y1="10" x2="18" y2="30" stroke="#4fc3f7" stroke-width="2"/><line x1="18" y1="14" x2="28" y2="6" stroke="#4fc3f7" stroke-width="2"/><line x1="18" y1="26" x2="28" y2="34" stroke="#4fc3f7" stroke-width="2"/><line x1="18" y1="20" x2="28" y2="20" stroke="#4fc3f7" stroke-width="2"/>',
+relay:'<rect x="4" y="6" width="32" height="28" rx="3" fill="none" stroke="#4fc3f7" stroke-width="1.5"/><path d="M10,20 Q14,12 18,20 Q22,28 26,20" fill="none" stroke="#ff9800" stroke-width="1.5"/><circle cx="28" cy="14" r="2" fill="#4fc3f7"/><line x1="28" y1="14" x2="34" y2="22" stroke="#70e090" stroke-width="1.5"/>',
+fuse:'<line x1="2" y1="18" x2="12" y2="18" stroke="#4fc3f7" stroke-width="2"/><rect x="12" y="12" width="16" height="12" rx="2" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="14" y1="18" x2="26" y2="18" stroke="#e07070" stroke-width="1" stroke-dasharray="2,1"/><line x1="28" y1="18" x2="38" y2="18" stroke="#4fc3f7" stroke-width="2"/>',
+breaker:'<line x1="2" y1="22" x2="12" y2="22" stroke="#4fc3f7" stroke-width="2"/><rect x="12" y="8" width="20" height="28" rx="3" fill="none" stroke="#4fc3f7" stroke-width="2"/><circle cx="22" cy="16" r="3" fill="#70e090"/><line x1="15" y1="22" x2="29" y2="22" stroke="#4fc3f7" stroke-width="1.5"/><line x1="32" y1="22" x2="38" y2="22" stroke="#4fc3f7" stroke-width="2"/>',
+bridge:'<line x1="2" y1="15" x2="12" y2="15" stroke="#4fc3f7" stroke-width="1.5"/><line x1="2" y1="25" x2="12" y2="25" stroke="#4fc3f7" stroke-width="1.5"/><polygon points="14,12 14,22 22,17" fill="none" stroke="#4fc3f7" stroke-width="1.2"/><line x1="28" y1="15" x2="38" y2="15" stroke="#4fc3f7" stroke-width="1.5"/><line x1="28" y1="25" x2="38" y2="25" stroke="#4fc3f7" stroke-width="1.5"/>',
+regulator:'<line x1="2" y1="15" x2="12" y2="15" stroke="#4fc3f7" stroke-width="2"/><rect x="12" y="6" width="20" height="24" rx="2" fill="none" stroke="#4fc3f7" stroke-width="2"/><text x="22" y="22" fill="#4fc3f7" font-size="7" text-anchor="middle">REG</text><line x1="32" y1="15" x2="38" y2="15" stroke="#4fc3f7" stroke-width="2"/><line x1="22" y1="30" x2="22" y2="38" stroke="#4fc3f7" stroke-width="2"/>',
+transformer:'<line x1="2" y1="12" x2="10" y2="12" stroke="#4fc3f7" stroke-width="1.5"/><path d="M10,12 Q13,6 16,12 Q19,18 22,12" fill="none" stroke="#4fc3f7" stroke-width="1.5"/><line x1="2" y1="28" x2="10" y2="28" stroke="#4fc3f7" stroke-width="1.5"/><path d="M10,28 Q13,22 16,28 Q19,34 22,28" fill="none" stroke="#4fc3f7" stroke-width="1.5"/><line x1="24" y1="6" x2="24" y2="34" stroke="#6a8aaa" stroke-width="1"/><path d="M28,12 Q31,6 34,12 Q37,18 40,12" fill="none" stroke="#4fc3f7" stroke-width="1.5"/><path d="M28,28 Q31,22 34,28 Q37,34 40,28" fill="none" stroke="#4fc3f7" stroke-width="1.5"/>',
+ammeter:'<circle cx="20" cy="20" r="10" fill="none" stroke="#4fc3f7" stroke-width="2"/><text x="20" y="24" fill="#4fc3f7" font-size="12" text-anchor="middle" font-weight="bold">A</text>',
+voltmeter:'<circle cx="20" cy="20" r="10" fill="none" stroke="#4fc3f7" stroke-width="2"/><text x="20" y="24" fill="#4fc3f7" font-size="12" text-anchor="middle" font-weight="bold">V</text>'
+};
+
+function buildTB(){
+  var tb=document.getElementById('toolbar');tb.innerHTML='';
+  GR.forEach(function(g){
+    var t=document.createElement('div');t.className='tg-title';t.textContent=g.t;tb.appendChild(t);
+    g.i.forEach(function(type){
+      var c=C[type],b=document.createElement('div');b.className='cb';b.draggable=true;b.dataset.type=type;
+      b.innerHTML='<div class="cb-icon"><svg viewBox="0 0 40 40">'+(TH[type]||'')+'</svg></div><div class="cb-txt"><span class="cb-n">'+c.n+'</span><span class="cb-d">'+c.d+'</span></div>';
+      b.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',type);e.dataTransfer.effectAllowed='copy'});
+      tb.appendChild(b);
+    });
+  });
+}
+
+// ===== 缩放功能 =====
+function updZoom(){
+  ZW.style.transform='translate('+Z.px+'px,'+Z.py+'px) scale('+Z.scale+')';
+  document.getElementById('zoomLevel').textContent=Math.round(Z.scale*100)+'%';
+}
+function zoomIn(){if(Z.scale<Z.max){Z.scale=Math.min(Z.max,Z.scale*1.2);updZoom()}}
+function zoomOut(){if(Z.scale>Z.min){Z.scale=Math.max(Z.min,Z.scale/1.2);updZoom()}}
+function resetZoom(){Z.scale=1;Z.px=0;Z.py=0;updZoom();toast('视图已重置')}
+
+// 鼠标滚轮缩放（以鼠标位置为中心）
+cvs.addEventListener('wheel',function(e){
+  if(e.ctrlKey||e.metaKey){
+    e.preventDefault();
+    var delta=e.deltaY>0?0.8:1.25;
+    var ns=Z.scale*delta;
+    if(ns>=Z.min&&ns<=Z.max){
+      var r=cvs.getBoundingClientRect();
+      var mx=e.clientX-r.left, my=e.clientY-r.top;
+      // 以鼠标为中心缩放
+      Z.px=mx-(mx-Z.px)*delta;
+      Z.py=my-(my-Z.py)*delta;
+      Z.scale=ns;
+      updZoom();
+    }
+  }
+},{passive:false});
+
+// 中键平移
+cvs.addEventListener('mousedown',function(e){
+  if(e.button===1){
+    e.preventDefault();
+    Z.pan=true;Z.sx=e.clientX-Z.px;Z.sy=e.clientY-Z.py;
+    cvs.classList.add('panning');
+  }
+});
+document.addEventListener('mousemove',function(e){
+  if(Z.pan){Z.px=e.clientX-Z.sx;Z.py=e.clientY-Z.sy;updZoom()}
+});
+document.addEventListener('mouseup',function(){Z.pan=false;cvs.classList.remove('panning')});
+cvs.addEventListener('contextmenu',function(e){e.preventDefault()});
+
+// ===== 渲染函数 =====
+function rBat(c){return '<svg width="100" height="50" viewBox="0 0 100 50"><rect x="10" y="5" width="80" height="40" rx="4" fill="rgba(20,40,60,.8)" stroke="#2a4a6b"/><line x1="30" y1="12" x2="30" y2="38" stroke="#4fc3f7" stroke-width="3"/><line x1="42" y1="18" x2="42" y2="32" stroke="#4fc3f7" stroke-width="2"/><line x1="54" y1="12" x2="54" y2="38" stroke="#4fc3f7" stroke-width="3"/><line x1="66" y1="18" x2="66" y2="32" stroke="#4fc3f7" stroke-width="2"/><text x="22" y="10" fill="#e07070" font-size="10" font-weight="bold">+</text><text x="72" y="10" fill="#7090e0" font-size="10" font-weight="bold">-</text><text x="50" y="48" fill="#6a8aaa" font-size="9" text-anchor="middle">'+c.p.voltage+'V</text></svg>'}
+function rGnd(){return '<svg width="40" height="50" viewBox="0 0 40 50"><line x1="20" y1="0" x2="20" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="10" y1="20" x2="30" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="13" y1="28" x2="27" y2="28" stroke="#4fc3f7" stroke-width="2"/><line x1="16" y1="36" x2="24" y2="36" stroke="#4fc3f7" stroke-width="2"/></svg>'}
+function rAC(c){return '<svg width="100" height="50" viewBox="0 0 100 50"><rect x="10" y="5" width="80" height="40" rx="4" fill="rgba(20,40,60,.8)" stroke="#2a4a6b"/><circle cx="50" cy="25" r="14" fill="none" stroke="#4fc3f7" stroke-width="2"/><path d="M38,25 Q44,15 50,25 Q56,35 62,25" fill="none" stroke="#ffeb3b" stroke-width="2"/><text x="50" y="48" fill="#6a8aaa" font-size="8" text-anchor="middle">'+c.p.voltage+'V '+c.p.freq+'Hz</text></svg>'}
+function rRes(c){var r=c.p.resistance,l=r>=1000?(r/1000).toFixed(r%1000===0?0:1)+'kΩ':r+'Ω';return '<svg width="100" height="40" viewBox="0 0 100 40"><rect x="5" y="2" width="90" height="36" rx="4" fill="rgba(20,40,60,.6)" stroke="#2a4a6b"/><line x1="5" y1="20" x2="20" y2="20" stroke="#4fc3f7" stroke-width="2"/><polyline points="20,20 25,8 33,32 41,8 49,32 57,8 65,32 70,20" fill="none" stroke="#ff9800" stroke-width="2"/><line x1="70" y1="20" x2="95" y2="20" stroke="#4fc3f7" stroke-width="2"/><text x="50" y="38" fill="#6a8aaa" font-size="8" text-anchor="middle">'+l+'</text></svg>'}
+function rCap(c){var v=c.p.capacitance,l=v>=1000?(v/1000).toFixed(v%1000===0?0:1)+'mF':v+'μF';return '<svg width="80" height="40" viewBox="0 0 80 40"><rect x="5" y="2" width="70" height="36" rx="4" fill="rgba(20,40,60,.6)" stroke="#2a4a6b"/><line x1="5" y1="20" x2="32" y2="20" stroke="#4fc3f7" stroke-width="2"/><line x1="32" y1="8" x2="32" y2="32" stroke="#4fc3f7" stroke-width="2.5"/><line x1="48" y1="8" x2="48" y2="32" stroke="#4fc3f7" stroke-width="2.5"/><line x1="48" y1="20" x2="75" y2="20" stroke="#4fc3f7" stroke-width="2"/><text x="40" y="38" fill="#6a8aaa" font-size="8" text-anchor="middle">'+l+'</text></svg>'}
+function rInd(c){return '<svg width="100" height="40" viewBox="0 0 100 40"><rect x="5" y="2" width="90" height="36" rx="4" fill="rgba(20,40,60,.6)" stroke="#2a4a6b"/><line x1="5" y1="20" x2="20" y2="20" stroke="#4fc3f7" stroke-width="2"/><path d="M20,20 Q25,10 30,20 Q35,30 40,20 Q45,10 50,20 Q55,30 60,20 Q65,10 70,20" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="70" y1="20" x2="95" y2="20" stroke="#4fc3f7" stroke-width="2"/><text x="50" y="38" fill="#6a8aaa" font-size="8" text-anchor="middle">'+c.p.inductance+'mH</text></svg>'}
+function rDio(){return '<svg width="80" height="40" viewBox="0 0 80 40"><rect x="5" y="2" width="70" height="36" rx="4" fill="rgba(20,40,60,.6)" stroke="#2a4a6b"/><line x1="5" y1="20" x2="28" y2="20" stroke="#4fc3f7" stroke-width="2"/><polygon points="28,10 28,30 48,20" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="48" y1="10" x2="48" y2="30" stroke="#4fc3f7" stroke-width="2"/><line x1="48" y1="20" x2="75" y2="20" stroke="#4fc3f7" stroke-width="2"/></svg>'}
+function rLED(c){var col=c.p.color,op=c.lit?'0.8':'0';return '<svg width="80" height="50" viewBox="0 0 80 50"><circle cx="40" cy="25" r="18" fill="'+col+'" opacity="'+op+'"/><rect x="5" y="5" width="70" height="40" rx="4" fill="rgba(20,40,60,.6)" stroke="#2a4a6b"/><line x1="5" y1="25" x2="22" y2="25" stroke="#4fc3f7" stroke-width="2"/><polygon points="22,14 22,36 42,25" fill="'+(c.lit?col:'none')+'" stroke="'+col+'" stroke-width="2"/><line x1="42" y1="14" x2="42" y2="36" stroke="'+col+'" stroke-width="2"/><line x1="42" y1="25" x2="75" y2="25" stroke="#4fc3f7" stroke-width="2"/></svg>'}
+function rBulb(c){var l=c.lit;return '<svg width="70" height="70" viewBox="0 0 70 70"><circle cx="35" cy="35" r="25" fill="'+(l?'rgba(255,235,59,.6)':'rgba(255,235,59,0)')+'"/><circle cx="35" cy="35" r="20" fill="'+(l?'rgba(255,235,59,.3)':'rgba(20,40,60,.6)')+'" stroke="'+(l?'#ffeb3b':'#2a4a6b')+'" stroke-width="2"/><line x1="25" y1="25" x2="45" y2="45" stroke="'+(l?'#ffeb3b':'#4fc3f7')+'" stroke-width="1.5"/><line x1="45" y1="25" x2="25" y2="45" stroke="'+(l?'#ffeb3b':'#4fc3f7')+'" stroke-width="1.5"/><line x1="0" y1="35" x2="15" y2="35" stroke="#4fc3f7" stroke-width="2"/><line x1="55" y1="35" x2="70" y2="35" stroke="#4fc3f7" stroke-width="2"/></svg>'}
+function rMot(c){var a=c.lit;return '<svg width="70" height="70" viewBox="0 0 70 70"><circle cx="35" cy="35" r="20" fill="'+(a?'rgba(79,195,247,.2)':'rgba(20,40,60,.6)')+'" stroke="'+(a?'#4fc3f7':'#2a4a6b')+'" stroke-width="2"/><text x="35" y="40" fill="'+(a?'#4fc3f7':'#6a8aaa')+'" font-size="14" text-anchor="middle" font-weight="bold">M</text><line x1="0" y1="35" x2="15" y2="35" stroke="#4fc3f7" stroke-width="2"/><line x1="55" y1="35" x2="70" y2="35" stroke="#4fc3f7" stroke-width="2"/></svg>'}
+function rBuz(c){var a=c.lit;return '<svg width="80" height="50" viewBox="0 0 80 50"><rect x="5" y="5" width="70" height="40" rx="4" fill="'+(a?'rgba(79,195,247,.2)':'rgba(20,40,60,.6)')+'" stroke="'+(a?'#4fc3f7':'#2a4a6b')+'"/><line x1="5" y1="25" x2="25" y2="25" stroke="#4fc3f7" stroke-width="2"/><rect x="25" y="15" width="20" height="20" rx="2" fill="none" stroke="#4fc3f7" stroke-width="2"/><path d="M45,18 Q52,25 45,32" fill="none" stroke="'+(a?'#4fc3f7':'#6a8aaa')+'" stroke-width="1.5"/><line x1="45" y1="25" x2="75" y2="25" stroke="#4fc3f7" stroke-width="2"/></svg>'}
+function rSol(c){var a=c.lit;return '<svg width="90" height="50" viewBox="0 0 90 50"><rect x="5" y="5" width="80" height="40" rx="4" fill="'+(a?'rgba(112,224,144,.15)':'rgba(20,40,60,.6)')+'" stroke="'+(a?'#70e090':'#2a4a6b')+'"/><line x1="5" y1="25" x2="18" y2="25" stroke="#4fc3f7" stroke-width="2"/><path d="M18,25 Q23,15 28,25 Q33,35 38,25 Q43,15 48,25" fill="none" stroke="'+(a?'#70e090':'#4fc3f7')+'" stroke-width="2"/><rect x="52" y="14" width="16" height="22" rx="2" fill="none" stroke="'+(a?'#70e090':'#ff9800')+'" stroke-width="2"/><line x1="68" y1="25" x2="85" y2="25" stroke="#4fc3f7" stroke-width="2"/></svg>'}
+function rSpk(c){var a=c.lit;return '<svg width="70" height="60" viewBox="0 0 70 60"><rect x="5" y="5" width="60" height="50" rx="4" fill="'+(a?'rgba(79,195,247,.15)':'rgba(20,40,60,.6)')+'" stroke="'+(a?'#4fc3f7':'#2a4a6b')+'"/><line x1="5" y1="30" x2="18" y2="30" stroke="#4fc3f7" stroke-width="2"/><polygon points="18,22 18,38 28,38 38,46 38,14 28,22" fill="'+(a?'rgba(79,195,247,.3)':'none')+'" stroke="'+(a?'#4fc3f7':'#6a8aaa')+'" stroke-width="2"/><line x1="38" y1="30" x2="65" y2="30" stroke="#4fc3f7" stroke-width="2"/></svg>'}
+function rSw(c){var cl=c.p.closed,ly=cl?20:10;return '<svg width="90" height="40" viewBox="0 0 90 40"><rect x="5" y="2" width="80" height="36" rx="4" fill="rgba(20,40,60,.6)" stroke="'+(cl?'#70e090':'#2a4a6b')+'"/><line x1="5" y1="20" x2="25" y2="20" stroke="#4fc3f7" stroke-width="2"/><circle cx="27" cy="20" r="3" fill="#4fc3f7"/><line x1="27" y1="20" x2="60" y2="'+ly+'" stroke="'+(cl?'#70e090':'#e07070')+'" stroke-width="2.5" stroke-linecap="round"/><circle cx="62" cy="20" r="3" fill="none" stroke="#4fc3f7" stroke-width="1.5"/><line x1="62" y1="20" x2="85" y2="20" stroke="#4fc3f7" stroke-width="2"/><text x="45" y="38" fill="'+(cl?'#70e090':'#e07070')+'" font-size="8" text-anchor="middle">'+(cl?'ON':'OFF')+'</text></svg>'}
+function rBtn(c){var pr=c.p.pressed;return '<svg width="70" height="50" viewBox="0 0 70 50"><rect x="5" y="5" width="60" height="40" rx="4" fill="rgba(20,40,60,.6)" stroke="'+(pr?'#70e090':'#2a4a6b')+'"/><line x1="5" y1="25" x2="20" y2="25" stroke="#4fc3f7" stroke-width="2"/><circle cx="22" cy="25" r="2.5" fill="#4fc3f7"/><circle cx="48" cy="25" r="2.5" fill="none" stroke="#4fc3f7" stroke-width="1.5"/><line x1="48" y1="25" x2="65" y2="25" stroke="#4fc3f7" stroke-width="2"/><line x1="35" y1="25" x2="35" y2="'+(pr?14:10)+'" stroke="'+(pr?'#70e090':'#e07070')+'" stroke-width="2.5" stroke-linecap="round"/><rect x="28" y="'+(pr?8:6)+'" width="14" height="6" rx="2" fill="'+(pr?'#70e090':'#4a6a8a')+'"/><text x="35" y="46" fill="'+(pr?'#70e090':'#e07070')+'" font-size="7" text-anchor="middle">'+(pr?'PUSH':'—')+'</text></svg>'}
+function rReed(c){var cl=c.p.closed;return '<svg width="80" height="36" viewBox="0 0 80 36"><rect x="5" y="2" width="70" height="32" rx="4" fill="rgba(20,40,60,.6)" stroke="'+(cl?'#70e090':'#2a4a6b')+'"/><rect x="20" y="6" width="40" height="24" rx="6" fill="none" stroke="'+(cl?'#70e090':'#6a8aaa')+'" stroke-width="1.5" stroke-dasharray="4,2" opacity=".6"/><line x1="5" y1="18" x2="30" y2="18" stroke="#4fc3f7" stroke-width="2"/><line x1="30" y1="18" x2="50" y2="'+(cl?18:10)+'" stroke="'+(cl?'#70e090':'#e07070')+'" stroke-width="2" stroke-linecap="round"/><line x1="50" y1="18" x2="75" y2="18" stroke="#4fc3f7" stroke-width="2"/></svg>'}
+function rPot(c){var r=c.p.resistance,l=r>=1000?(r/1000).toFixed(r%1000===0?0:1)+'kΩ':r+'Ω',p=c.p.position;return '<svg width="100" height="50" viewBox="0 0 100 50"><rect x="5" y="5" width="90" height="40" rx="4" fill="rgba(20,40,60,.6)" stroke="#2a4a6b"/><line x1="5" y1="25" x2="20" y2="25" stroke="#4fc3f7" stroke-width="2"/><polyline points="20,25 25,13 33,37 41,13 49,37 57,13 65,37 70,25" fill="none" stroke="#ff9800" stroke-width="2"/><line x1="70" y1="25" x2="95" y2="25" stroke="#4fc3f7" stroke-width="2"/><line x1="'+(20+p*.5)+'" y1="13" x2="'+(20+p*.5)+'" y2="5" stroke="#4fc3f7" stroke-width="1.5"/><text x="50" y="48" fill="#6a8aaa" font-size="8" text-anchor="middle">'+l+'</text></svg>'}
+function rNPN(c){var on=c.lit||c.p.on;return '<svg width="60" height="70" viewBox="0 0 60 70"><rect x="5" y="5" width="50" height="60" rx="4" fill="rgba(20,40,60,.6)" stroke="'+(on?'#70e090':'#2a4a6b')+'"/><line x1="5" y1="35" x2="20" y2="35" stroke="#4fc3f7" stroke-width="2"/><line x1="20" y1="15" x2="20" y2="55" stroke="#4fc3f7" stroke-width="3"/><line x1="20" y1="22" x2="45" y2="10" stroke="'+(on?'#70e090':'#4fc3f7')+'" stroke-width="2"/><line x1="20" y1="48" x2="45" y2="60" stroke="'+(on?'#70e090':'#4fc3f7')+'" stroke-width="2"/><polygon points="40,56 45,60 40,60" fill="'+(on?'#70e090':'#4fc3f7')+'"/><line x1="45" y1="10" x2="45" y2="5" stroke="#4fc3f7" stroke-width="2"/><line x1="45" y1="60" x2="45" y2="65" stroke="#4fc3f7" stroke-width="2"/><text x="30" y="38" fill="#6a8aaa" font-size="7" text-anchor="middle">NPN</text></svg>'}
+function rPNP(c){var on=c.lit||c.p.on;return '<svg width="60" height="70" viewBox="0 0 60 70"><rect x="5" y="5" width="50" height="60" rx="4" fill="rgba(20,40,60,.6)" stroke="'+(on?'#70e090':'#2a4a6b')+'"/><line x1="5" y1="35" x2="20" y2="35" stroke="#4fc3f7" stroke-width="2"/><line x1="20" y1="15" x2="20" y2="55" stroke="#4fc3f7" stroke-width="3"/><line x1="20" y1="22" x2="45" y2="10" stroke="'+(on?'#70e090':'#4fc3f7')+'" stroke-width="2"/><line x1="20" y1="48" x2="45" y2="60" stroke="'+(on?'#70e090':'#4fc3f7')+'" stroke-width="2"/><polygon points="24,14 20,10 24,10" fill="'+(on?'#70e090':'#4fc3f7')+'"/><line x1="45" y1="10" x2="45" y2="5" stroke="#4fc3f7" stroke-width="2"/><line x1="45" y1="60" x2="45" y2="65" stroke="#4fc3f7" stroke-width="2"/><text x="30" y="38" fill="#6a8aaa" font-size="7" text-anchor="middle">PNP</text></svg>'}
+function rNMOS(c){var on=c.lit||c.p.on;return '<svg width="60" height="70" viewBox="0 0 60 70"><rect x="5" y="5" width="50" height="60" rx="4" fill="rgba(20,40,60,.6)" stroke="'+(on?'#70e090':'#2a4a6b')+'"/><line x1="5" y1="35" x2="16" y2="35" stroke="#4fc3f7" stroke-width="2"/><line x1="16" y1="15" x2="16" y2="55" stroke="#4fc3f7" stroke-width="1.5" stroke-dasharray="4,2"/><line x1="20" y1="12" x2="20" y2="58" stroke="#4fc3f7" stroke-width="2"/><line x1="20" y1="18" x2="45" y2="10" stroke="'+(on?'#70e090':'#4fc3f7')+'" stroke-width="2"/><line x1="20" y1="35" x2="45" y2="35" stroke="'+(on?'#70e090':'#4fc3f7')+'" stroke-width="2"/><line x1="20" y1="52" x2="45" y2="60" stroke="'+(on?'#70e090':'#4fc3f7')+'" stroke-width="2"/><line x1="45" y1="10" x2="45" y2="5" stroke="#4fc3f7" stroke-width="2"/><line x1="45" y1="60" x2="45" y2="65" stroke="#4fc3f7" stroke-width="2"/><text x="30" y="45" fill="#6a8aaa" font-size="6" text-anchor="middle">N-MOS</text></svg>'}
+function rRelay(c){var act=c.p.activated,comY=20,noY=45,ncY=70,lsx=85,lex=110,ley=act?noY:ncY;return '<svg width="140" height="90" viewBox="0 0 140 90"><rect x="5" y="5" width="130" height="80" rx="6" fill="rgba(20,40,60,.7)" stroke="'+(act?'#70e090':'#2a4a6b')+'" stroke-width="1.5"/><line x1="0" y1="25" x2="18" y2="25" stroke="#4fc3f7" stroke-width="2"/><line x1="0" y1="65" x2="18" y2="65" stroke="#4fc3f7" stroke-width="2"/><path d="M18,25 Q25,15 32,25 Q39,35 46,25 Q53,15 58,25" fill="none" stroke="'+(act?'#70e090':'#ff9800')+'" stroke-width="2"/><text x="38" y="52" fill="#6a8aaa" font-size="7" text-anchor="middle">COIL</text><circle cx="68" cy="15" r="4" fill="'+(act?'#70e090':'#3a3a3a')+'"/><line x1="65" y1="'+comY+'" x2="'+lsx+'" y2="'+comY+'" stroke="#4fc3f7" stroke-width="2"/><circle cx="'+lsx+'" cy="'+comY+'" r="3" fill="#4fc3f7"/><line x1="'+lsx+'" y1="'+comY+'" x2="'+lex+'" y2="'+ley+'" stroke="'+(act?'#70e090':'#ff9800')+'" stroke-width="3" stroke-linecap="round"/><circle cx="'+lex+'" cy="'+noY+'" r="3" fill="none" stroke="'+(act?'#70e090':'#4fc3f7')+'" stroke-width="1.5"/><line x1="'+lex+'" y1="'+noY+'" x2="140" y2="'+noY+'" stroke="#4fc3f7" stroke-width="2"/><circle cx="'+lex+'" cy="'+ncY+'" r="3" fill="'+(act?'none':'#4fc3f7')+'" stroke="'+(act?'#e07070':'#4fc3f7')+'" stroke-width="1.5"/><line x1="'+lex+'" y1="'+ncY+'" x2="140" y2="'+ncY+'" stroke="#4fc3f7" stroke-width="2"/><text x="125" y="85" fill="'+(act?'#70e090':'#ff9800')+'" font-size="8" text-anchor="middle" font-weight="bold">'+(act?'ON':'OFF')+'</text></svg>'}
+function rFuse(c){var bl=c.p.blown;return '<svg width="90" height="36" viewBox="0 0 90 36"><rect x="5" y="2" width="80" height="32" rx="4" fill="rgba(20,40,60,.6)" stroke="'+(bl?'#e07070':'#2a4a6b')+'"/><line x1="5" y1="18" x2="25" y2="18" stroke="#4fc3f7" stroke-width="2"/><rect x="25" y="8" width="30" height="20" rx="3" fill="none" stroke="'+(bl?'#e07070':'#4fc3f7')+'" stroke-width="2"/><line x1="28" y1="18" x2="52" y2="18" stroke="'+(bl?'#e07070':'#ffeb3b')+'" stroke-width="'+(bl?1:1.5)+'" '+(bl?'stroke-dasharray="3,3"':'')+'/><line x1="55" y1="18" x2="85" y2="18" stroke="#4fc3f7" stroke-width="2"/><text x="45" y="34" fill="'+(bl?'#e07070':'#6a8aaa')+'" font-size="7" text-anchor="middle">'+(bl?'BLOWN':c.p.rating+'A')+'</text></svg>'}
+function rBrk(c){var tr=c.p.tripped;return '<svg width="90" height="44" viewBox="0 0 90 44"><rect x="5" y="2" width="80" height="40" rx="4" fill="rgba(20,40,60,.6)" stroke="'+(tr?'#e07070':'#2a4a6b')+'"/><line x1="5" y1="22" x2="22" y2="22" stroke="#4fc3f7" stroke-width="2"/><rect x="22" y="6" width="36" height="32" rx="4" fill="none" stroke="'+(tr?'#e07070':'#4fc3f7')+'" stroke-width="2"/><circle cx="40" cy="16" r="5" fill="'+(tr?'#e07070':'#70e090')+'"/><line x1="26" y1="22" x2="54" y2="'+(tr?14:22)+'" stroke="'+(tr?'#e07070':'#4fc3f7')+'" stroke-width="2.5" stroke-linecap="round"/><line x1="58" y1="22" x2="85" y2="22" stroke="#4fc3f7" stroke-width="2"/><text x="40" y="42" fill="'+(tr?'#e07070':'#70e090')+'" font-size="7" text-anchor="middle">'+(tr?'TRIPPED':'OK '+c.p.rating+'A')+'</text></svg>'}
+function rBridge(c){return '<svg width="100" height="100" viewBox="0 0 100 100"><rect x="5" y="5" width="90" height="90" rx="6" fill="rgba(20,40,60,.7)" stroke="#2a4a6b"/><line x1="0" y1="30" x2="20" y2="30" stroke="#4fc3f7" stroke-width="2"/><line x1="0" y1="70" x2="20" y2="70" stroke="#4fc3f7" stroke-width="2"/><line x1="80" y1="30" x2="100" y2="30" stroke="#4fc3f7" stroke-width="2"/><line x1="80" y1="70" x2="100" y2="70" stroke="#4fc3f7" stroke-width="2"/><polygon points="35,30 35,50 50,40" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="50" y1="30" x2="50" y2="50" stroke="#4fc3f7" stroke-width="2"/><polygon points="35,70 35,50 50,60" fill="none" stroke="#4fc3f7" stroke-width="2"/><polygon points="65,30 65,50 50,40" fill="none" stroke="#4fc3f7" stroke-width="2"/><polygon points="65,70 65,50 50,60" fill="none" stroke="#4fc3f7" stroke-width="2"/><text x="50" y="95" fill="#6a8aaa" font-size="7" text-anchor="middle">BRIDGE</text></svg>'}
+function rReg(c){var v=c.p.outputV;return '<svg width="90" height="60" viewBox="0 0 90 60"><rect x="5" y="5" width="80" height="40" rx="4" fill="rgba(20,40,60,.7)" stroke="#2a4a6b"/><line x1="0" y1="15" x2="15" y2="15" stroke="#4fc3f7" stroke-width="2"/><line x1="75" y1="15" x2="90" y2="15" stroke="#4fc3f7" stroke-width="2"/><line x1="45" y1="45" x2="45" y2="60" stroke="#4fc3f7" stroke-width="2"/><rect x="20" y="10" width="50" height="30" rx="3" fill="rgba(30,58,95,.8)" stroke="#4fc3f7" stroke-width="1.5"/><text x="45" y="28" fill="#4fc3f7" font-size="9" text-anchor="middle" font-weight="bold">REG</text><text x="45" y="55" fill="#6a8aaa" font-size="8" text-anchor="middle">'+v+'V</text></svg>'}
+function rTrans(c){return '<svg width="110" height="80" viewBox="0 0 110 80"><rect x="5" y="5" width="100" height="70" rx="6" fill="rgba(20,40,60,.7)" stroke="#2a4a6b"/><line x1="0" y1="20" x2="18" y2="20" stroke="#4fc3f7" stroke-width="2"/><path d="M18,20 Q24,10 30,20 Q36,30 42,20" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="0" y1="60" x2="18" y2="60" stroke="#4fc3f7" stroke-width="2"/><path d="M18,60 Q24,50 30,60 Q36,70 42,60" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="48" y1="10" x2="48" y2="70" stroke="#6a8aaa" stroke-width="1.5"/><line x1="52" y1="10" x2="52" y2="70" stroke="#6a8aaa" stroke-width="1.5"/><path d="M58,20 Q64,10 70,20 Q76,30 82,20" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="82" y1="20" x2="110" y2="20" stroke="#4fc3f7" stroke-width="2"/><path d="M58,60 Q64,50 70,60 Q76,70 82,60" fill="none" stroke="#4fc3f7" stroke-width="2"/><line x1="82" y1="60" x2="110" y2="60" stroke="#4fc3f7" stroke-width="2"/><text x="30" y="44" fill="#6a8aaa" font-size="7" text-anchor="middle">PRI</text><text x="70" y="44" fill="#6a8aaa" font-size="7" text-anchor="middle">SEC</text><text x="50" y="78" fill="#6a8aaa" font-size="7" text-anchor="middle">1:'+c.p.ratio+'</text></svg>'}
+function rAmm(c){var r=c.p.reading||0;return '<svg width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="rgba(20,40,60,.8)" stroke="'+(r>0?'#70e090':'#2a4a6b')+'" stroke-width="2"/><circle cx="30" cy="30" r="20" fill="rgba(10,20,35,.9)"/><text x="30" y="26" fill="#4fc3f7" font-size="14" text-anchor="middle" font-weight="bold">A</text><text x="30" y="42" fill="'+(r>0?'#70e090':'#6a8aaa')+'" font-size="8" text-anchor="middle">'+(r>0?r.toFixed(1)+'mA':'---')+'</text></svg>'}
+function rVol(c){var r=c.p.reading||0;return '<svg width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="rgba(20,40,60,.8)" stroke="'+(r>0?'#70e090':'#2a4a6b')+'" stroke-width="2"/><circle cx="30" cy="30" r="20" fill="rgba(10,20,35,.9)"/><text x="30" y="26" fill="#4fc3f7" font-size="14" text-anchor="middle" font-weight="bold">V</text><text x="30" y="42" fill="'+(r>0?'#70e090':'#6a8aaa')+'" font-size="8" text-anchor="middle">'+(r>0?r.toFixed(1)+'V':'---')+'</text></svg>'}
+
+// ===== 端口/导线 =====
+function gRP(c,i){var cfg=C[c.type],p=cfg.ports[i],r=c.rotation||0,cx=cfg.w/2,cy=cfg.h/2,rx=p.x-cx,ry=p.y-cy,rad=r*Math.PI/180;return{x:c.x+cx+rx*Math.cos(rad)-ry*Math.sin(rad),y:c.y+cy+rx*Math.sin(rad)+ry*Math.cos(rad)}}
+function gWP(w){var fc=S.comps.find(function(c){return c.id===w.fc}),tc=S.comps.find(function(c){return c.id===w.tc});if(!fc||!tc)return[];return[gRP(fc,w.fp)].concat(w.wps||[]).concat([gRP(tc,w.tp)])}
+function gWPD(w){var p=gWP(w);if(p.length<2)return'';var d='M'+p[0].x+','+p[0].y;for(var i=1;i<p.length;i++)d+=' L'+p[i].x+','+p[i].y;return d}
+
+function addC(type,x,y,sk){var cfg=C[type];if(!cfg)return;if(S.snap){x=Math.round(x/20)*20;y=Math.round(y/20)*20}var c={id:S.nid++,type:type,x:x,y:y,rotation:0,p:JSON.parse(JSON.stringify(cfg.p)),lit:false,current:0};S.comps.push(c);renC(c);updI();if(!sk)pushH();return c}
+
+function renC(comp){
+  var old=document.getElementById('c'+comp.id);if(old)old.remove();
+  var cfg=C[comp.type],el=document.createElement('div');
+  el.id='c'+comp.id;el.className='co';el.style.left=comp.x+'px';el.style.top=comp.y+'px';el.style.width=cfg.w+'px';el.style.height=cfg.h+'px';el.dataset.cid=comp.id;
+  var body=document.createElement('div');body.className='cbd';body.innerHTML=cfg.r(comp);body.style.transform='rotate('+(comp.rotation||0)+'deg)';el.appendChild(body);
+  var rh=document.createElement('div');rh.className='rh';rh.innerHTML='↻';rh.addEventListener('click',function(e){e.stopPropagation();rotC(comp.id)});el.appendChild(rh);
+  cfg.ports.forEach(function(port,idx){
+    var pp=gRP(comp,idx),pe=document.createElement('div');pe.className='pt';pe.style.left=(pp.x-comp.x-6)+'px';pe.style.top=(pp.y-comp.y-6)+'px';pe.dataset.cid=comp.id;pe.dataset.pi=idx;
+    if(port.l){var lb=document.createElement('div');lb.className='pl';lb.textContent=port.l;lb.style.left=(pp.x-comp.x-6)+'px';lb.style.top=(pp.y-comp.y-18)+'px';el.appendChild(lb)}
+    pe.addEventListener('mousedown',function(e){e.stopPropagation();startConn(comp.id,idx,e)});
+    pe.addEventListener('mouseup',function(e){e.stopPropagation();endConn(comp.id,idx)});
+    el.appendChild(pe);
+  });
+  el.addEventListener('mousedown',function(e){if(e.target.classList.contains('pt')||e.target.classList.contains('rh'))return;if(e.button===2||e.button===1)return;startDrag(comp.id,e)});
+  el.addEventListener('dblclick',function(e){
+    if(e.target.classList.contains('pt')||e.target.classList.contains('rh'))return;e.stopPropagation();
+    if(comp.type==='switch'){comp.p.closed=!comp.p.closed;refC(comp);toast('开关'+(comp.p.closed?'闭合':'断开'));pushH();if(S.run)analyze()}
+    else if(comp.type==='button'){comp.p.pressed=!comp.p.pressed;refC(comp);toast('按钮'+(comp.p.pressed?'按下':'释放'));pushH();if(S.run)analyze()}
+    else if(comp.type==='reed'){comp.p.closed=!comp.p.closed;refC(comp);toast('干簧管'+(comp.p.closed?'闭合':'断开'));pushH();if(S.run)analyze()}
+    else if(comp.type==='breaker'&&comp.p.tripped){comp.p.tripped=false;refC(comp);toast('断路器已复位');pushH();if(S.run)analyze()}
+    else editC(comp.id);
+  });
+  el.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();S.ctx=comp.id;showCM(e.clientX,e.clientY)});
+  el.addEventListener('click',function(e){if(!e.target.classList.contains('pt')&&!e.target.classList.contains('rh'))selC(comp.id)});
+  ZW.appendChild(el);
+}
+
+function refC(c){var el=document.getElementById('c'+c.id);if(!el)return;var cfg=C[c.type],body=el.querySelector('.cbd');body.innerHTML=cfg.r(c);body.style.transform='rotate('+(c.rotation||0)+'deg)';cfg.ports.forEach(function(p,i){var pp=gRP(c,i);var pe=el.querySelector('.pt[data-pi="'+i+'"]');if(pe){pe.style.left=(pp.x-c.x-6)+'px';pe.style.top=(pp.y-c.y-6)+'px'}})}
+function rotC(id){var c=S.comps.find(function(x){return x.id===id});if(!c)return;c.rotation=((c.rotation||0)+90)%360;refC(c);updW();selC(id);toast('旋转至 '+c.rotation+'°');pushH()}
+
+// 拖拽 - 使用s2c转换坐标
+function startDrag(id,e){
+  var c=S.comps.find(function(x){return x.id===id});if(!c)return;
+  selC(id);
+  var pos=s2c(e.clientX,e.clientY);
+  S.drag={id:id,ox:c.x,oy:c.y,dx:pos.x-c.x,dy:pos.y-c.y};
+  document.addEventListener('mousemove',onDM);
+  document.addEventListener('mouseup',onDE);
+}
+function onDM(e){
+  if(!S.drag)return;
+  var c=S.comps.find(function(x){return x.id===S.drag.id});if(!c)return;
+  var pos=s2c(e.clientX,e.clientY);
+  var nx=pos.x-S.drag.dx, ny=pos.y-S.drag.dy;
+  if(S.snap){nx=Math.round(nx/20)*20;ny=Math.round(ny/20)*20}
+  c.x=nx;c.y=ny;
+  var el=document.getElementById('c'+c.id);
+  if(el){el.style.left=c.x+'px';el.style.top=c.y+'px'}
+  var cfg=C[c.type];
+  cfg.ports.forEach(function(p,i){var pp=gRP(c,i);var pe=el.querySelector('.pt[data-pi="'+i+'"]');if(pe){pe.style.left=(pp.x-c.x-6)+'px';pe.style.top=(pp.y-c.y-6)+'px'}});
+  updW();
+}
+function onDE(){if(S.drag)pushH();S.drag=null;document.removeEventListener('mousemove',onDM);document.removeEventListener('mouseup',onDE)}
+
+function startConn(cid,pi,e){S.conn={fc:cid,fp:pi};e.target.classList.add('con');document.addEventListener('mousemove',onCMove);toast('点击另一个端口完成连线')}
+function onCMove(e){
+  if(!S.conn)return;
+  var fc=S.comps.find(function(c){return c.id===S.conn.fc});if(!fc)return;
+  var fp=gRP(fc,S.conn.fp);
+  var pos=s2c(e.clientX,e.clientY);
+  TW.innerHTML='<path d="M'+fp.x+','+fp.y+' L'+pos.x+','+pos.y+'" fill="none" stroke="#4fc3f7" stroke-width="2" stroke-dasharray="6,3" opacity=".6"/>';
+}
+function endConn(cid,pi){if(!S.conn)return;if(S.conn.fc===cid&&S.conn.fp===pi){cancelConn();return}var ex=S.wires.some(function(w){return(w.fc===S.conn.fc&&w.fp===S.conn.fp&&w.tc===cid&&w.tp===pi)||(w.fc===cid&&w.fp===pi&&w.tc===S.conn.fc&&w.tp===S.conn.fp)});if(!ex){S.wires.push({id:S.nid++,fc:S.conn.fc,fp:S.conn.fp,tc:cid,tp:pi,wps:[],active:false});updW();updI();toast('导线已连接');pushH()}cancelConn()}
+function cancelConn(){S.conn=null;TW.innerHTML='';document.removeEventListener('mousemove',onCMove);document.querySelectorAll('.pt.con').forEach(function(p){p.classList.remove('con')})}
+
+function updW(){WL.querySelectorAll('.wg').forEach(function(g){g.remove()});S.wires.forEach(function(wire){var fc=S.comps.find(function(c){return c.id===wire.fc}),tc=S.comps.find(function(c){return c.id===wire.tc});if(!fc||!tc)return;var g=document.createElementNS('http://www.w3.org/2000/svg','g');g.classList.add('wg');if(S.selW===wire.id)g.classList.add('wire-selected');var pd=gWPD(wire),col=wire.active?'#00e5ff':'#2a5a7a',sw=wire.active?3:2;var vp=document.createElementNS('http://www.w3.org/2000/svg','path');vp.classList.add('wp');vp.setAttribute('d',pd);vp.setAttribute('stroke',col);vp.setAttribute('stroke-width',sw);vp.setAttribute('stroke-linecap','round');vp.setAttribute('stroke-linejoin','round');if(wire.active)vp.setAttribute('filter','url(#glow)');var hp=document.createElementNS('http://www.w3.org/2000/svg','path');hp.classList.add('wh');hp.setAttribute('d',pd);hp.addEventListener('click',function(e){e.stopPropagation();var pos=s2c(e.clientX,e.clientY);addWP(wire.id,pos.x,pos.y)});hp.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();S.ctx={type:'wire',id:wire.id};showWM(e.clientX,e.clientY)});g.appendChild(vp);g.appendChild(hp);if(wire.wps)wire.wps.forEach(function(wp,idx){var ci=document.createElementNS('http://www.w3.org/2000/svg','circle');ci.classList.add('wpt');ci.setAttribute('cx',wp.x);ci.setAttribute('cy',wp.y);ci.setAttribute('r','5');ci.setAttribute('fill','#1a3050');ci.setAttribute('stroke','#4fc3f7');ci.setAttribute('stroke-width','2');ci.addEventListener('mousedown',function(e){e.stopPropagation();startWPD(wire.id,idx,e)});ci.addEventListener('dblclick',function(e){e.stopPropagation();rmWP(wire.id,idx)});g.appendChild(ci)});WL.appendChild(g)})}
+function addWP(wid,x,y){var w=S.wires.find(function(w){return w.id===wid});if(!w)return;var pts=gWP(w),md=Infinity,bs=-1;for(var i=0;i<pts.length-1;i++){var p1=pts[i],p2=pts[i+1],dx=p2.x-p1.x,dy=p2.y-p1.y,l2=dx*dx+dy*dy;if(l2===0)continue;var t=Math.max(0,Math.min(1,((x-p1.x)*dx+(y-p1.y)*dy)/l2)),px=p1.x+t*dx,py=p1.y+t*dy,d=Math.sqrt((x-px)*(x-px)+(y-py)*(y-py));if(d<md){md=d;bs=i}}if(bs>=0){if(!w.wps)w.wps=[];w.wps.splice(Math.min(bs,w.wps.length),0,{x:Math.round(x),y:Math.round(y)});S.selW=wid;updW();toast('拐点已添加');pushH()}}
+function rmWP(wid,idx){var w=S.wires.find(function(x){return x.id===wid});if(!w||!w.wps)return;w.wps.splice(idx,1);updW();toast('拐点已删除');pushH()}
+function startWPD(wid,idx,e){S.wpD={wid:wid,idx:idx,sx:e.clientX,sy:e.clientY};S.selW=wid;document.addEventListener('mousemove',onWPM);document.addEventListener('mouseup',onWPE)}
+function onWPM(e){
+  if(!S.wpD)return;
+  var w=S.wires.find(function(x){return x.id===S.wpD.wid});if(!w||!w.wps)return;
+  var wp=w.wps[S.wpD.idx];
+  // 计算缩放后的移动距离
+  wp.x+=(e.clientX-S.wpD.sx)/Z.scale;
+  wp.y+=(e.clientY-S.wpD.sy)/Z.scale;
+  S.wpD.sx=e.clientX;S.wpD.sy=e.clientY;
+  updW();
+}
+function onWPE(){if(S.wpD)pushH();S.wpD=null;document.removeEventListener('mousemove',onWPM);document.removeEventListener('mouseup',onWPE)}
+
+// ===== 右键菜单 =====
+function showCM(x,y){var m=document.getElementById('ctxM');m.innerHTML='<div class="cmi" onclick="mRot()">🔄 旋转 90°</div><div class="cmi" onclick="mEdit()">⚙️ 编辑参数</div><div class="cmi" onclick="mDup()">📋 复制</div><div class="cmd"></div><div class="cmi dng" onclick="mDel()">🗑️ 删除</div>';m.style.left=x+'px';m.style.top=y+'px';m.style.display='block'}
+function showWM(x,y){var m=document.getElementById('ctxM');m.innerHTML='<div class="cmi" onclick="mOrtho()">📐 自动正交</div><div class="cmi" onclick="mClrWP()">🧹 清除拐点</div><div class="cmd"></div><div class="cmi dng" onclick="mDel()">🗑️ 删除导线</div>';m.style.left=x+'px';m.style.top=y+'px';m.style.display='block'}
+function hideCtx(){document.getElementById('ctxM').style.display='none'}
+function mRot(){hideCtx();if(S.ctx&&typeof S.ctx==='number')rotC(S.ctx)}
+function mEdit(){hideCtx();if(S.ctx&&typeof S.ctx==='number')editC(S.ctx)}
+function mDup(){hideCtx();if(S.ctx&&typeof S.ctx==='number'){var c=S.comps.find(function(x){return x.id===S.ctx});if(c){var n=addC(c.type,c.x+30,c.y+30);if(n){n.rotation=c.rotation;n.p=JSON.parse(JSON.stringify(c.p));refC(n);toast('已复制')}}}}
+function mDel(){hideCtx();if(!S.ctx)return;if(typeof S.ctx==='number'){S.wires=S.wires.filter(function(w){return w.fc!==S.ctx&&w.tc!==S.ctx});S.comps=S.comps.filter(function(c){return c.id!==S.ctx});var el=document.getElementById('c'+S.ctx);if(el)el.remove();updW();updI();deselAll();toast('已删除');pushH()}else if(S.ctx.type==='wire'){S.wires=S.wires.filter(function(w){return w.id!==S.ctx.id});updW();updI();toast('导线已删除');pushH()}S.ctx=null}
+function mOrtho(){hideCtx();if(S.ctx&&S.ctx.type==='wire'){var w=S.wires.find(function(x){return x.id===S.ctx.id});if(w){var fc=S.comps.find(function(c){return c.id===w.fc}),tc=S.comps.find(function(c){return c.id===w.tc});if(fc&&tc){var fp=gRP(fc,w.fp),tp=gRP(tc,w.tp),mx=(fp.x+tp.x)/2,my=(fp.y+tp.y)/2;w.wps=Math.abs(tp.x-fp.x)>=Math.abs(tp.y-fp.y)?[{x:mx,y:fp.y},{x:mx,y:tp.y}]:[{x:fp.x,y:my},{x:tp.x,y:my}];updW();toast('已正交');pushH()}}}}
+function mClrWP(){hideCtx();if(S.ctx&&S.ctx.type==='wire'){var w=S.wires.find(function(x){return x.id===S.ctx.id});if(w){w.wps=[];updW();toast('拐点已清除');pushH()}}}
+
+function selC(id){document.querySelectorAll('.co.sel').forEach(function(el){el.classList.remove('sel')});S.selC=id;S.selW=null;var el=document.getElementById('c'+id);if(el)el.classList.add('sel');var comp=S.comps.find(function(c){return c.id===id});if(comp){var cfg=C[comp.type];document.getElementById('selI').style.display='block';document.getElementById('sT').textContent=cfg.n;var ps='';if(comp.type==='battery')ps=comp.p.voltage+'V';else if(comp.type==='acSource')ps=comp.p.voltage+'V '+comp.p.freq+'Hz';else if(['resistor','bulb','motor','buzzer','solenoid','speaker'].indexOf(comp.type)>=0)ps=comp.p.resistance+'Ω';else if(comp.type==='capacitor')ps=comp.p.capacitance+'μF';else if(comp.type==='inductor')ps=comp.p.inductance+'mH';else if(comp.type==='diode')ps='Vf='+comp.p.fv+'V';else if(comp.type==='led')ps='Vf='+comp.p.fv+'V';else if(comp.type==='switch')ps=comp.p.closed?'闭合':'断开';else if(comp.type==='button')ps=comp.p.pressed?'按下':'释放';else if(comp.type==='reed')ps=comp.p.closed?'闭合':'断开';else if(comp.type==='potentiometer')ps=comp.p.resistance+'Ω';else if(comp.type==='npn'||comp.type==='pnp')ps=(comp.lit||comp.p.on)?'导通':'截止';else if(comp.type==='nmos')ps=(comp.lit||comp.p.on)?'导通':'截止';else if(comp.type==='relay')ps=comp.p.activated?'激活(COM→NO)':'未激活(COM→NC)';else if(comp.type==='fuse')ps=comp.p.blown?'已熔断':comp.p.rating+'A';else if(comp.type==='breaker')ps=comp.p.tripped?'已跳闸':comp.p.rating+'A';else if(comp.type==='bridge')ps='AC→DC';else if(comp.type==='regulator')ps='OUT='+comp.p.outputV+'V';else if(comp.type==='transformer')ps='1:'+comp.p.ratio;else if(comp.type==='ammeter')ps=(comp.p.reading||0).toFixed(1)+'mA';else if(comp.type==='voltmeter')ps=(comp.p.reading||0).toFixed(1)+'V';document.getElementById('sP').textContent=ps;document.getElementById('sR').textContent=(comp.rotation||0)+'°'}updW()}
+function deselAll(){document.querySelectorAll('.co.sel').forEach(function(el){el.classList.remove('sel')});S.selC=null;S.selW=null;document.getElementById('selI').style.display='none';updW()}
+
+function editC(id){
+  var comp=S.comps.find(function(c){return c.id===id});if(!comp)return;var cfg=C[comp.type];
+  document.getElementById('editT').textContent='编辑 '+cfg.n;var html='';
+  if(comp.type==='battery')html='<label>电压 (V)</label><input type="number" id="ev" value="'+comp.p.voltage+'" min="0.1" max="100" step="0.1">';
+  else if(comp.type==='acSource')html='<label>电压有效值 (V)</label><input type="number" id="ev" value="'+comp.p.voltage+'" min="1" max="1000" step="1"><label>频率 (Hz)</label><input type="number" id="ef" value="'+comp.p.freq+'" min="1" max="1000" step="1">';
+  else if(['resistor','bulb','motor','buzzer','solenoid','speaker'].indexOf(comp.type)>=0)html='<label>电阻 (Ω)</label><input type="number" id="ev" value="'+comp.p.resistance+'" min="1" max="100000" step="1">';
+  else if(comp.type==='capacitor')html='<label>电容 (μF)</label><input type="number" id="ev" value="'+comp.p.capacitance+'" min="1" max="10000" step="1">';
+  else if(comp.type==='inductor')html='<label>电感 (mH)</label><input type="number" id="ev" value="'+comp.p.inductance+'" min="1" max="1000" step="1">';
+  else if(comp.type==='diode'||comp.type==='led'){html='<label>正向电压 (V)</label><input type="number" id="ev" value="'+comp.p.fv+'" min="0.1" max="5" step="0.1">';if(comp.type==='led')html+='<label>颜色</label><select id="ec" style="width:100%;padding:7px;background:#0a0e17;border:1px solid #2a4a6b;border-radius:6px;color:#e0e0e0;margin-bottom:10px"><option value="#ff4444" '+(comp.p.color==='#ff4444'?'selected':'')+'>红色</option><option value="#44ff44" '+(comp.p.color==='#44ff44'?'selected':'')+'>绿色</option><option value="#4444ff" '+(comp.p.color==='#4444ff'?'selected':'')+'>蓝色</option><option value="#ffeb3b" '+(comp.p.color==='#ffeb3b'?'selected':'')+'>黄色</option><option value="#ffffff" '+(comp.p.color==='#ffffff'?'selected':'')+'>白色</option></select>'}
+  else if(comp.type==='potentiometer')html='<label>总电阻 (Ω)</label><input type="number" id="ev" value="'+comp.p.resistance+'" min="100" max="100000" step="100"><label>位置 (%)</label><input type="number" id="ep" value="'+comp.p.position+'" min="0" max="100" step="1">';
+  else if(comp.type==='relay')html='<label>线圈电阻 (Ω)</label><input type="number" id="ev" value="'+comp.p.coilR+'" min="10" max="10000" step="10">';
+  else if(comp.type==='fuse')html='<label>额定电流 (A)</label><input type="number" id="ev" value="'+comp.p.rating+'" min="0.1" max="100" step="0.1">';
+  else if(comp.type==='breaker')html='<label>额定电流 (A)</label><input type="number" id="ev" value="'+comp.p.rating+'" min="0.1" max="100" step="0.1">';
+  else if(comp.type==='regulator')html='<label>输出电压 (V)</label><input type="number" id="ev" value="'+comp.p.outputV+'" min="1" max="50" step="0.5">';
+  else if(comp.type==='transformer')html='<label>匝数比</label><input type="number" id="ev" value="'+comp.p.ratio+'" min="0.1" max="100" step="0.1">';
+  else{toast('该元件无可编辑参数');return}
+  document.getElementById('editB').innerHTML=html;document.getElementById('editO').classList.add('show');document.getElementById('editO').dataset.cid=id;
+}
+function saveEdit(){
+  var id=parseInt(document.getElementById('editO').dataset.cid),comp=S.comps.find(function(c){return c.id===id});if(!comp){document.getElementById('editO').classList.remove('show');return}
+  var vi=document.getElementById('ev');if(vi){var v=parseFloat(vi.value);if(comp.type==='battery')comp.p.voltage=v;else if(comp.type==='acSource')comp.p.voltage=v;else if(['resistor','bulb','motor','buzzer','solenoid','speaker'].indexOf(comp.type)>=0)comp.p.resistance=v;else if(comp.type==='capacitor')comp.p.capacitance=v;else if(comp.type==='inductor')comp.p.inductance=v;else if(['diode','led'].indexOf(comp.type)>=0)comp.p.fv=v;else if(comp.type==='relay')comp.p.coilR=v;else if(['fuse','breaker'].indexOf(comp.type)>=0)comp.p.rating=v;else if(comp.type==='regulator')comp.p.outputV=v;else if(comp.type==='transformer')comp.p.ratio=v}
+  var fi=document.getElementById('ef');if(fi&&comp.type==='acSource')comp.p.freq=parseFloat(fi.value);
+  var cs=document.getElementById('ec');if(cs&&comp.type==='led')comp.p.color=cs.value;
+  var pi=document.getElementById('ep');if(pi&&comp.type==='potentiometer')comp.p.position=parseFloat(pi.value);
+  refC(comp);selC(id);document.getElementById('editO').classList.remove('show');toast('参数已更新');pushH();if(S.run)analyze();
+}
+
+// ===== 电路分析 =====
+function analyze(){
+  S.comps.forEach(function(c){c.lit=false;c.current=0});
+  S.wires.forEach(function(w){w.active=false});
+  S.parts=[];
+  S.comps.forEach(function(c){if(c.type==='ammeter'||c.type==='voltmeter')c.p.reading=0});
+  for(var iter=0;iter<3;iter++){
+    S.comps.forEach(function(c){
+      if(c.type==='relay'){var cp=fPath(c.id,0,c.id,1);if(cp.found){var ok=true;cp.path.forEach(function(s){if(s.type==='component'){var cc=S.comps.find(function(x){return x.id===s.id});if(cc){if(cc.type==='switch'&&!cc.p.closed)ok=false;if(cc.type==='button'&&!cc.p.pressed)ok=false;if(cc.type==='reed'&&!cc.p.closed)ok=false;if(cc.type==='fuse'&&cc.p.blown)ok=false;if(cc.type==='breaker'&&cc.p.tripped)ok=false}}});c.p.activated=ok}else c.p.activated=false}
+      if(c.type==='npn'){var bp=fPath(c.id,0,c.id,2);c.lit=bp.found;c.p.on=bp.found}
+      if(c.type==='pnp'){var bp=fPath(c.id,0,c.id,2);c.lit=bp.found;c.p.on=bp.found}
+      if(c.type==='nmos'){var gp=fPath(c.id,0,c.id,2);c.lit=gp.found;c.p.on=gp.found}
+    });
+    S.comps.forEach(function(c){if(['relay','npn','pnp','nmos'].indexOf(c.type)>=0)refC(c)});
+  }
+  var sources=S.comps.filter(function(c){return c.type==='battery'||c.type==='acSource'});
+  if(sources.length===0){updCI(0,Infinity,0);updW();return}
+  var tv=0,has=false;
+  sources.forEach(function(src){
+    var res=fPath(src.id,0,src.id,1);
+    if(res.found){
+      has=true;tv+=src.p.voltage;var ok=true,pr=0;
+      res.path.forEach(function(s){if(s.type==='component'){var c=S.comps.find(function(x){return x.id===s.id});if(c){if(c.type==='switch'&&!c.p.closed)ok=false;if(c.type==='button'&&!c.p.pressed)ok=false;if(c.type==='reed'&&!c.p.closed)ok=false;if(c.type==='fuse'&&c.p.blown)ok=false;if(c.type==='breaker'&&c.p.tripped)ok=false;if(['resistor','bulb','motor','buzzer','solenoid','speaker'].indexOf(c.type)>=0)pr+=c.p.resistance;if((c.type==='npn'||c.type==='pnp'||c.type==='nmos')&&!c.p.on)ok=false}}});
+      if(ok){
+        res.path.forEach(function(s){if(s.type==='wire'){var w=S.wires.find(function(x){return x.id===s.id});if(w)w.active=true}if(s.type==='component'){var c=S.comps.find(function(x){return x.id===s.id});if(c&&['led','bulb','motor','buzzer','solenoid','speaker'].indexOf(c.type)>=0)c.lit=true}});
+        if(pr>0){var cur=src.p.voltage/pr;src.current=cur;mkParts(res.path,cur);
+          res.path.forEach(function(s){if(s.type==='component'){var c=S.comps.find(function(x){return x.id===s.id});if(c&&c.type==='ammeter'){c.p.reading=cur*1000;refC(c)}}});
+          res.path.forEach(function(s){if(s.type==='component'){var c=S.comps.find(function(x){return x.id===s.id});if(c&&c.type==='fuse'&&!c.p.blown&&cur>c.p.rating){c.p.blown=true;refC(c);toast('保险丝已熔断！')}if(c&&c.type==='breaker'&&!c.p.tripped&&cur>c.p.rating){c.p.tripped=true;refC(c);toast('断路器已跳闸！')}}});
+        }
+      }
+    }
+  });
+  if(has){var tr=S.comps.reduce(function(s,c){if(['resistor','bulb','motor','buzzer','solenoid','speaker'].indexOf(c.type)>=0)return s+c.p.resistance;return s},0);if(tr===0)tr=1;updCI(tv,tr,tv/tr*1000);
+    S.comps.forEach(function(c){if(c.type==='voltmeter'){c.p.reading=tv;refC(c)}});
+  }else updCI(0,Infinity,0);
+  updW();S.comps.forEach(function(c){refC(c)});
+}
+
+function fPath(sc,sp,ec,ep){
+  var vis={},q=[{cid:sc,pi:sp,path:[{type:'component',id:sc,port:sp}]}];vis[sc+':'+sp]=true;
+  while(q.length>0){var cur=q.shift();var cw=S.wires.filter(function(w){return(w.fc===cur.cid&&w.fp===cur.pi)||(w.tc===cur.cid&&w.tp===cur.pi)});
+    for(var wi=0;wi<cw.length;wi++){var w=cw[wi];if(vis['w:'+w.id])continue;var nc,np;if(w.fc===cur.cid&&w.fp===cur.pi){nc=w.tc;np=w.tp}else{nc=w.fc;np=w.fp}
+      var np2=cur.path.concat([{type:'wire',id:w.id},{type:'component',id:nc,port:np}]);
+      if(nc===ec&&np===ep)return{found:true,path:np2};
+      var ncc=S.comps.find(function(c){return c.id===nc});if(!ncc)continue;var cfg=C[ncc.type];
+      if(ncc.type==='relay'){
+        if(np===2){var tp=ncc.p.activated?3:4,k=nc+':'+tp;if(!vis[k]){vis[k]=true;q.push({cid:nc,pi:tp,path:np2})}}
+        else if(np===3){if(ncc.p.activated){var k=nc+':2';if(!vis[k]){vis[k]=true;q.push({cid:nc,pi:2,path:np2})}}}
+        else if(np===4){if(!ncc.p.activated){var k=nc+':2';if(!vis[k]){vis[k]=true;q.push({cid:nc,pi:2,path:np2})}}}
+        else{for(var i=0;i<cfg.ports.length;i++){if(i===np)continue;var k=nc+':'+i;if(!vis[k]){vis[k]=true;q.push({cid:nc,pi:i,path:np2})}}}
+      }else if(ncc.type==='bridge'){
+        if(np===0||np===1){var k=nc+':'+(np===0?1:0);if(!vis[k]){vis[k]=true;q.push({cid:nc,pi:k,path:np2})}}
+        else if(np===2||np===3){var k=nc+':'+(np===2?3:2);if(!vis[k]){vis[k]=true;q.push({cid:nc,pi:k,path:np2})}}
+      }else if(ncc.type==='regulator'){
+        if(np===0){var k=nc+':1';if(!vis[k]){vis[k]=true;q.push({cid:nc,pi:1,path:np2})}}
+        else if(np===1){var k=nc+':0';if(!vis[k]){vis[k]=true;q.push({cid:nc,pi:0,path:np2})}}
+      }else{for(var i=0;i<cfg.ports.length;i++){if(i===np)continue;var k=nc+':'+i;if(!vis[k]){vis[k]=true;q.push({cid:nc,pi:i,path:np2})}}}
+      vis['w:'+w.id]=true;
+    }
+  }
+  return{found:false,path:[]};
+}
+
+function mkParts(path,current){var speed=Math.min(3,Math.max(.5,current/5)),segs=[];for(var si=0;si<path.length;si++){var s=path[si];if(s.type==='wire'){var w=S.wires.find(function(x){return x.id===s.id});if(!w)continue;var pts=gWP(w);for(var i=0;i<pts.length-1;i++)segs.push({x1:pts[i].x,y1:pts[i].y,x2:pts[i+1].x,y2:pts[i+1].y})}}var n=Math.max(3,Math.min(15,segs.length*2));for(var i=0;i<n;i++)S.parts.push({segs:segs,progress:i/n,speed:speed*.003})}
+function updCI(v,r,c){document.getElementById('tV').textContent=v.toFixed(1)+' V';document.getElementById('tR').textContent=r===Infinity?'∞ Ω':r+' Ω';document.getElementById('tI').textContent=c.toFixed(1)+' mA'}
+
+function runSim(){if(S.run)return;S.run=true;document.getElementById('sDot').className='si son';document.getElementById('sTxt').textContent='运行中';analyze();animP();toast('模拟已开始')}
+function stopSim(){S.run=false;if(S.afid){cancelAnimationFrame(S.afid);S.afid=null}document.getElementById('sDot').className='si soff';document.getElementById('sTxt').textContent='已停止';WL.querySelectorAll('.particle').forEach(function(p){p.remove()});S.parts=[];S.wires.forEach(function(w){w.active=false});S.comps.forEach(function(c){c.lit=false;c.current=0;if(c.type==='relay')c.p.activated=false;if(['npn','pnp','nmos'].indexOf(c.type)>=0)c.p.on=false});updW();S.comps.forEach(function(c){refC(c)});updCI(0,Infinity,0);toast('模拟已停止')}
+function animP(){if(!S.run)return;WL.querySelectorAll('.particle').forEach(function(p){p.remove()});S.parts.forEach(function(pt){pt.progress+=pt.speed;if(pt.progress>=1)pt.progress-=1;if(!pt.segs.length)return;var tl=pt.segs.length,si=Math.floor(pt.progress*tl),sp=(pt.progress*tl)-si;if(si>=tl)return;var seg=pt.segs[si];if(!seg)return;var x=seg.x1+(seg.x2-seg.x1)*sp,y=seg.y1+(seg.y2-seg.y1)*sp;var c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.classList.add('particle');c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r','3');c.setAttribute('fill','#00e5ff');c.setAttribute('filter','url(#glow)');c.setAttribute('opacity','0.9');WL.appendChild(c)});S.afid=requestAnimationFrame(animP)}
+
+function pushH(){var s=JSON.stringify({comps:S.comps,wires:S.wires,nid:S.nid});S.hist=S.hist.slice(0,S.hIdx+1);S.hist.push(s);S.hIdx=S.hist.length-1;if(S.hist.length>50){S.hist.shift();S.hIdx--}updHB()}
+function undo(){if(S.hIdx<=0)return;S.hIdx--;restH();toast('已撤销')}
+function redo(){if(S.hIdx>=S.hist.length-1)return;S.hIdx++;restH();toast('已重做')}
+function restH(){if(S.hIdx<0)return;var s=JSON.parse(S.hist[S.hIdx]);S.comps.forEach(function(c){var el=document.getElementById('c'+c.id);if(el)el.remove()});S.comps=s.comps;S.wires=s.wires;S.nid=s.nid;S.comps.forEach(function(c){renC(c)});updW();updI();updHB()}
+function updHB(){document.getElementById('undoBtn').disabled=S.hIdx<=0;document.getElementById('redoBtn').disabled=S.hIdx>=S.hist.length-1}
+
+function saveCkt(){S.slM='save';var d=JSON.stringify({comps:S.comps,wires:S.wires,nid:S.nid,zoom:{scale:Z.scale,px:Z.px,py:Z.py}},null,2);document.getElementById('slT').textContent='保存电路';document.getElementById('slB').innerHTML='<label>复制JSON数据：</label><textarea id="slD">'+d+'</textarea>';document.getElementById('slO').classList.add('show')}
+function loadCkt(){S.slM='load';document.getElementById('slT').textContent='加载电路';document.getElementById('slB').innerHTML='<label>粘贴JSON数据：</label><textarea id="slD" placeholder="在此粘贴..."></textarea>';document.getElementById('slO').classList.add('show')}
+function confirmSL(){if(S.slM==='save'){var ta=document.getElementById('slD');ta.select();document.execCommand('copy');toast('已复制到剪贴板');document.getElementById('slO').classList.remove('show')}else{var ta=document.getElementById('slD');try{var d=JSON.parse(ta.value);if(d.comps&&d.wires){stopSim();S.comps.forEach(function(c){var el=document.getElementById('c'+c.id);if(el)el.remove()});S.comps=d.comps;S.wires=d.wires;S.nid=d.nid||1;if(d.zoom){Z.scale=d.zoom.scale||1;Z.px=d.zoom.px||0;Z.py=d.zoom.py||0;updZoom()}S.comps.forEach(function(c){renC(c)});updW();updI();pushH();toast('电路已加载');document.getElementById('slO').classList.remove('show')}else toast('格式错误')}catch(e){toast('解析失败：'+e.message)}}}
+
+function showEx(){document.getElementById('exO').classList.add('show')}
+function loadEx(name){
+  stopSim();S.comps.forEach(function(c){var el=document.getElementById('c'+c.id);if(el)el.remove()});S.comps=[];S.wires=[];S.nid=1;resetZoom();
+  if(name==='led'){var b=addC('battery',100,200,1),r=addC('resistor',280,200,1),l=addC('led',440,195,1);S.wires.push({id:S.nid++,fc:b.id,fp:1,tc:r.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:r.id,fp:1,tc:l.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:l.id,fp:1,tc:b.id,tp:0,wps:[{x:560,y:220},{x:560,y:300},{x:100,y:300}],active:false})}
+  else if(name==='relay'){var b1=addC('battery',60,140,1),sw=addC('switch',220,160,1),rl=addC('relay',380,100,1),b2=addC('battery',60,320,1),bl=addC('bulb',560,300,1);S.wires.push({id:S.nid++,fc:b1.id,fp:0,tc:sw.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:sw.id,fp:1,tc:rl.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:rl.id,fp:1,tc:b1.id,tp:1,wps:[{x:340,y:260},{x:60,y:260}],active:false});S.wires.push({id:S.nid++,fc:b2.id,fp:0,tc:rl.id,tp:2,wps:[{x:340,y:345},{x:540,y:345},{x:540,y:120}],active:false});S.wires.push({id:S.nid++,fc:rl.id,fp:3,tc:bl.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:bl.id,fp:1,tc:b2.id,tp:1,wps:[{x:650,y:355},{x:650,y:420},{x:160,y:420},{x:160,y:345}],active:false})}
+  else if(name==='bridge'){var ac=addC('acSource',60,200,1),br=addC('bridge',240,160,1),cap=addC('capacitor',440,200,1),r=addC('resistor',560,200,1);S.wires.push({id:S.nid++,fc:ac.id,fp:0,tc:br.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:ac.id,fp:1,tc:br.id,tp:1,wps:[{x:160,y:225},{x:160,y:230},{x:240,y:230}],active:false});S.wires.push({id:S.nid++,fc:br.id,fp:2,tc:cap.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:cap.id,fp:1,tc:r.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:r.id,fp:1,tc:br.id,tp:3,wps:[{x:660,y:220},{x:660,y:300},{x:340,y:300},{x:340,y:230}],active:false})}
+  else if(name==='regulator'){var ac=addC('acSource',40,180,1),br=addC('bridge',200,140,1),reg=addC('regulator',400,170,1),r=addC('resistor',560,170,1);S.wires.push({id:S.nid++,fc:ac.id,fp:0,tc:br.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:ac.id,fp:1,tc:br.id,tp:1,wps:[{x:140,y:205},{x:140,y:210},{x:200,y:210}],active:false});S.wires.push({id:S.nid++,fc:br.id,fp:2,tc:reg.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:br.id,fp:3,tc:reg.id,tp:2,wps:[{x:340,y:230},{x:340,y:320},{x:445,y:320},{x:445,y:230}],active:false});S.wires.push({id:S.nid++,fc:reg.id,fp:1,tc:r.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:r.id,fp:1,tc:br.id,tp:3,wps:[{x:660,y:190},{x:660,y:300},{x:340,y:300},{x:340,y:230}],active:false})}
+  else if(name==='mosfet'){var b=addC('battery',60,180,1),sw=addC('switch',200,200,1),r=addC('resistor',340,200,1),nm=addC('nmos',460,160,1),bl=addC('bulb',560,260,1);S.wires.push({id:S.nid++,fc:b.id,fp:0,tc:sw.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:sw.id,fp:1,tc:r.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:r.id,fp:1,tc:nm.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:nm.id,fp:2,tc:b.id,tp:1,wps:[{x:490,y:320},{x:490,y:360},{x:160,y:360},{x:160,y:205}],active:false});S.wires.push({id:S.nid++,fc:b.id,fp:0,tc:bl.id,tp:0,wps:[{x:60,y:280},{x:60,y:295},{x:560,y:295}],active:false});S.wires.push({id:S.nid++,fc:bl.id,fp:1,tc:nm.id,tp:1,wps:[{x:630,y:290},{x:630,y:160},{x:490,y:160}],active:false})}
+  else if(name==='meter'){var b=addC('battery',60,180,1),sw=addC('switch',200,200,1),r=addC('resistor',340,200,1),am=addC('ammeter',480,190,1),vm=addC('voltmeter',340,80,1);S.wires.push({id:S.nid++,fc:b.id,fp:0,tc:sw.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:sw.id,fp:1,tc:r.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:r.id,fp:1,tc:am.id,tp:0,wps:[],active:false});S.wires.push({id:S.nid++,fc:am.id,fp:1,tc:b.id,tp:1,wps:[{x:540,y:220},{x:580,y:220},{x:580,y:300},{x:160,y:300},{x:160,y:205}],active:false});S.wires.push({id:S.nid++,fc:vm.id,fp:0,tc:r.id,tp:0,wps:[{x:340,y:110},{x:300,y:110},{x:300,y:220}],active:false});S.wires.push({id:S.nid++,fc:vm.id,fp:1,tc:am.id,tp:0,wps:[{x:400,y:110},{x:440,y:110},{x:440,y:220}],active:false})}
+  updW();updI();pushH();document.getElementById('exO').classList.remove('show');toast('示例已加载');
+}
+
+function togSnap(){S.snap=!S.snap;document.getElementById('snapBtn').classList.toggle('active',S.snap);toast(S.snap?'网格吸附已开启':'网格吸附已关闭')}
+function showHelp(){document.getElementById('helpO').classList.add('show')}
+
+// ===== 拖拽放置 - 使用s2c转换坐标 =====
+cvs.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='copy'});
+cvs.addEventListener('drop',function(e){
+  e.preventDefault();
+  var type=e.dataTransfer.getData('text/plain');
+  if(!type||!C[type])return;
+  // 关键修复：使用s2c将屏幕坐标转换为画布坐标
+  var pos=s2c(e.clientX,e.clientY);
+  var cfg=C[type];
+  // 将元件中心对准放置位置
+  var x=pos.x-cfg.w/2;
+  var y=pos.y-cfg.h/2;
+  addC(type,Math.max(0,x),Math.max(0,y));
+  toast(C[type].n+' 已放置');
+});
+
+cvs.addEventListener('click',function(e){
+  // 点击空白区域取消选择
+  if(e.target===cvs||e.target===ZW||e.target.classList.contains('canvas-bg')){
+    deselAll();cancelConn();hideCtx();
+  }
+});
+
+document.addEventListener('click',function(e){if(!e.target.closest('.cm'))hideCtx()});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){cancelConn();hideCtx();document.getElementById('editO').classList.remove('show');document.getElementById('slO').classList.remove('show');document.getElementById('helpO').classList.remove('show');document.getElementById('exO').classList.remove('show')}
+  if((e.key==='r'||e.key==='R')&&S.selC&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();rotC(S.selC)}
+  if(e.key==='Delete'||e.key==='Backspace'){if(document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA')return;if(S.selC){var id=S.selC;S.wires=S.wires.filter(function(w){return w.fc!==id&&w.tc!==id});S.comps=S.comps.filter(function(c){return c.id!==id});var el=document.getElementById('c'+id);if(el)el.remove();updW();updI();deselAll();toast('已删除');pushH()}}
+  if(e.ctrlKey&&e.key==='z'){e.preventDefault();undo()}
+  if(e.ctrlKey&&e.key==='y'){e.preventDefault();redo()}
+  if(e.ctrlKey&&e.key==='s'){e.preventDefault();saveCkt()}
+});
+function updI(){document.getElementById('cCnt').textContent=S.comps.length;document.getElementById('wCnt').textContent=S.wires.length}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._to);t._to=setTimeout(function(){t.classList.remove('show')},2000)}
+function clearAll(){if(!S.comps.length&&!S.wires.length)return;if(!confirm('确定清空所有内容？'))return;stopSim();S.comps.forEach(function(c){var el=document.getElementById('c'+c.id);if(el)el.remove()});S.comps=[];S.wires=[];updW();updI();deselAll();pushH();toast('已清空')}
+
+// ===== 初始化 =====
+buildTB();
+updI();
+pushH();
+updZoom();
+toast('欢迎！拖拽元件到画布开始设计');
+</script>
+</body>
+</html>

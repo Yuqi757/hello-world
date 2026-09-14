@@ -267,7 +267,7 @@
         <circle cx="24" cy="24" r="3.5" fill="currentColor"/>
       </svg>
       <span class="brand-name mono">SYS.NAV</span>
-      <span class="ver mono">v4.5</span>
+      <span class="ver mono">v4.6</span>
     </div>
     <div class="top-right mono">
       <div class="sys-dot"><span class="led"></span> SYSTEM ONLINE</div>
@@ -311,15 +311,15 @@
   </main>
 
   <footer class="mono">
-    <span>© SYS.NAV v4.5 // COMMAND INTERFACE</span>
+    <span>© SYS.NAV v4.6 // COMMAND INTERFACE</span>
     <span>KONAMI: ↑↑↓↓←→←→BA // DEPLOY: GITHUB PAGES</span>
   </footer>
 
   <script>
     const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const BOOT_ENABLED = true;   /* 不想看开机动画改成 false */
+    const BOOT_ENABLED = true;   /* 总开关：改成 false 永远不播 */
 
-    /* ========= 模块清单（与仓库文件一一对应，共 7 个） ========= */
+    /* ========= 模块清单（7 个） ========= */
     const MODULES = [
       {
         id:'01', type:'PLC', title:'PLC 控制模块', file:'PLC.html',
@@ -358,7 +358,6 @@
       },
     ];
 
-    /* 文件名 → URL（自动编码空格/中文等特殊字符） */
     const fileUrl = f => './' + encodeURIComponent(f);
 
     /* 渲染卡片 */
@@ -544,9 +543,18 @@
       }
     }
 
-    /* ========= 开机自检 ========= */
+    /* ========= 开机自检：每次会话仅首次进入播放 ========= */
+    const BOOT_KEY  = 'sysnav-booted';
+    const forceBoot = /[?&]boot=1/.test(location.search);   /* ?boot=1 强制重播 */
+    let needBoot = forceBoot;
+    if (!needBoot){
+      try { needBoot = !sessionStorage.getItem(BOOT_KEY); }
+      catch(e){ needBoot = true; }                          /* 存储不可用时退化为每次播放 */
+    }
+    if (forceBoot){ try { sessionStorage.removeItem(BOOT_KEY); } catch(e){} }
+
     const BOOT_LINES = [
-      '> SYS.NAV BIOS v4.5',
+      '> SYS.NAV BIOS v4.6',
       '> MEM CHECK ............ 64K OK',
       '> INTERFACE RENDER ..... OK',
       '> LINK MODULES ......... ' + MODULES.length + ' FOUND',
@@ -557,6 +565,14 @@
     const bootEl = document.getElementById('boot');
     const bootText = document.getElementById('bootText');
     let bootDone = false;
+
+    /* 不需要播放：立即移除遮罩，无黑屏闪烁 */
+    function skipBoot(){
+      bootDone = true;
+      bootEl.remove();
+      document.body.classList.remove('booting');
+    }
+    /* 播放结束：淡出后移除 */
     function finishBoot(){
       if (bootDone) return;
       bootDone = true;
@@ -564,9 +580,11 @@
       document.body.classList.remove('booting');
       setTimeout(() => bootEl.remove(), 700);
     }
-    if (!BOOT_ENABLED || REDUCED){
-      finishBoot();
+
+    if (!BOOT_ENABLED || REDUCED || !needBoot){
+      skipBoot();
     } else {
+      try { sessionStorage.setItem(BOOT_KEY, '1'); } catch(e){}   /* 决定播放的瞬间就记账 */
       let bi = 0;
       (function nextLine(){
         if (bi >= BOOT_LINES.length){ setTimeout(finishBoot, 350); return; }
@@ -575,7 +593,7 @@
         bootText.appendChild(line);
         setTimeout(nextLine, 140 + Math.random()*120);
       })();
-      setTimeout(finishBoot, 4000);
+      setTimeout(finishBoot, 4000);   /* 保险丝 */
     }
 
     /* ========= Konami 彩蛋 ========= */

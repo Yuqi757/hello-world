@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>接线实训台 · S7-1200 / 编码器 / 步进轴 / 空开 / 博图组态</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14181f; --bg2:#191f28; --panel:#1f2631; --panel2:#242d3a; --line:#38434f;
+  --ink:#e9edf3; --mut:#93a1b3; --dim:#6b7889;
+  --yel:#ffc51f; --yel2:#f0b400; --grn:#3fd68f; --red:#ff5d5d; --blu:#4ea1ff; --cyn:#3fd2c4;
+  --mono:'IBM Plex Mono','Courier New',monospace;
+  --disp:'Oswald','PingFang SC','Microsoft YaHei',sans-serif;
+  --body:'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.65;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(900px 500px at 8% -5%, rgba(255,197,31,.07), transparent 60%),
+    radial-gradient(800px 600px at 100% 20%, rgba(78,161,255,.06), transparent 60%),
+    linear-gradient(rgba(120,150,190,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120,150,190,.045) 1px, transparent 1px),
+    linear-gradient(180deg, var(--bg2), var(--bg) 500px);
+  background-size:auto,auto,34px 34px,34px 34px,auto}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .03 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wrap{max-width:1320px;margin:0 auto;padding:0 28px}
+section{padding:64px 0}
+::selection{background:var(--yel);color:#1a1a1a}
+.sec-tag{font-family:var(--mono);font-size:12px;letter-spacing:.32em;color:var(--yel);display:inline-flex;align-items:center;gap:10px;text-transform:uppercase}
+.sec-tag::before{content:"";width:26px;height:12px;background:repeating-linear-gradient(-45deg,var(--yel) 0 5px,transparent 5px 10px);border:1px solid #00000055}
+h2.sec-title{font-family:var(--disp);font-weight:600;font-size:clamp(26px,3.4vw,40px);letter-spacing:.02em;margin:10px 0 8px}
+.sec-sub{color:var(--mut);max-width:780px}
+.mono{font-family:var(--mono)}
+button{font-family:inherit;cursor:pointer}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* ---------- 页头 ---------- */
+header{position:relative;padding:54px 0 0;overflow:hidden}
+header::after{content:"";position:absolute;top:0;right:-140px;width:560px;height:560px;pointer-events:none;background:radial-gradient(circle,rgba(255,197,31,.10),transparent 62%);z-index:-1}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;gap:20px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;font-family:var(--disp);font-weight:600;letter-spacing:.14em;font-size:15px}
+.brand b{color:var(--yel)}
+.tower{display:flex;flex-direction:column;gap:5px;padding:7px 9px;background:#12161c;border:1px solid var(--line);border-radius:6px}
+.tower i{width:13px;height:13px;border-radius:50%;background:#3a3030;transition:.4s}
+.tower .r{background:var(--red);box-shadow:0 0 10px #ff5d5d77;animation:breath 2.6s ease-in-out infinite}
+body.powered .tower .r{background:#4a3a2a;box-shadow:none;animation:none}
+body.powered .tower .g{background:var(--grn);box-shadow:0 0 12px #3fd68f99;animation:breath 1.6s ease-in-out infinite}
+@keyframes breath{50%{opacity:.45}}
+.hdr-main{display:grid;grid-template-columns:1.25fr .9fr;gap:48px;align-items:end;padding:44px 0 36px}
+.eyebrow{font-family:var(--mono);color:var(--mut);font-size:13px;letter-spacing:.18em;margin-bottom:14px}
+.eyebrow em{color:var(--cyn);font-style:normal}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,5.4vw,72px);line-height:1.06}
+h1 em{font-style:normal;color:var(--yel);position:relative;white-space:nowrap}
+h1 em::after{content:"";position:absolute;left:0;right:0;bottom:6px;height:8px;background:repeating-linear-gradient(-45deg,rgba(255,197,31,.28) 0 6px,transparent 6px 12px);z-index:-1}
+.lede{margin-top:18px;color:var(--mut);max-width:560px;font-size:16px}
+.lede b{color:var(--ink)}
+.nameplate{background:linear-gradient(180deg,#2b333f,#222933);border:1px solid #48546388;border-radius:8px;padding:6px;box-shadow:0 14px 34px #00000055,inset 0 1px 0 #ffffff14;position:relative}
+.nameplate::before,.nameplate::after{content:"✚";position:absolute;color:#5c6a7c;font-size:11px}
+.nameplate::before{top:8px;left:10px}.nameplate::after{bottom:6px;right:10px}
+.np-head{font-family:var(--disp);letter-spacing:.2em;font-size:13px;color:#c8d2de;text-align:center;padding:8px 0 10px;border-bottom:1px dashed #48546388}
+.np-row{display:grid;grid-template-columns:1fr 1fr}
+.np-cell{padding:12px 16px;border-bottom:1px solid #39434f66}
+.np-cell:nth-child(odd){border-right:1px solid #39434f66}
+.np-cell small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase}
+.np-cell b{font-family:var(--mono);font-size:14px;color:#ffd75e;font-weight:500}
+.hazard{height:14px;background:repeating-linear-gradient(-45deg,var(--yel) 0 16px,#15181d 16px 32px);border-top:2px solid #000;border-bottom:2px solid #000;opacity:.92}
+
+/* ---------- 元件速览 ---------- */
+.parts{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:28px}
+.part{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 14px 14px;position:relative;transition:transform .25s,border-color .25s,box-shadow .25s;cursor:default}
+.part::before{content:attr(data-no);position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.part:hover{transform:translateY(-4px);border-color:var(--yel);box-shadow:0 10px 26px #00000066}
+.part .ic{width:44px;height:44px;display:grid;place-items:center;margin-bottom:10px;background:#171d25;border:1px solid var(--line);border-radius:6px;color:var(--yel)}
+.part h4{font-size:15px;font-weight:700}
+.part .tag{font-family:var(--mono);font-size:11px;color:var(--cyn);margin:2px 0 6px}
+.part p{font-size:12.5px;color:var(--mut);line-height:1.55}
+
+/* ---------- 工作台 ---------- */
+.bench-grid{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:20px;align-items:start}
+.stage-wrap{position:relative;background:linear-gradient(180deg,#1b222c,#171d26);border:1px solid var(--line);border-radius:10px;overflow:auto;box-shadow:0 18px 44px #00000055}
+.stage-inner{min-width:1040px;padding:10px}
+svg text{font-family:var(--mono)}
+.stage-tools{position:sticky;left:0;display:flex;gap:16px;flex-wrap:wrap;padding:10px 16px;border-top:1px dashed var(--line);font-family:var(--mono);font-size:11.5px;color:var(--dim);background:#171d26}
+.stage-tools b{color:#ffd75e;font-weight:500}
+.tip{position:absolute;z-index:30;pointer-events:none;max-width:300px;opacity:0;transform:translateY(6px);transition:opacity .15s,transform .15s;background:#0f141a;border:1px solid var(--yel2);border-left:4px solid var(--yel);padding:8px 12px;font-size:12.5px;color:#f2e9c8;box-shadow:0 10px 26px #000a;border-radius:4px}
+.tip.on{opacity:1;transform:none}
+.tip b{color:var(--yel);font-family:var(--mono)}
+.zone{fill:none;stroke:#3a4552;stroke-dasharray:5 7}
+.zlabel{fill:#5b6a7c;font-size:11px;letter-spacing:.24em}
+.elabel{fill:#c7d2de;font-size:12.5px;font-weight:600;letter-spacing:.06em}
+.esub{fill:#7d8b9c;font-size:10px;letter-spacing:.08em}
+.tlabel{fill:#26303b;font-size:8.6px;font-weight:600}
+.tlabel2{fill:#c9d4e0;font-size:9px}
+.term{fill:#7f8b99;stroke:#0d1116;stroke-width:1.4;transition:.2s;cursor:help}
+.term:hover{fill:var(--yel);stroke:#fff}
+.tj{fill:#c9d4e0}
+.body{stroke-width:1.5}
+.el-hl{stroke:var(--yel) !important;stroke-width:2.6px !important;filter:drop-shadow(0 0 7px rgba(255,197,31,.7))}
+.wire,.jl,.gnd{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.15s cubic-bezier(.4,0,.2,1) .12s}
+.jl{transition:stroke-dashoffset .8s ease .1s}
+.shd{fill:none;stroke:#8fa3b8;stroke-width:1.6;stroke-dasharray:.02 .014;opacity:0;transition:opacity .6s .5s}
+.gnd-stripe{fill:none;stroke:#2fae4a;stroke-dasharray:.03 .03;opacity:0;transition:opacity .6s .6s}
+.wg{opacity:0;visibility:hidden;transition:opacity .5s}
+.wg.done,.wg.active{opacity:1;visibility:visible}
+.wg.done .wire,.wg.done .jl,.wg.done .gnd,.wg.active .wire,.wg.active .jl,.wg.active .gnd{stroke-dashoffset:0}
+.wg.done .shd,.wg.active .shd,.wg.done .gnd-stripe,.wg.active .gnd-stripe{opacity:1}
+.wg.done .wire,.wg.done .jl,.wg.done .gnd{transition-duration:.45s}
+.wg.active .wire{filter:drop-shadow(0 0 4px rgba(255,215,94,.6))}
+.flow{fill:none;stroke:#ffe08a;stroke-width:2;stroke-linecap:round;stroke-dasharray:10 16;animation:flow 1s linear infinite;opacity:.95;pointer-events:none;filter:drop-shadow(0 0 3px rgba(255,224,138,.8))}
+@keyframes flow{to{stroke-dashoffset:-26}}
+.cb-move{transition:transform .45s cubic-bezier(.6,-0.2,.3,1.3)}
+.cb-move.on{transform:translateY(32px)}
+.led{fill:#3c4652;stroke:#0d1116;stroke-width:1;transition:.3s}
+.led.on-g{fill:#3fd68f;filter:drop-shadow(0 0 5px #3fd68f)}
+.led.on-y{fill:#ffd23f;filter:drop-shadow(0 0 5px #ffd23f)}
+.led.flash{animation:ledflash .5s steps(2) infinite}
+@keyframes ledflash{0%{fill:#ffd23f;filter:drop-shadow(0 0 6px #ffd23f)}50%{fill:#3c4652;filter:none}}
+.rotor{transform-box:fill-box;transform-origin:center}
+#stage.spinning .rotor{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bus-glow{filter:drop-shadow(0 0 5px rgba(255,120,120,.55))}
+.panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:10px;padding:22px;position:sticky;top:18px;box-shadow:0 18px 44px #00000055}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.step-no{font-family:var(--mono);font-size:13px;color:var(--mut)}
+.step-no b{color:var(--yel);font-size:22px}
+.auto-btn{font-family:var(--mono);font-size:12px;background:#171d25;color:#ffd75e;border:1px solid #4a5568;padding:6px 12px;border-radius:5px;transition:.2s}
+.auto-btn:hover{border-color:var(--yel)}
+.auto-btn.playing{background:var(--yel);color:#141414;border-color:var(--yel)}
+.ptrack{height:6px;background:#171d25;border-radius:3px;overflow:hidden;border:1px solid #333d49;margin-bottom:18px}
+.ptrack i{display:block;height:100%;width:0;background:repeating-linear-gradient(-45deg,var(--yel) 0 7px,var(--yel2) 7px 14px);transition:width .6s ease}
+.panel h3{font-family:var(--disp);font-size:22px;font-weight:600;letter-spacing:.03em;margin-bottom:8px}
+.panel h3 span{color:var(--yel)}
+.panel .desc{font-size:13.5px;color:#c3cedb;margin-bottom:12px}
+.panel ul{list-style:none;margin-bottom:14px}
+.panel ul li{position:relative;padding:6px 0 6px 22px;font-size:12.8px;color:var(--mut);border-bottom:1px dashed #333d4955}
+.panel ul li::before{content:"▸";position:absolute;left:2px;color:var(--yel)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{font-family:var(--mono);font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:20px;color:#aeb9c7;background:#171d25;cursor:default;transition:.2s}
+.chip:hover,.chip.hi{border-color:var(--cyn);color:var(--cyn)}
+.nav-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.nav-row button{padding:11px;border-radius:6px;border:1px solid #4a5568;background:#171d25;color:var(--ink);font-weight:600;font-size:14px;transition:.2s}
+.nav-row button:hover:not(:disabled){border-color:var(--yel);color:var(--yel)}
+.nav-row button:disabled{opacity:.35;cursor:not-allowed}
+.nav-row #btnNext{background:var(--yel);border-color:var(--yel);color:#15181d}
+.nav-row #btnNext:hover:not(:disabled){background:#ffd75e;color:#15181d}
+.power-btn{width:100%;padding:14px;border-radius:8px;border:none;font-family:var(--disp);font-weight:600;font-size:17px;letter-spacing:.14em;background:#3a2323;color:#8a6a6a;cursor:not-allowed;display:flex;align-items:center;justify-content:center;gap:10px;transition:.3s}
+.power-btn::before{content:"";width:14px;height:14px;border-radius:50%;background:#5a3a3a;border:2px solid #00000066}
+.power-btn.ready{cursor:pointer;background:linear-gradient(180deg,#ffcf33,#f0a800);color:#15181d;box-shadow:0 6px 22px rgba(240,180,0,.35),inset 0 1px 0 #fff5}
+.power-btn.ready::before{background:#c81e1e;animation:breath 1.4s infinite}
+.power-btn.on{background:linear-gradient(180deg,#35e08e,#1db06a);color:#06251a;cursor:pointer}
+.power-btn.on::before{background:#06251a}
+.power-status{margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--dim);text-align:center;border-top:1px dashed var(--line);padding-top:12px;min-height:34px}
+.power-status.hot{color:var(--grn)}
+
+/* ---------- 表格 ---------- */
+.tbl-wrap{margin-top:24px;border:1px solid var(--line);border-radius:8px;overflow:auto;background:var(--panel)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-align:left;padding:12px 16px;border-bottom:2px solid var(--line);background:#1a212b}
+td{padding:10px 16px;border-bottom:1px solid #2c3541;color:#c3cedb}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#232b3799}
+td .mono{color:#ffd75e}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:7px;vertical-align:-1px;border:1px solid #0006}
+
+/* ---------- 颜色 & 工艺 ---------- */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:26px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:22px}
+.card h3{font-family:var(--disp);font-size:18px;letter-spacing:.06em;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.card h3::before{content:"";width:8px;height:18px;background:var(--yel);transform:skewX(-14deg)}
+.color-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px dashed #333d4966;font-size:13px}
+.color-row:last-child{border:none}
+.swatch{width:44px;height:15px;border-radius:3px;flex:none;border:1px solid #0007}
+.swatch.pe{background:repeating-linear-gradient(-45deg,#f3c623 0 6px,#2fae4a 6px 12px)}
+.color-row b{font-family:var(--mono);font-weight:600;min-width:88px}
+.color-row span{color:var(--mut)}
+.craft li{display:flex;gap:12px;padding:9px 0;border-bottom:1px dashed #333d4966;font-size:13px;color:#c3cedb;list-style:none}
+.craft li:last-child{border:none}
+.craft .n{font-family:var(--mono);color:var(--yel);flex:none}
+
+/* ---------- 排故 ---------- */
+.faq{margin-top:24px;display:flex;flex-direction:column;gap:12px}
+.faq-item{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;transition:border-color .3s}
+.faq-item.open{border-color:#4a5568}
+.faq-q{width:100%;display:flex;align-items:center;gap:14px;padding:16px 20px;background:none;border:none;color:var(--ink);font-size:15px;font-weight:600;text-align:left}
+.faq-q .sym{font-family:var(--mono);font-size:11px;color:#15181d;background:var(--red);padding:3px 8px;border-radius:3px;flex:none}
+.faq-q .arr{margin-left:auto;color:var(--yel);transition:transform .3s}
+.faq-item.open .arr{transform:rotate(90deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .45s ease}
+.faq-a-in{padding:0 20px 18px 20px;color:var(--mut);font-size:13.5px}
+.faq-a-in b{color:#ffd75e}
+
+/* ---------- 测验 ---------- */
+#quiz .qcard{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px 22px;margin-bottom:14px}
+.qcard .qn{font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.16em}
+.qcard .qq{font-size:15.5px;font-weight:700;margin:6px 0 14px}
+.opts{display:grid;gap:8px}
+.opt{display:flex;align-items:center;gap:10px;text-align:left;padding:11px 14px;background:#171d25;border:1px solid #3a4552;border-radius:6px;color:#c3cedb;font-size:13.5px;transition:.2s}
+.opt .k{font-family:var(--mono);width:22px;height:22px;flex:none;display:grid;place-items:center;border:1px solid #4a5568;border-radius:4px;font-size:11px;color:var(--mut)}
+.opt:hover:not(.lock){border-color:var(--yel);transform:translateX(3px)}
+.opt.correct{border-color:var(--grn);background:#12332466;color:#b8f5d8}
+.opt.correct .k{border-color:var(--grn);color:var(--grn)}
+.opt.wrong{border-color:var(--red);background:#3a161666;color:#ffc9c9}
+.opt.wrong .k{border-color:var(--red);color:var(--red)}
+.opt.lock{cursor:default}
+.why{display:none;margin-top:12px;padding:11px 14px;border-left:3px solid var(--yel);background:#171d25;font-size:13px;color:var(--mut);border-radius:0 6px 6px 0}
+.why.show{display:block;animation:fadein .4s}
+.why a{color:var(--cyn);cursor:pointer;text-decoration:underline dotted}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}}
+.scorebar{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg,#242d3a,#1f2631);border:1px solid var(--line);border-radius:8px;padding:16px 22px;margin-top:18px}
+.scorebar .sc{font-family:var(--disp);font-size:26px;color:var(--yel)}
+.scorebar button{background:none;border:1px solid var(--line);color:var(--mut);padding:8px 16px;border-radius:6px;font-size:13px}
+.scorebar button:hover{border-color:var(--yel);color:var(--yel)}
+
+/* ---------- 博图组态（代码复刻界面） ---------- */
+.tia-intro{margin-top:20px;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--cyn);border-radius:6px;color:var(--mut);font-size:13.5px}
+.tia-intro b{color:var(--cyn)}
+.tia-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-top:18px;overflow:hidden}
+.tia-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:13px 20px;background:#1a212b;border-bottom:1px solid var(--line)}
+.tia-no{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:#0e1418;background:var(--cyn);padding:3px 9px;border-radius:3px;font-weight:600}
+.tia-head h4{font-family:var(--disp);font-size:17px;letter-spacing:.04em}
+.tia-path{font-size:11px;color:var(--dim);margin-left:auto}
+.tia-body{display:grid;grid-template-columns:1.25fr .75fr}
+.tia-notes{padding:18px 20px}
+.tia-notes h5{font-size:12px;color:var(--cyn);font-family:var(--mono);letter-spacing:.12em;margin-bottom:10px}
+.tia-notes li{position:relative;list-style:none;padding:6px 0 6px 20px;font-size:13px;color:var(--mut);border-bottom:1px dashed #333d4955}
+.tia-notes li::before{content:"▸";position:absolute;left:0;color:var(--cyn)}
+.tia-notes li b{color:#ffd75e;font-family:var(--mono);font-weight:600}
+.tia-links{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.goto{font-family:var(--mono);font-size:11.5px;background:#171d25;border:1px solid #3a4552;color:#aeb9c7;padding:6px 12px;border-radius:20px;transition:.2s}
+.goto:hover{border-color:var(--cyn);color:var(--cyn)}
+.tm-wrap{padding:14px;background:#12161c;border-right:1px solid var(--line)}
+.tm-win{background:#dcd9d4;border:1px solid #8f8c87;border-radius:3px;color:#1c1c1c;font-size:12px;line-height:1.5;box-shadow:0 8px 24px #0008;overflow:hidden}
+.tm-top{display:flex;justify-content:flex-end;gap:3px;padding:5px 6px;background:#eceae7;border-bottom:1px solid #b3b0ab}
+.tm-tab{padding:3px 12px;background:#cfccc7;border:1px solid #96938e;border-bottom:none;border-radius:3px 3px 0 0;color:#444;font-size:11.5px}
+.tm-tab.act{background:#f6f4f1;color:#111;font-weight:600}
+.tm-body{display:grid;grid-template-columns:186px 1fr}
+.tm-tree{background:#f1efec;border-right:1px solid #b3b0ab;padding:8px 4px;font-size:11.5px}
+.nd{display:flex;align-items:center;gap:5px;padding:2.5px 6px;white-space:nowrap;color:#222}
+.nd.i1{padding-left:18px}.nd.i2{padding-left:32px}
+.nd.sel{background:#316ac5;color:#fff}
+.cv{width:10px;font-size:8px;color:#666;flex:none;font-style:normal}
+.ck{margin-left:auto;width:13px;height:13px;flex:none;border-radius:50%;background:#2e9e44;color:#fff;font-size:9px;display:grid;place-items:center;font-style:normal}
+.ck.b{background:#2b3fd0}
+.tm-main{background:#e6e4e0;padding:12px 16px;min-height:330px}
+.tm-h{font-size:12.5px;color:#222;border-bottom:1px solid #9b9893;padding-bottom:4px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.tm-panel{background:#c8c5c0;padding:16px 18px;border:1px solid #b5b2ad}
+.tm-pttl{font-size:12.5px;margin:10px 0 6px;font-weight:600;color:#222}
+.tm-row{display:flex;align-items:center;gap:8px;margin:7px 0;flex-wrap:wrap}
+.tm-lbl{min-width:112px;text-align:right;color:#1e1e1e}
+.tm-in{background:#fff;border:1px solid #8b8884;padding:3px 8px;font-size:11.5px;min-width:150px;color:#111;display:inline-flex;align-items:center;gap:6px}
+.tm-in.dis{background:#e3e1de;color:#777}
+.tm-dd{margin-left:auto;border-left:1px solid #b3b0ab;padding:0 6px;color:#333;background:#f0eeeb}
+.tm-rad{width:12px;height:12px;border:1px solid #77746f;border-radius:50%;background:#fff;flex:none;position:relative}
+.tm-rad.on::after{content:"";position:absolute;inset:2.5px;border-radius:50%;background:#2b62d9}
+.tm-cb{width:12px;height:12px;border:1px solid #77746f;background:#fff;flex:none;display:grid;place-items:center;font-size:9px;color:#2b62d9}
+.tm-note{color:#555;font-size:11px}
+.tm-flow{display:flex;align-items:center;gap:10px;margin:12px 0;padding:12px;border:1px solid #a9a6a1;background:#cfccc7;flex-wrap:wrap}
+.tm-fb{background:#d8d5d0;border:1px solid #96938e;padding:10px 12px;text-align:center;font-size:11px;color:#333}
+.tm-fb .gl{display:block;font-size:10px;color:#666;margin-top:4px}
+.tm-fgrp{display:flex;align-items:center;gap:10px;border:1px solid #96938e;padding:8px}
+.tm-arr{width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:10px solid #222;flex:none}
+.tm-2col{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;margin-top:6px}
+.tm-colh{font-size:12px;font-weight:600;margin-bottom:6px}
+.tm-bigarr{height:10px;background:#9a9792;position:relative;margin:6px 0;flex:1;min-width:50px}
+.tm-bigarr::after{content:"";position:absolute;right:-1px;top:-4px;border-top:9px solid transparent;border-bottom:9px solid transparent;border-left:12px solid #9a9792}
+.tm-bigarr.l::after{right:auto;left:-1px;border-left:none;border-right:12px solid #9a9792}
+.tm-svg{width:100%;background:#c8c5c0;display:block;margin:6px 0}
+.tm-svg text{font-size:11px;fill:#222;font-family:var(--body)}
+.tm-hl{outline:2px solid var(--yel);outline-offset:1px;background:#fff3c4 !important}
+.tm-lad{background:#fff;padding:10px 12px;font-size:11px;color:#111}
+.net-h{background:#d9d6d1;border:1px solid #b3b0ab;padding:3px 8px;font-weight:600;margin-top:8px;display:flex;gap:8px;align-items:center;font-size:11px}
+.lad-cmt{color:#888;padding:2px 10px}
+.mc{display:grid;grid-template-columns:1fr auto 1fr;padding:6px 4px 10px}
+.mc-l,.mc-r{display:flex;flex-direction:column;justify-content:flex-start;padding-top:30px}
+.lrow{display:flex;align-items:center;gap:5px;height:19px;font-size:10.5px}
+.ln{height:2px;background:#111;flex:1;min-width:10px}
+.blk{background:#c9c9da;border:1px solid #8a8aa0;min-width:158px}
+.blk .bt{text-align:center;font-weight:600;background:#b9b9cf;padding:2px 0 4px;border-bottom:1px solid #8a8aa0}
+.blk .prow{display:flex;justify-content:space-between;gap:16px;padding:1px 8px;height:19px;align-items:center;font-size:10.5px}
+.tag{color:#14407c}
+.cmt{color:#b0189c;font-style:normal}
+.cmt.bg{background:#cfe6f5;padding:0 3px}
+.konst{color:#d06000}
+.ct{font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:-1px}
+.ladline{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin:4px 0 4px 14px;border-left:2px solid #111;padding-left:10px}
+.ladcell{display:flex;flex-direction:column;align-items:center;gap:1px}
+@media(max-width:900px){.tia-body{grid-template-columns:1fr}.tm-wrap{border-right:none;border-bottom:1px solid var(--line)}}
+
+/* ---------- 页脚 ---------- */
+footer{margin-top:40px;border-top:2px solid #000}
+.f-hazard{height:12px;background:repeating-linear-gradient(-45deg,var(--yel) 0 16px,#15181d 16px 32px);opacity:.85}
+.f-body{padding:36px 0;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;color:var(--dim);font-size:13px}
+.f-body b{color:var(--mut)}
+.f-note{max-width:640px;border-left:3px solid var(--red);padding-left:14px}
+@media (max-width:1150px){.bench-grid{grid-template-columns:1fr}.panel{position:static}.parts{grid-template-columns:repeat(3,1fr)}.hdr-main{grid-template-columns:1fr}}
+@media (max-width:720px){.parts{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.wrap{padding:0 16px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="hdr-top">
+      <div class="brand">⚡ WIRING&nbsp;TRAINER&nbsp;<b>/ 电气接线实训台</b></div>
+      <div class="tower" title="柜门状态灯：红=检修 / 绿=运行"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+    </div>
+    <div class="hdr-main">
+      <div>
+        <div class="eyebrow">PROJECT NO.07 — <em>S7-1200 · ENCODER · STEPPER AXIS · TIA</em></div>
+        <h1>把每一根线，<br>接到<em>它该去的位置</em></h1>
+        <p class="lede">从 <b>空开</b> 取电，到 <b>PLC</b> 发脉冲，再到 <b>步进电机</b> 转起来 —— 9 个步骤、约 30 根导线，外加 <b>博图轴组态</b> 代码复刻界面，手把手带你完成一套完整的 S7-1200 位置控制回路。</p>
+      </div>
+      <div class="nameplate">
+        <div class="np-head">EQUIPMENT NAMEPLATE · 设备铭牌</div>
+        <div class="np-row">
+          <div class="np-cell"><small>Controller</small><b>S7-1200 CPU 1214C DC/DC/DC</b></div>
+          <div class="np-cell"><small>Circuits</small><b>AC220V · DC24V · DC48V</b></div>
+          <div class="np-cell"><small>Pulse Output</small><b>PTO ≤ 100 kHz</b></div>
+          <div class="np-cell"><small>Safety</small><b>仿真教学 · 实操断电挂牌</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hazard"></div>
+</header>
+
+<section id="parts">
+  <div class="wrap">
+    <div class="sec-tag">Module 01 · Components</div>
+    <h2 class="sec-title">先认识这六位"主角"</h2>
+    <p class="sec-sub">接线前先读懂每个元件的作用。把鼠标放到卡片上，接线图中的对应元件会亮起。</p>
+    <div class="parts">
+      <div class="part reveal" data-el="qf" data-no="01">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="12" y1="7" x2="12" y2="13"/></svg></div>
+        <h4>空气开关</h4><div class="tag">QF1 / QF2 / QF3</div>
+        <p>回路的"总闸"，过载短路时跳闸保护，检修时提供明显断开点。</p>
+      </div>
+      <div class="part reveal" data-el="psu" data-no="02">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 12h2l1-3 2 6 1-3h4"/></svg></div>
+        <h4>开关电源</h4><div class="tag">AC220V → DC24V / 48V</div>
+        <p>把交流市电变成稳定的直流电，给 PLC、编码器和驱动器供血。</p>
+      </div>
+      <div class="part reveal" data-el="plc" data-no="03">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9" r="1.4" fill="currentColor"/><circle cx="15" cy="9" r="1.4" fill="currentColor"/><path d="M8 15h8"/></svg></div>
+        <h4>S7-1200 PLC</h4><div class="tag">CPU 1214C DC/DC/DC</div>
+        <p>控制大脑：读编码器计数，按工艺轴组态从 Q0.0/Q0.1 发高速脉冲。</p>
+      </div>
+      <div class="part reveal" data-el="enc" data-no="04">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.6"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/></svg></div>
+        <h4>增量式编码器</h4><div class="tag">A / B / Z 三相 · 24V</div>
+        <p>位置反馈：A、B 两相正交脉冲测速测向，Z 相每转一个零点。</p>
+      </div>
+      <div class="part reveal" data-el="drv" data-no="05">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M8 16h8"/></svg></div>
+        <h4>步进驱动器</h4><div class="tag">PUL / DIR / ENA</div>
+        <p>脉冲翻译官：收到一个脉冲就走一个步距角，DIR 决定正反转。</p>
+      </div>
+      <div class="part reveal" data-el="mot" data-no="06">
+        <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/><line x1="12" y1="8.6" x2="12" y2="12"/></svg></div>
+        <h4>步进电机</h4><div class="tag">两相四线 · 42/57 系列</div>
+        <p>执行机构：A+/A−、B+/B− 两相绕组按脉冲节拍轮流通电旋转。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="bench">
+  <div class="wrap">
+    <div style="margin-bottom:22px">
+      <div class="sec-tag">Module 02 · Wiring Bench</div>
+      <h2 class="sec-title">交互式接线台</h2>
+      <p class="sec-sub">跟着右侧步骤走：每进入一步，对应的导线会在图中"画"出来。悬停任意端子可查看定义，全部接完后点"通电模拟"。</p>
+    </div>
+    <div class="bench-grid">
+      <div class="stage-wrap" id="stageWrap">
+        <div class="stage-inner">
+        <svg id="stage" viewBox="0 0 1280 830" xmlns="http://www.w3.org/2000/svg" aria-label="电气原理接线图">
+          <rect class="zone" x="30" y="66" width="424" height="606" rx="10"/>
+          <text class="zlabel" x="44" y="88">① 电源区 POWER</text>
+          <rect class="zone" x="410" y="256" width="446" height="296" rx="10"/>
+          <text class="zlabel" x="424" y="278">② 控制区 CONTROL</text>
+          <rect class="zone" x="902" y="306" width="362" height="272" rx="10"/>
+          <text class="zlabel" x="916" y="328">③ 驱动区 DRIVE</text>
+          <text class="zlabel" x="44" y="808">原理接线图（教学示意）· 实际施工以设备手册与图纸为准</text>
+
+          <g id="el-ac">
+            <text class="elabel" x="30" y="100">电网 AC220V</text>
+            <text class="esub" x="30" y="114">L · N · PE</text>
+          </g>
+          <g id="el-qf1">
+            <rect class="body" x="95" y="105" width="90" height="90" rx="6" fill="#2c3540" stroke="#4a5766"/>
+            <rect x="126" y="116" width="28" height="68" rx="4" fill="#1a212a"/>
+            <g class="cb-move"><rect x="130" y="122" width="20" height="24" rx="3" fill="#ffc51f" stroke="#7a5c00"/></g>
+            <text class="elabel" x="140" y="214" text-anchor="middle">QF1</text>
+            <text class="esub" x="140" y="227" text-anchor="middle">2P · 主回路</text>
+            <rect x="87" y="119" width="10" height="12" rx="2" fill="#39434f"/><rect x="87" y="159" width="10" height="12" rx="2" fill="#39434f"/>
+            <rect x="183" y="119" width="10" height="12" rx="2" fill="#39434f"/><rect x="183" y="159" width="10" height="12" rx="2" fill="#39434f"/>
+          </g>
+          <g id="el-smp24">
+            <rect class="body" x="235" y="95" width="130" height="110" rx="6" fill="#46525f" stroke="#5d6b7a"/>
+            <g fill="#37424e"><circle cx="258" cy="118" r="2.4"/><circle cx="274" cy="118" r="2.4"/><circle cx="290" cy="118" r="2.4"/><circle cx="306" cy="118" r="2.4"/><circle cx="258" cy="132" r="2.4"/><circle cx="274" cy="132" r="2.4"/><circle cx="290" cy="132" r="2.4"/><circle cx="306" cy="132" r="2.4"/></g>
+            <text class="elabel" x="300" y="158" text-anchor="middle" fill="#dfe7ee">开关电源</text>
+            <text class="esub" x="300" y="173" text-anchor="middle" fill="#aeb9c7">AC220V→DC24V/5A</text>
+            <circle id="led-psu24" class="led" cx="350" cy="108" r="4.5"/>
+            <text class="tlabel2" x="228" y="128" text-anchor="end">L</text><text class="tlabel2" x="228" y="168" text-anchor="end">N</text><text class="tlabel2" x="228" y="195" text-anchor="end">⏚</text>
+            <text class="tlabel2" x="372" y="128">+</text><text class="tlabel2" x="372" y="168">−</text>
+          </g>
+          <g id="el-qf2">
+            <rect class="body" x="415" y="105" width="80" height="80" rx="6" fill="#2c3540" stroke="#4a5766"/>
+            <rect x="444" y="114" width="22" height="62" rx="3" fill="#1a212a"/>
+            <g class="cb-move"><rect x="448" y="119" width="14" height="20" rx="3" fill="#ffc51f" stroke="#7a5c00"/></g>
+            <text class="elabel" x="455" y="204" text-anchor="middle">QF2</text>
+            <text class="esub" x="455" y="217" text-anchor="middle">DC24V 回路</text>
+            <rect x="407" y="119" width="10" height="12" rx="2" fill="#39434f"/><rect x="407" y="159" width="10" height="12" rx="2" fill="#39434f"/>
+            <rect x="493" y="119" width="10" height="12" rx="2" fill="#39434f"/><rect x="493" y="159" width="10" height="12" rx="2" fill="#39434f"/>
+          </g>
+          <g id="el-smp48">
+            <rect class="body" x="160" y="545" width="130" height="100" rx="6" fill="#46525f" stroke="#5d6b7a"/>
+            <g fill="#37424e"><circle cx="182" cy="568" r="2.4"/><circle cx="198" cy="568" r="2.4"/><circle cx="214" cy="568" r="2.4"/><circle cx="230" cy="568" r="2.4"/><circle cx="246" cy="568" r="2.4"/></g>
+            <text class="elabel" x="225" y="598" text-anchor="middle" fill="#dfe7ee">驱动器电源</text>
+            <text class="esub" x="225" y="613" text-anchor="middle" fill="#aeb9c7">AC220V→DC48V</text>
+            <circle id="led-psu48" class="led" cx="275" cy="558" r="4.5"/>
+            <text class="tlabel2" x="297" y="574">+</text><text class="tlabel2" x="297" y="604">−</text>
+          </g>
+          <g id="el-qf3">
+            <rect class="body" x="340" y="555" width="80" height="80" rx="6" fill="#2c3540" stroke="#4a5766"/>
+            <rect x="369" y="564" width="22" height="62" rx="3" fill="#1a212a"/>
+            <g class="cb-move"><rect x="373" y="569" width="14" height="20" rx="3" fill="#ffc51f" stroke="#7a5c00"/></g>
+            <text class="elabel" x="380" y="654" text-anchor="middle">QF3</text>
+            <text class="esub" x="380" y="667" text-anchor="middle">DC48V 回路</text>
+            <rect x="332" y="564" width="10" height="12" rx="2" fill="#39434f"/><rect x="332" y="594" width="10" height="12" rx="2" fill="#39434f"/>
+            <rect x="418" y="564" width="10" height="12" rx="2" fill="#39434f"/><rect x="418" y="594" width="10" height="12" rx="2" fill="#39434f"/>
+          </g>
+          <g id="el-plc">
+            <rect class="body" x="430" y="300" width="400" height="220" rx="8" fill="#2e3742" stroke="#4a5766"/>
+            <rect x="445" y="292" width="370" height="18" rx="3" fill="#dfe5ea"/>
+            <rect x="445" y="510" width="370" height="18" rx="3" fill="#dfe5ea"/>
+            <text class="tlabel" x="450" y="304" text-anchor="middle">L+</text>
+            <text class="tlabel" x="484" y="304" text-anchor="middle">M</text>
+            <text class="tlabel" x="518" y="304" text-anchor="middle">1M</text>
+            <text class="tlabel" x="560" y="304" text-anchor="middle">I0.0</text>
+            <text class="tlabel" x="594" y="304" text-anchor="middle">I0.1</text>
+            <text class="tlabel" x="628" y="304" text-anchor="middle">I0.2</text>
+            <text class="tlabel" x="662" y="304" text-anchor="middle">I0.3</text>
+            <text class="tlabel" x="696" y="304" text-anchor="middle">I0.4</text>
+            <text class="tlabel" x="730" y="304" text-anchor="middle">I0.5</text>
+            <text class="tlabel" x="764" y="304" text-anchor="middle">I0.6</text>
+            <text class="tlabel" x="798" y="304" text-anchor="middle">I0.7</text>
+            <text class="tlabel" x="470" y="522" text-anchor="middle">1L</text>
+            <text class="tlabel" x="560" y="522" text-anchor="middle">Q0.0</text>
+            <text class="tlabel" x="594" y="522" text-anchor="middle">Q0.1</text>
+            <text class="tlabel" x="628" y="522" text-anchor="middle">Q0.2</text>
+            <text class="tlabel" x="700" y="522" text-anchor="middle">Q0.3</text>
+            <text class="tlabel" x="734" y="522" text-anchor="middle">Q0.4</text>
+            <text class="tlabel" x="768" y="522" text-anchor="middle">Q0.5</text>
+            <circle id="qled0" class="led" cx="560" cy="537" r="3.6"/>
+            <circle id="qled1" class="led" cx="594" cy="537" r="3.6"/>
+            <circle id="led-pwr" class="led" cx="652" cy="345" r="4.5"/>
+            <circle id="led-run" class="led" cx="652" cy="363" r="4.5"/>
+            <circle id="led-err" class="led" cx="652" cy="381" r="4.5"/>
+            <text class="esub" x="664" y="349">PWR</text><text class="esub" x="664" y="367">RUN</text><text class="esub" x="664" y="385">ERROR</text>
+            <text class="elabel" x="630" y="438" text-anchor="middle" fill="#dfe7ee" style="font-size:14px">SIEMENS · S7-1200</text>
+            <text class="esub" x="630" y="456" text-anchor="middle">CPU 1214C · DC/DC/DC · 14DI / 10DO</text>
+            <text class="esub" x="630" y="478" text-anchor="middle" fill="#8fa3b8">高速计数 HSC ↑ · 脉冲输出 PTO ↓</text>
+          </g>
+          <g id="el-enc">
+            <circle class="body" cx="1000" cy="68" r="40" fill="#46525f" stroke="#5d6b7a"/>
+            <circle cx="1000" cy="68" r="26" fill="#39434f"/>
+            <circle cx="1000" cy="68" r="6" fill="#20262e"/>
+            <rect x="1040" y="62" width="16" height="12" rx="2" fill="#39434f"/>
+            <text class="elabel" x="1000" y="30" text-anchor="middle">增量式编码器</text>
+            <text class="esub" x="1000" y="44" text-anchor="middle">推挽输出 · DC5~24V · A/B/Z</text>
+          </g>
+          <g id="el-drv">
+            <rect class="body" x="930" y="330" width="190" height="230" rx="8" fill="#3a4450" stroke="#556373"/>
+            <g fill="#2c3540"><rect x="934" y="336" width="4" height="24"/><rect x="934" y="364" width="4" height="24"/><rect x="934" y="392" width="4" height="24"/></g>
+            <rect x="946" y="338" width="160" height="138" rx="4" fill="#2e3742"/>
+            <rect x="918" y="342" width="14" height="16" rx="2" fill="#c9d4e0"/><rect x="918" y="367" width="14" height="16" rx="2" fill="#c9d4e0"/>
+            <rect x="918" y="392" width="14" height="16" rx="2" fill="#c9d4e0"/><rect x="918" y="417" width="14" height="16" rx="2" fill="#c9d4e0"/>
+            <rect x="918" y="442" width="14" height="16" rx="2" fill="#c9d4e0"/><rect x="918" y="467" width="14" height="16" rx="2" fill="#c9d4e0"/>
+            <text class="tlabel" x="938" y="354">PUL+</text><text class="tlabel" x="938" y="379">PUL−</text>
+            <text class="tlabel" x="938" y="404">DIR+</text><text class="tlabel" x="938" y="429">DIR−</text>
+            <text class="tlabel" x="938" y="454">ENA+</text><text class="tlabel" x="938" y="479">ENA−</text>
+            <g fill="#1a212a"><rect x="1044" y="346" width="9" height="16"/><rect x="1057" y="346" width="9" height="16"/><rect x="1070" y="346" width="9" height="16"/><rect x="1083" y="346" width="9" height="16"/></g>
+            <g fill="#ffc51f"><rect x="1045.5" y="347.5" width="6" height="6"/><rect x="1058.5" y="355.5" width="6" height="6"/><rect x="1071.5" y="347.5" width="6" height="6"/><rect x="1084.5" y="355.5" width="6" height="6"/></g>
+            <text class="esub" x="1044" y="374">细分拨码 SW</text>
+            <circle id="led-drv" class="led" cx="1098" cy="394" r="4.5"/>
+            <text class="esub" x="1044" y="398">RUN</text>
+            <text class="elabel" x="1025" y="430" text-anchor="middle" fill="#dfe7ee">步进驱动器</text>
+            <text class="esub" x="1025" y="446" text-anchor="middle">共阴接法 · 源型输出适配</text>
+            <rect x="980" y="552" width="20" height="16" rx="2" fill="#c9d4e0"/><rect x="1015" y="552" width="20" height="16" rx="2" fill="#c9d4e0"/>
+            <text class="tlabel" x="990" y="546" text-anchor="middle">V+</text><text class="tlabel" x="1025" y="546" text-anchor="middle">V−</text>
+            <rect x="1112" y="432" width="14" height="16" rx="2" fill="#c9d4e0"/><rect x="1112" y="457" width="14" height="16" rx="2" fill="#c9d4e0"/>
+            <rect x="1112" y="482" width="14" height="16" rx="2" fill="#c9d4e0"/><rect x="1112" y="507" width="14" height="16" rx="2" fill="#c9d4e0"/>
+            <text class="tlabel" x="1106" y="443" text-anchor="end">A+</text><text class="tlabel" x="1106" y="468" text-anchor="end">A−</text>
+            <text class="tlabel" x="1106" y="493" text-anchor="end">B+</text><text class="tlabel" x="1106" y="518" text-anchor="end">B−</text>
+          </g>
+          <g id="el-mot">
+            <circle class="body" cx="1205" cy="477" r="45" fill="#46525f" stroke="#5d6b7a"/>
+            <g fill="#2c3540"><circle cx="1176" cy="448" r="3"/><circle cx="1234" cy="448" r="3"/><circle cx="1176" cy="506" r="3"/><circle cx="1234" cy="506" r="3"/></g>
+            <g class="rotor"><circle cx="1205" cy="477" r="19" fill="#39434f" stroke="#242b33"/><rect x="1203" y="459" width="4" height="9" fill="#c9d4e0"/></g>
+            <circle cx="1205" cy="477" r="4" fill="#20262e"/>
+            <text class="elabel" x="1205" y="540" text-anchor="middle">步进电机</text>
+            <text class="esub" x="1205" y="554" text-anchor="middle">两相四线 42HS</text>
+          </g>
+          <g id="el-pe">
+            <text class="elabel" x="44" y="752">接地铜排 PE</text>
+            <g stroke="#8fa3b8" stroke-width="2">
+              <line x1="240" y1="778" x2="270" y2="778"/><line x1="246" y1="784" x2="264" y2="784"/><line x1="251" y1="790" x2="259" y2="790"/>
+              <line x1="690" y1="778" x2="720" y2="778"/><line x1="696" y1="784" x2="714" y2="784"/><line x1="701" y1="790" x2="709" y2="790"/>
+            </g>
+          </g>
+
+          <g id="g1" class="wg">
+            <path class="wire" pathLength="1" stroke="#b06a3b" stroke-width="3.4" d="M52 125 L95 125"/>
+            <path class="wire" pathLength="1" stroke="#4ea1ff" stroke-width="3.4" d="M52 165 L95 165"/>
+            <path class="wire" pathLength="1" stroke="#b06a3b" stroke-width="3" d="M185 125 L235 125"/>
+            <path class="wire" pathLength="1" stroke="#4ea1ff" stroke-width="3" d="M185 165 L235 165"/>
+            <path class="wire" pathLength="1" stroke="#b06a3b" stroke-width="2.6" d="M205 125 L205 545"/>
+            <path class="wire" pathLength="1" stroke="#4ea1ff" stroke-width="2.6" d="M218 165 L218 545"/>
+            <circle class="tj" cx="205" cy="125" r="3"/><circle class="tj" cx="218" cy="165" r="3"/>
+          </g>
+          <g id="g2" class="wg">
+            <path class="wire" pathLength="1" stroke="#ef4444" stroke-width="3" d="M365 125 L415 125"/>
+            <path class="wire" pathLength="1" stroke="#3b82f6" stroke-width="3" d="M365 165 L415 165"/>
+            <path class="wire bus" pathLength="1" stroke="#ef4444" stroke-width="5" d="M495 125 L975 125"/>
+            <path class="wire bus" pathLength="1" stroke="#3b82f6" stroke-width="5" d="M495 165 L990 165 L990 220 M990 230 L990 247 M990 257 L990 274 M990 284 L990 495"/>
+            <path class="wire" pathLength="1" stroke="#3b82f6" stroke-width="2" d="M990 220 A5 5 0 0 0 990 230 M990 247 A5 5 0 0 0 990 257 M990 274 A5 5 0 0 0 990 284"/>
+            <text class="tlabel2" x="735" y="117" fill="#ff8f8f">24V+ 母线</text>
+            <text class="tlabel2" x="735" y="184" fill="#8fb9ff">0V 母线</text>
+          </g>
+          <g id="g3" class="wg">
+            <path class="wire" pathLength="1" stroke="#ef4444" stroke-width="3" d="M535 125 L535 272 L506 272 A5 5 0 0 0 496 272 L450 272 L450 292"/>
+            <path class="wire" pathLength="1" stroke="#3b82f6" stroke-width="3" d="M501 165 L501 282"/>
+            <circle class="tj" cx="535" cy="125" r="3"/><circle class="tj" cx="501" cy="165" r="3"/><circle class="tj" cx="501" cy="282" r="3"/>
+          </g>
+          <g id="g4" class="wg">
+            <path class="jl" pathLength="1" stroke="#e9edf3" stroke-width="2.2" d="M484 292 L484 282 L518 282 L518 292"/>
+            <path class="wire" pathLength="1" stroke="#b06a3b" stroke-width="3" d="M975 125 L975 110"/>
+            <path class="wire" pathLength="1" stroke="#3b82f6" stroke-width="3" d="M990 165 L990 110"/>
+            <circle class="tj" cx="975" cy="125" r="3"/>
+          </g>
+          <g id="g5" class="wg">
+            <path class="wire" pathLength="1" stroke="#ffd23f" stroke-width="2.6" d="M1005 110 L1005 225 L560 225 L560 292"/>
+            <path class="wire" pathLength="1" stroke="#6ee7a0" stroke-width="2.6" d="M1020 110 L1020 252 L594 252 L594 292"/>
+            <path class="wire" pathLength="1" stroke="#ff9f43" stroke-width="2.6" d="M1035 110 L1035 279 L628 279 L628 292"/>
+            <path class="shd" pathLength="1" d="M1052 110 L1052 300"/>
+            <g stroke="#8fa3b8" stroke-width="1.6"><line x1="1044" y1="306" x2="1060" y2="306"/><line x1="1047" y1="311" x2="1057" y2="311"/><line x1="1050" y1="316" x2="1054" y2="316"/></g>
+            <text class="esub" x="1060" y="300">屏蔽层</text>
+            <text class="esub" x="1060" y="313">单端接PE</text>
+          </g>
+          <g id="g6" class="wg">
+            <path class="wire" pathLength="1" stroke="#f472b6" stroke-width="2.8" d="M560 528 L560 580 L900 580 L900 350 L918 350"/>
+            <path class="wire" pathLength="1" stroke="#a78bfa" stroke-width="2.8" d="M594 528 L594 596 L908 596 L908 400 L918 400"/>
+            <path class="wire" pathLength="1" stroke="#34d399" stroke-width="2.8" d="M628 528 L628 612 L916 612 L916 450 L918 450"/>
+            <path class="jl" pathLength="1" stroke="#e9edf3" stroke-width="2.2" d="M918 375 L902 375 L902 475 L918 475 M902 425 L918 425"/>
+            <path class="wire" pathLength="1" stroke="#3b82f6" stroke-width="2.4" d="M902 475 L902 495 L904.5 495 A3.5 3.5 0 0 1 911.5 495 L912.5 495 A3.5 3.5 0 0 1 919.5 495 L990 495"/>
+            <text class="esub" x="568" y="574" fill="#f472b6">脉冲 PULSE</text>
+            <text class="esub" x="602" y="610" fill="#a78bfa">方向 DIR</text>
+            <text class="esub" x="636" y="626" fill="#34d399">使能 ENA</text>
+            <text class="esub" x="838" y="516">PUL−/DIR−/ENA−</text>
+            <text class="esub" x="838" y="529">短接回 0V（共阴）</text>
+            <circle class="tj" cx="990" cy="495" r="3"/>
+          </g>
+          <g id="g7" class="wg">
+            <path class="wire" pathLength="1" stroke="#f97316" stroke-width="4" d="M290 570 L340 570"/>
+            <path class="wire" pathLength="1" stroke="#93c5fd" stroke-width="4" d="M290 600 L340 600"/>
+            <path class="wire" pathLength="1" stroke="#f97316" stroke-width="4" d="M420 570 L440 570 L440 640 L990 640 L990 560"/>
+            <path class="wire" pathLength="1" stroke="#93c5fd" stroke-width="4" d="M420 600 L452 600 L452 656 L1025 656 L1025 645 A5 5 0 0 0 1025 635 L1025 568"/>
+          </g>
+          <g id="g8" class="wg">
+            <path class="wire" pathLength="1" stroke="#ff5d5d" stroke-width="3" d="M1126 440 L1160 440"/>
+            <path class="wire" pathLength="1" stroke="#ffb0a0" stroke-width="3" d="M1126 465 L1160 465"/>
+            <path class="wire" pathLength="1" stroke="#4cc9f0" stroke-width="3" d="M1126 490 L1160 490"/>
+            <path class="wire" pathLength="1" stroke="#9adcf0" stroke-width="3" d="M1126 515 L1160 515"/>
+          </g>
+          <g id="g9" class="wg">
+            <path class="gnd" pathLength="1" stroke="#f3c623" stroke-width="3.2" d="M52 192 L60 192 L60 770"/>
+            <path class="gnd-stripe" pathLength="1" stroke-width="3.2" d="M52 192 L60 192 L60 770"/>
+            <path class="gnd" pathLength="1" stroke="#f3c623" stroke-width="3" d="M250 205 L250 520 L310 520 L310 565 A5 5 0 0 0 310 575 L310 595 A5 5 0 0 0 310 605 L310 770"/>
+            <path class="gnd-stripe" pathLength="1" stroke-width="3" d="M250 205 L250 520 L310 520 L310 565 A5 5 0 0 0 310 575 L310 595 A5 5 0 0 0 310 605 L310 770"/>
+            <path class="gnd" pathLength="1" stroke="#f3c623" stroke-width="3" d="M620 528 L620 575 A5 5 0 0 0 620 585 L620 591 A5 5 0 0 0 620 601 L620 607 A5 5 0 0 0 620 617 L620 635 A5 5 0 0 0 620 645 L620 651 A5 5 0 0 0 620 661 L620 770"/>
+            <path class="gnd-stripe" pathLength="1" stroke-width="3" d="M620 528 L620 575 A5 5 0 0 0 620 585 L620 591 A5 5 0 0 0 620 601 L620 607 A5 5 0 0 0 620 617 L620 635 A5 5 0 0 0 620 645 L620 651 A5 5 0 0 0 620 661 L620 770"/>
+            <path class="gnd" pathLength="1" stroke="#f3c623" stroke-width="3" d="M1080 568 L1080 770"/>
+            <path class="gnd-stripe" pathLength="1" stroke-width="3" d="M1080 568 L1080 770"/>
+            <path class="gnd" pathLength="1" stroke="#f3c623" stroke-width="3" d="M1205 522 L1205 770"/>
+            <path class="gnd-stripe" pathLength="1" stroke-width="3" d="M1205 522 L1205 770"/>
+            <path class="gnd" pathLength="1" stroke="#f3c623" stroke-width="5" d="M60 770 L1205 770"/>
+            <path class="gnd-stripe" pathLength="1" stroke-width="5" d="M60 770 L1205 770"/>
+          </g>
+
+          <g id="terms">
+            <circle class="term" cx="52" cy="125" r="4.5" data-tip="<b>L</b> · 电网相线（棕），～220V，经 QF1 后分配"/>
+            <circle class="term" cx="52" cy="165" r="4.5" data-tip="<b>N</b> · 电网零线（蓝）"/>
+            <circle class="term" cx="52" cy="192" r="4.5" data-tip="<b>PE</b> · 电网保护接地（黄绿），直连接地铜排"/>
+            <circle class="term" cx="95" cy="125" r="4.5" data-tip="<b>QF1 进线</b> · 2P 空开，同时断开 L 与 N"/>
+            <circle class="term" cx="95" cy="165" r="4.5" data-tip="<b>QF1 进线 N</b>"/>
+            <circle class="term" cx="185" cy="125" r="4.5" data-tip="<b>QF1 出线</b> · 分配给两台开关电源"/>
+            <circle class="term" cx="185" cy="165" r="4.5" data-tip="<b>QF1 出线 N</b>"/>
+            <circle class="term" cx="235" cy="125" r="4.5" data-tip="<b>开关电源 L 输入</b>"/>
+            <circle class="term" cx="235" cy="165" r="4.5" data-tip="<b>开关电源 N 输入</b>"/>
+            <circle class="term" cx="235" cy="192" r="4.5" data-tip="<b>开关电源外壳接地</b> · 接 PE"/>
+            <circle class="term" cx="365" cy="125" r="4.5" data-tip="<b>DC +24V 输出</b> · 接 QF2 后进母线"/>
+            <circle class="term" cx="365" cy="165" r="4.5" data-tip="<b>DC 0V 输出</b>"/>
+            <circle class="term" cx="415" cy="125" r="4.5" data-tip="<b>QF2 进线 +</b> · 直流回路保护空开"/>
+            <circle class="term" cx="415" cy="165" r="4.5" data-tip="<b>QF2 进线 −</b>"/>
+            <circle class="term" cx="495" cy="125" r="4.5" data-tip="<b>QF2 出线 +</b> · 进入 24V+ 母线"/>
+            <circle class="term" cx="495" cy="165" r="4.5" data-tip="<b>QF2 出线 −</b> · 进入 0V 母线"/>
+            <circle class="term" cx="700" cy="125" r="5" data-tip="<b>24V+ 母线</b> · 为 PLC、编码器供电的公共正极"/>
+            <circle class="term" cx="700" cy="165" r="5" data-tip="<b>0V 母线</b> · 公共参考电位，信号公共端最终都回这里"/>
+            <circle class="term" cx="975" cy="112" r="4.5" data-tip="<b>编码器电源（棕）</b> · 接 24V+，先核对铭牌电压"/>
+            <circle class="term" cx="990" cy="112" r="4.5" data-tip="<b>编码器电源（蓝）</b> · 接 0V"/>
+            <circle class="term" cx="1005" cy="112" r="4.5" data-tip="<b>A 相</b> → PLC I0.0，高速计数通道"/>
+            <circle class="term" cx="1020" cy="112" r="4.5" data-tip="<b>B 相</b> → PLC I0.1，与 A 相差 90°，用于判向"/>
+            <circle class="term" cx="1035" cy="112" r="4.5" data-tip="<b>Z 相</b> → PLC I0.2，每转一个零点脉冲"/>
+            <circle class="term" cx="450" cy="292" r="4.5" data-tip="<b>L+</b> · PLC 电源正极，接 24V+ 母线"/>
+            <circle class="term" cx="484" cy="292" r="4.5" data-tip="<b>M</b> · PLC 电源负极，接 0V 母线"/>
+            <circle class="term" cx="518" cy="292" r="4.5" data-tip="<b>1M</b> · 输入公共端，须与 M 短接"/>
+            <circle class="term" cx="560" cy="292" r="4.5" data-tip="<b>I0.0</b> · 编码器 A 相，组态为高速计数器输入"/>
+            <circle class="term" cx="594" cy="292" r="4.5" data-tip="<b>I0.1</b> · 编码器 B 相"/>
+            <circle class="term" cx="628" cy="292" r="4.5" data-tip="<b>I0.2</b> · 编码器 Z 相（零点）"/>
+            <circle class="term" cx="470" cy="528" r="4.5" data-tip="<b>1L</b> · 输出组公共端，源型输出时接 0V"/>
+            <circle class="term" cx="560" cy="528" r="4.5" data-tip="<b>Q0.0</b> · 脉冲输出 PULSE，最高 100kHz"/>
+            <circle class="term" cx="594" cy="528" r="4.5" data-tip="<b>Q0.1</b> · 方向输出 DIR"/>
+            <circle class="term" cx="628" cy="528" r="4.5" data-tip="<b>Q0.2</b> · 驱动器使能 ENA"/>
+            <circle class="term" cx="205" cy="545" r="4.5" data-tip="<b>48V 电源 L 输入</b> · 从 QF1 出线并接"/>
+            <circle class="term" cx="218" cy="545" r="4.5" data-tip="<b>48V 电源 N 输入</b>"/>
+            <circle class="term" cx="290" cy="570" r="4.5" data-tip="<b>DC +48V 输出</b> · 经 QF3 到驱动器"/>
+            <circle class="term" cx="290" cy="600" r="4.5" data-tip="<b>DC 48V− 输出</b>"/>
+            <circle class="term" cx="340" cy="570" r="4.5" data-tip="<b>QF3 进线 +</b>"/>
+            <circle class="term" cx="340" cy="600" r="4.5" data-tip="<b>QF3 进线 −</b>"/>
+            <circle class="term" cx="420" cy="570" r="4.5" data-tip="<b>QF3 出线 +</b> · 至驱动器 V+"/>
+            <circle class="term" cx="420" cy="600" r="4.5" data-tip="<b>QF3 出线 −</b> · 至驱动器 V−"/>
+            <circle class="term" cx="922" cy="350" r="4.5" data-tip="<b>PUL+</b> · 接 Q0.0 脉冲"/>
+            <circle class="term" cx="922" cy="375" r="4.5" data-tip="<b>PUL−</b> · 与 DIR−、ENA− 短接回 0V"/>
+            <circle class="term" cx="922" cy="400" r="4.5" data-tip="<b>DIR+</b> · 接 Q0.1 方向"/>
+            <circle class="term" cx="922" cy="425" r="4.5" data-tip="<b>DIR−</b> · 公共端"/>
+            <circle class="term" cx="922" cy="450" r="4.5" data-tip="<b>ENA+</b> · 接 Q0.2 使能（也可由程序控制）"/>
+            <circle class="term" cx="922" cy="475" r="4.5" data-tip="<b>ENA−</b> · 公共端"/>
+            <circle class="term" cx="990" cy="562" r="4.5" data-tip="<b>V+</b> · 驱动器功率电源正（48V），极性勿反！"/>
+            <circle class="term" cx="1025" cy="562" r="4.5" data-tip="<b>V−</b> · 驱动器功率电源负"/>
+            <circle class="term" cx="1120" cy="440" r="4.5" data-tip="<b>A+</b> · 电机 A 相首端"/>
+            <circle class="term" cx="1120" cy="465" r="4.5" data-tip="<b>A−</b> · 电机 A 相尾端"/>
+            <circle class="term" cx="1120" cy="490" r="4.5" data-tip="<b>B+</b> · 电机 B 相首端"/>
+            <circle class="term" cx="1120" cy="515" r="4.5" data-tip="<b>B−</b> · 电机 B 相尾端"/>
+            <circle class="term" cx="60" cy="770" r="5" data-tip="<b>接地铜排</b> · 所有 PE、机壳、屏蔽层汇总点"/>
+          </g>
+        </svg>
+        </div>
+        <div class="tip" id="tip"></div>
+        <div class="stage-tools">
+          <span>◈ 悬停端子查看定义</span>
+          <span><b>红/蓝</b> 24V 母线</span>
+          <span><b>橙</b> 48V 功率</span>
+          <span><b>粉/紫/绿</b> 脉冲·方向·使能</span>
+          <span><b>黄绿</b> PE 接地</span>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <div class="panel-head">
+          <div class="step-no">STEP <b id="stepNo">00</b> / 09</div>
+          <button class="auto-btn" id="btnAuto">▶ 自动演示</button>
+        </div>
+        <div class="ptrack"><i id="pbar"></i></div>
+        <h3 id="stepTitle"></h3>
+        <p class="desc" id="stepDesc"></p>
+        <div class="chips" id="stepChips"></div>
+        <ul id="stepTips"></ul>
+        <div class="nav-row">
+          <button id="btnPrev">◀ 上一步</button>
+          <button id="btnNext">下一步 ▶</button>
+        </div>
+        <button class="power-btn" id="btnPower" title="完成全部步骤后可通电">⏻ 通电模拟</button>
+        <div class="power-status" id="powerStatus">系统状态：断电检修中 · 已挂牌</div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section id="ref">
+  <div class="wrap">
+    <div class="sec-tag">Module 03 · Reference</div>
+    <h2 class="sec-title">物料清单 & 端子速查表</h2>
+    <p class="sec-sub">施工前对照清点，接线时对照查线。表格中"去向"一列即每根线的最终落点。</p>
+    <div class="tbl-wrap reveal">
+      <table>
+        <thead><tr><th>#</th><th>元件</th><th>规格 / 型号</th><th>在本系统中的作用</th><th>数量</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">01</td><td>空气开关 QF1</td><td class="mono">2P · C10</td><td>AC220V 主回路隔离与短路保护</td><td class="mono">1</td></tr>
+          <tr><td class="mono">02</td><td>空气开关 QF2 / QF3</td><td class="mono">DC 专用 · C6</td><td>24V 控制回路 / 48V 功率回路保护</td><td class="mono">2</td></tr>
+          <tr><td class="mono">03</td><td>开关电源</td><td class="mono">220V→24V/5A · 220V→48V</td><td>控制系统供电 / 驱动器供电</td><td class="mono">2</td></tr>
+          <tr><td class="mono">04</td><td>PLC</td><td class="mono">S7-1200 CPU 1214C DC/DC/DC</td><td>高速计数 + PTO 脉冲轴控制</td><td class="mono">1</td></tr>
+          <tr><td class="mono">05</td><td>编码器</td><td class="mono">增量式 · 推挽输出 · A/B/Z</td><td>位置 / 速度反馈</td><td class="mono">1</td></tr>
+          <tr><td class="mono">06</td><td>步进驱动器</td><td class="mono">DC24~48V · 适配电机电流</td><td>把脉冲转换为绕组电流</td><td class="mono">1</td></tr>
+          <tr><td class="mono">07</td><td>步进电机</td><td class="mono">两相四线 · 42/57 系列</td><td>执行机构</td><td class="mono">1</td></tr>
+          <tr><td class="mono">08</td><td>导线与辅材</td><td class="mono">BVR 0.5~1.5mm² · 冷压端子 · 号码管 · 屏蔽双绞线</td><td>按颜色规范施工</td><td class="mono">若干</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tbl-wrap reveal">
+      <table>
+        <thead><tr><th>元件</th><th>端子</th><th>定义</th><th>去向</th><th>线色</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="2">电网进线</td><td class="mono">L / N</td><td>AC220V</td><td>QF1 进线</td><td><span class="dot" style="background:#b06a3b"></span>棕 / <span class="dot" style="background:#4ea1ff"></span>蓝</td></tr>
+          <tr><td class="mono">PE</td><td>保护接地</td><td>接地铜排</td><td><span class="dot" style="background:repeating-linear-gradient(-45deg,#f3c623 0 4px,#2fae4a 4px 8px)"></span>黄绿</td></tr>
+          <tr><td rowspan="2">PLC 电源</td><td class="mono">L+ / M</td><td>CPU 供电 24V</td><td>24V 母线</td><td><span class="dot" style="background:#ef4444"></span>红 / <span class="dot" style="background:#3b82f6"></span>蓝</td></tr>
+          <tr><td class="mono">1M</td><td>输入公共端</td><td>与 M 短接</td><td><span class="dot" style="background:#e9edf3"></span>白（跳线）</td></tr>
+          <tr><td>编码器</td><td class="mono">A / B / Z</td><td>正交脉冲 / 零点</td><td>I0.0 / I0.1 / I0.2</td><td><span class="dot" style="background:#ffd23f"></span>黄 / <span class="dot" style="background:#6ee7a0"></span>绿 / <span class="dot" style="background:#ff9f43"></span>橙</td></tr>
+          <tr><td rowspan="2">PLC 输出</td><td class="mono">Q0.0 / Q0.1 / Q0.2</td><td>脉冲 / 方向 / 使能</td><td>PUL+ / DIR+ / ENA+</td><td><span class="dot" style="background:#f472b6"></span>粉 / <span class="dot" style="background:#a78bfa"></span>紫 / <span class="dot" style="background:#34d399"></span>绿</td></tr>
+          <tr><td class="mono">1L</td><td>输出组公共端</td><td>接 0V（源型）</td><td><span class="dot" style="background:#3b82f6"></span>蓝</td></tr>
+          <tr><td>驱动器功率</td><td class="mono">V+ / V−</td><td>DC48V</td><td>经 QF3 来自 48V 电源</td><td><span class="dot" style="background:#f97316"></span>橙 / <span class="dot" style="background:#93c5fd"></span>浅蓝</td></tr>
+          <tr><td>电机</td><td class="mono">A+ A− B+ B−</td><td>两相绕组</td><td>驱动器输出侧</td><td><span class="dot" style="background:#ff5d5d"></span>红组 / <span class="dot" style="background:#4cc9f0"></span>青组</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="craft">
+  <div class="wrap">
+    <div class="sec-tag">Module 04 · Craft</div>
+    <h2 class="sec-title">导线颜色规范 & 接线工艺</h2>
+    <div class="two-col">
+      <div class="card reveal">
+        <h3>线色规范（GB / IEC）</h3>
+        <div class="color-row"><span class="swatch pe"></span><b>PE 保护地</b><span>黄绿双色，专用，任何情况下不得挪用</span></div>
+        <div class="color-row"><span class="swatch" style="background:#b06a3b"></span><b>棕</b><span>交流 L；规范中亦为直流正极推荐色</span></div>
+        <div class="color-row"><span class="swatch" style="background:#4ea1ff"></span><b>蓝</b><span>交流 N；直流负极（0V）</span></div>
+        <div class="color-row"><span class="swatch" style="background:#ef4444"></span><b>红</b><span>DC24V+，国内工程惯例（同一项目内保持统一）</span></div>
+        <div class="color-row"><span class="swatch" style="background:repeating-linear-gradient(90deg,#f472b6 0 8px,#a78bfa 8px 16px,#34d399 16px 24px)"></span><b>屏蔽多芯</b><span>编码器与脉冲信号线，双绞屏蔽、与动力线分槽</span></div>
+      </div>
+      <div class="card reveal">
+        <h3>七条工艺铁律</h3>
+        <ul class="craft">
+          <li><span class="n">01</span>多股软线必须压冷压端子（管型/叉型），严禁散丝直接入端子。</li>
+          <li><span class="n">02</span>每根线两端套号码管，号与图纸一致，方向统一朝外。</li>
+          <li><span class="n">03</span>端子螺丝按规定扭矩紧固，压后轻拉检查不脱落。</li>
+          <li><span class="n">04</span>强弱电分槽布线，间距 ≥100mm 或加装隔板。</li>
+          <li><span class="n">05</span>屏蔽层单端接地，就近接柜内接地铜排。</li>
+          <li><span class="n">06</span>接线完毕先用万用表蜂鸣档核对短路与极性，再目视复查。</li>
+          <li><span class="n">07</span>上电顺序：先控制回路（QF2），后功率回路（QF3）；先空载后带载。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="fault">
+  <div class="wrap">
+    <div class="sec-tag">Module 05 · Troubleshooting</div>
+    <h2 class="sec-title">常见故障排查手册</h2>
+    <p class="sec-sub">接完线不等于结束——这四个故障覆盖了 90% 的现场问题，点开逐条学习。</p>
+    <div class="faq">
+      <div class="faq-item reveal">
+        <button class="faq-q"><span class="sym">FAULT-01</span>上电后 PLC 的 PWR 灯不亮，CPU 无反应<span class="arr">▶</span></button>
+        <div class="faq-a"><div class="faq-a-in">① 检查 <b>QF2 是否已合闸</b>；② 万用表直流档测 <b>L+ 与 M 之间电压</b>，应为 24V 左右；③ 若为 0V，检查开关电源输出及输入侧；④ 若电压为负值，说明 <b>正负极接反</b>，立即断电纠正。注意：S7-1200 允许 20.4~28.8V，超出范围不要强行上电。</div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q"><span class="sym">FAULT-02</span>高速计数器不计数，或数值乱跳<span class="arr">▶</span></button>
+        <div class="faq-a"><div class="faq-a-in">不计数：查 <b>1M 是否与 M 短接</b>、A/B 相是否接到组态指定的 I0.0/I0.1、编码器供电电压是否匹配。数值乱跳：多为干扰——检查 <b>屏蔽层是否单端接地</b>、信号线是否与动力线同槽，必要时改用双绞屏蔽线并降低走线平行长度。</div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q"><span class="sym">FAULT-03</span>程序已发脉冲，步进电机却不转<span class="arr">▶</span></button>
+        <div class="faq-a"><div class="faq-a-in">按顺序查：① <b>ENA 使能</b>是否有效（或先短接强制使能验证）；② <b>PUL−/DIR−/ENA− 公共端是否接回 0V</b>（共阴接法最常见漏接点）；③ 工艺对象是否已下载并激活；④ 用示波器或驱动器脉冲指示灯确认 Q0.0 确有脉冲输出。</div></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q"><span class="sym">FAULT-04</span>电机抖动、啸叫、发热或丢步<span class="arr">▶</span></button>
+        <div class="faq-a"><div class="faq-a-in">① 核对 <b>相序</b>：A+/A−、B+/B− 任一相反接都会导致抖动不转；② 驱动器 <b>细分拨码与组态脉冲当量是否一致</b>（对照 SHOT 03 的 1000 脉冲/转）；③ 加减速时间是否过短导致失步（对照 SHOT 04）；④ 48V 电源容量是否足够，带载时电压是否跌落。</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quiz">
+  <div class="wrap">
+    <div class="sec-tag">Module 06 · Quiz</div>
+    <h2 class="sec-title">随堂验收 · 7 道题</h2>
+    <p class="sec-sub">答对 6 题以上视为通过实训。答错的题目会指回对应步骤，回去复习再战。</p>
+    <div id="quizBox" style="margin-top:24px"></div>
+    <div class="scorebar">
+      <div>当前得分 <span class="sc" id="scoreNum">0</span> / 7 · <span id="scoreMsg">开始答题吧</span></div>
+      <button id="btnResetQuiz">↺ 重新作答</button>
+    </div>
+  </div>
+</section>
+
+<section id="tia">
+  <div class="wrap">
+    <div class="sec-tag">Module 07 · TIA Configuration</div>
+    <h2 class="sec-title">接线的另一半：博图里的轴组态</h2>
+    <p class="sec-sub">线接完只是"身体"就位，轴要"活"起来还靠 TIA Portal 组态。下面五幅界面为代码复刻（无需图片文件），与接线图一一呼应：Q0.0/Q0.1、1000 脉冲/转、使能与就绪——把鼠标放到右侧要点上，左图对应字段会高亮。</p>
+    <div class="tia-intro">🖱 <b>联动用法：</b>悬停右侧"看什么"要点 → 左图对应参数亮黄框；点击"回接线步骤"可在图纸与组态之间对照学习。</div>
+
+    <article class="tia-card reveal">
+      <div class="tia-head"><span class="tia-no">SHOT 01</span><h4>工艺对象 - 轴 · 常规</h4><span class="tia-path mono">工艺对象 ▸ 轴  基本参数 ▸ 常规</span></div>
+      <div class="tia-body">
+        <div class="tm-wrap"><div class="tm-win">
+          <div class="tm-top"><span class="tm-tab">功能图</span><span class="tm-tab act">参数视图</span></div>
+          <div class="tm-body">
+            <div class="tm-tree">
+              <div class="nd"><i class="cv">▼</i>基本参数<i class="ck">✓</i></div>
+              <div class="nd i1 sel">常规<i class="ck">✓</i></div>
+              <div class="nd i1">驱动器<i class="ck">✓</i></div>
+              <div class="nd"><i class="cv">▼</i>扩展参数<i class="ck">✓</i></div>
+              <div class="nd i1">机械<i class="ck">✓</i></div>
+              <div class="nd i1">位置限制<i class="ck b">✓</i></div>
+              <div class="nd i1"><i class="cv">▼</i>动态<i class="ck">✓</i></div>
+              <div class="nd i2">常规<i class="ck">✓</i></div>
+              <div class="nd i2">急停<i class="ck">✓</i></div>
+              <div class="nd i1"><i class="cv">▼</i>回原点<i class="ck b">✓</i></div>
+              <div class="nd i2">主动<i class="ck b">✓</i></div>
+              <div class="nd i2">被动<i class="ck b">✓</i></div>
+            </div>
+            <div class="tm-main">
+              <div class="tm-h">常规</div>
+              <div class="tm-panel">
+                <div class="tm-pttl">工艺对象 - 轴</div>
+                <div class="tm-row" data-hl="t1-name"><span class="tm-lbl">轴名称：</span><span class="tm-in" style="flex:1">旋盖轴</span></div>
+                <div class="tm-flow">
+                  <div class="tm-fgrp">
+                    <div class="tm-fb">📄<span class="gl">用户程序</span></div><div class="tm-arr"></div>
+                    <div class="tm-fb"><span class="gl">工艺对象 - 轴</span></div>
+                  </div>
+                  <div class="tm-arr"></div><div class="tm-fb">⎍<span class="gl">PTO (Pulse Train Output)</span></div>
+                  <div class="tm-arr"></div><div class="tm-fb">🎛<span class="gl">驱动器</span></div>
+                </div>
+                <div class="tm-pttl">驱动器</div>
+                <div class="tm-row"><span class="tm-rad on"></span>PTO (Pulse Train Output)</div>
+                <div class="tm-row"><span class="tm-rad"></span>模拟驱动装置接口</div>
+                <div class="tm-row"><span class="tm-rad"></span>PROFIdrive</div>
+                <div class="tm-pttl">测量单位</div>
+                <div class="tm-row" data-hl="t1-unit"><span class="tm-lbl">位置单位：</span><span class="tm-in" style="min-width:200px">°<span class="tm-dd">▾</span></span></div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="tia-notes"><h5>看什么</h5><ul>
+          <li data-hl="t1-name">轴名称 <b>旋盖轴</b>：按实际机构命名，多轴调试时一眼可辨</li>
+          <li>驱动器接口选 <b>PTO</b>：对应接线图的"脉冲+方向"两线方案；伺服总线控制才选 PROFIdrive</li>
+          <li data-hl="t1-unit">位置单位 <b>°</b>：此后该轴所有速度、位置均以度计，与机械参数 36°/转 呼应</li>
+          <li>左侧树全绿勾 = 组态校验通过；蓝勾为可选项（位置限制、回原点）未强制配置</li>
+        </ul><div class="tia-links"><button class="goto" data-goto="6">↩ 对应接线 STEP 06</button></div></div>
+      </div>
+    </article>
+
+    <article class="tia-card reveal">
+      <div class="tia-head"><span class="tia-no">SHOT 02</span><h4>驱动器 · 硬件接口</h4><span class="tia-path mono">轴 ▸ 基本参数 ▸ 驱动器</span></div>
+      <div class="tia-body">
+        <div class="tm-wrap"><div class="tm-win">
+          <div class="tm-top"><span class="tm-tab">功能图</span><span class="tm-tab act">参数视图</span></div>
+          <div class="tm-body">
+            <div class="tm-tree">
+              <div class="nd"><i class="cv">▼</i>基本参数<i class="ck">✓</i></div>
+              <div class="nd i1">常规<i class="ck">✓</i></div>
+              <div class="nd i1 sel">驱动器<i class="ck">✓</i></div>
+              <div class="nd"><i class="cv">▼</i>扩展参数<i class="ck">✓</i></div>
+              <div class="nd i1">机械<i class="ck">✓</i></div>
+              <div class="nd i1">位置限制<i class="ck b">✓</i></div>
+              <div class="nd i1"><i class="cv">▼</i>动态<i class="ck">✓</i></div>
+              <div class="nd i2">常规<i class="ck">✓</i></div>
+              <div class="nd i2">急停<i class="ck">✓</i></div>
+              <div class="nd i1"><i class="cv">▼</i>回原点<i class="ck b">✓</i></div>
+              <div class="nd i2">主动<i class="ck b">✓</i></div>
+              <div class="nd i2">被动<i class="ck b">✓</i></div>
+            </div>
+            <div class="tm-main">
+              <div class="tm-h">驱动器</div>
+              <div class="tm-panel">
+                <svg class="tm-svg" viewBox="0 0 460 190">
+                  <text x="52" y="52">PLC</text>
+                  <rect x="20" y="60" width="92" height="72" fill="#5b6772"/><rect x="30" y="112" width="10" height="10" fill="#3fd68f"/>
+                  <text x="212" y="24">驱动器</text>
+                  <rect x="196" y="32" width="64" height="126" fill="#5b6772"/><rect x="203" y="39" width="50" height="30" fill="#9fd8dc"/>
+                  <g fill="#22292f"><rect x="205" y="78" width="8" height="8"/><rect x="217" y="78" width="8" height="8"/><rect x="229" y="78" width="8" height="8"/><rect x="205" y="90" width="8" height="8"/><rect x="217" y="90" width="8" height="8"/><rect x="229" y="90" width="8" height="8"/></g>
+                  <text x="372" y="72">电机</text>
+                  <rect x="340" y="82" width="72" height="52" fill="#6b7480"/><rect x="412" y="98" width="20" height="14" fill="#dfe3e8"/>
+                  <line x1="112" y1="78" x2="188" y2="78" stroke="#222" stroke-width="2"/><polygon points="196,78 186,73 186,83" fill="#222"/>
+                  <text x="128" y="70">PTO 信号</text>
+                  <line x1="112" y1="106" x2="188" y2="106" stroke="#222" stroke-width="2"/><polygon points="196,106 186,101 186,111" fill="#222"/>
+                  <text x="140" y="98">启用</text>
+                  <line x1="196" y1="140" x2="120" y2="140" stroke="#222" stroke-width="2"/><polygon points="112,140 122,135 122,145" fill="#222"/>
+                  <text x="140" y="156">就绪</text>
+                  <line x1="260" y1="46" x2="352" y2="46" stroke="#222" stroke-width="2"/><line x1="352" y1="46" x2="352" y2="76" stroke="#222" stroke-width="2"/><polygon points="352,82 347,72 357,72" fill="#222"/>
+                  <text x="292" y="38">电源</text>
+                </svg>
+                <div class="tm-pttl">硬件接口</div>
+                <div class="tm-row"><span class="tm-lbl">脉冲发生器：</span><span class="tm-in">Pulse_1<span class="tm-dd">▾</span></span><span class="tm-note" style="color:#2e7d32">⮕ 设备组态</span></div>
+                <div class="tm-row"><span class="tm-lbl">信号类型：</span><span class="tm-in">PTO（脉冲 A 和方向 B）<span class="tm-dd">▾</span></span></div>
+                <div class="tm-row" data-hl="t2-pulse"><span class="tm-lbl">脉冲输出：</span><span class="tm-in" style="min-width:80px">Q0.0</span><span class="tm-in" style="min-width:80px">%Q0.0<span class="tm-dd">▾</span></span><span class="tm-note">100 kHz 板载输出</span></div>
+                <div class="tm-row"><span class="tm-cb">✓</span>激活方向输出</div>
+                <div class="tm-row" data-hl="t2-dir"><span class="tm-lbl">方向输出：</span><span class="tm-in" style="min-width:80px">Q0.1</span><span class="tm-in" style="min-width:80px">%Q0.1<span class="tm-dd">▾</span></span><span class="tm-note">100 kHz 板载输出</span></div>
+                <div class="tm-pttl">驱动装置的使能和反馈</div>
+                <div class="tm-2col">
+                  <div>
+                    <div class="tm-colh">PLC</div>
+                    <div class="tm-row"><span class="tm-lbl">使能输出：</span></div>
+                    <div class="tm-row"><span class="tm-in dis" style="min-width:86px"></span><span class="tm-in dis" style="min-width:56px"></span><span class="tm-bigarr"></span></div>
+                    <div class="tm-row"><span class="tm-lbl">就绪输入：</span></div>
+                    <div class="tm-row" data-hl="t2-ready"><span class="tm-in" style="min-width:86px">TRUE</span><span class="tm-in dis" style="min-width:56px"></span><span class="tm-bigarr l"></span></div>
+                  </div>
+                  <div>
+                    <div class="tm-colh">驱动器</div>
+                    <div class="tm-note" style="margin:26px 0 30px">启动驱动器</div>
+                    <div class="tm-note" style="margin:26px 0">驱动器就绪</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="tia-notes"><h5>看什么</h5><ul>
+          <li>脉冲发生器 <b>Pulse_1</b>：板载 PTO 通道 1</li>
+          <li>信号类型 <b>PTO（脉冲 A 和方向 B）</b>：即脉冲+方向模式，对应驱动器 PUL / DIR 端子</li>
+          <li data-hl="t2-pulse">脉冲输出 <b>Q0.0</b>：正是接线 STEP 06 压线的端子，100kHz 板载输出</li>
+          <li data-hl="t2-dir">方向输出 <b>Q0.1</b>：与 Q0.0 构成"脉冲+方向"两线方案</li>
+          <li data-hl="t2-ready">使能输出留空、就绪输入填 <b>TRUE</b>：步进开环没有"就绪"反馈，软件给 TRUE 打通使能链——经典手法</li>
+        </ul><div class="tia-links"><button class="goto" data-goto="6">↩ 对应接线 STEP 06</button></div></div>
+      </div>
+    </article>
+
+    <article class="tia-card reveal">
+      <div class="tia-head"><span class="tia-no">SHOT 03</span><h4>机械 · 脉冲当量</h4><span class="tia-path mono">轴 ▸ 扩展参数 ▸ 机械</span></div>
+      <div class="tia-body">
+        <div class="tm-wrap"><div class="tm-win">
+          <div class="tm-top"><span class="tm-tab">功能图</span><span class="tm-tab act">参数视图</span></div>
+          <div class="tm-body">
+            <div class="tm-tree">
+              <div class="nd"><i class="cv">▼</i>基本参数<i class="ck">✓</i></div>
+              <div class="nd i1">常规<i class="ck">✓</i></div>
+              <div class="nd i1">驱动器<i class="ck">✓</i></div>
+              <div class="nd"><i class="cv">▼</i>扩展参数<i class="ck">✓</i></div>
+              <div class="nd i1 sel">机械<i class="ck">✓</i></div>
+              <div class="nd i1">位置限制<i class="ck b">✓</i></div>
+              <div class="nd i1"><i class="cv">▼</i>动态<i class="ck">✓</i></div>
+              <div class="nd i2">常规<i class="ck">✓</i></div>
+              <div class="nd i2">急停<i class="ck">✓</i></div>
+              <div class="nd i1"><i class="cv">▼</i>回原点<i class="ck b">✓</i></div>
+              <div class="nd i2">主动<i class="ck b">✓</i></div>
+              <div class="nd i2">被动<i class="ck b">✓</i></div>
+            </div>
+            <div class="tm-main">
+              <div class="tm-h">机械</div>
+              <div class="tm-panel">
+                <svg class="tm-svg" viewBox="0 0 420 110">
+                  <rect x="28" y="28" width="92" height="58" rx="6" fill="#4a545e"/>
+                  <g fill="#39434d"><rect x="36" y="20" width="76" height="6"/><rect x="36" y="88" width="76" height="6"/></g>
+                  <circle cx="128" cy="57" r="26" fill="#e8eaed"/>
+                  <rect x="152" y="53" width="230" height="8" fill="#b9c0c7"/>
+                  <g stroke="#8f98a1" stroke-width="2"><line x1="162" y1="53" x2="158" y2="61"/><line x1="176" y1="53" x2="172" y2="61"/><line x1="190" y1="53" x2="186" y2="61"/><line x1="204" y1="53" x2="200" y2="61"/><line x1="218" y1="53" x2="214" y2="61"/><line x1="288" y1="53" x2="284" y2="61"/><line x1="302" y1="53" x2="298" y2="61"/><line x1="316" y1="53" x2="312" y2="61"/><line x1="330" y1="53" x2="326" y2="61"/><line x1="344" y1="53" x2="340" y2="61"/><line x1="358" y1="53" x2="354" y2="61"/><line x1="372" y1="53" x2="368" y2="61"/></g>
+                  <rect x="238" y="40" width="36" height="34" fill="#5b6772"/>
+                  <rect x="228" y="26" width="130" height="8" fill="#8f98a1"/>
+                </svg>
+                <div class="tm-row" data-hl="t3-ppr"><span class="tm-lbl">电机每转的脉冲数：</span><span class="tm-in" style="min-width:180px">1000</span></div>
+                <div class="tm-row" data-hl="t3-disp"><span class="tm-lbl">电机每转的负载位移：</span><span class="tm-in" style="min-width:150px">36.0<span class="tm-dd">°</span></span></div>
+                <div class="tm-row"><span class="tm-lbl">所允许的旋转方向：</span><span class="tm-in" style="min-width:180px">双向<span class="tm-dd">▾</span></span></div>
+                <div class="tm-row"><span class="tm-cb"></span>反向信号</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="tia-notes"><h5>看什么</h5><ul>
+          <li data-hl="t3-ppr">电机每转脉冲数 <b>1000</b>：必须与驱动器细分拨码逐位对应，拨错则所有定位成比例偏差</li>
+          <li data-hl="t3-disp">每转负载位移 <b>36.0°</b>：电机转一圈工位转 36°——典型 10 工位旋转机构（360°÷10）</li>
+          <li>允许旋转方向 <b>双向</b>：若机构只允许单向，可在此做软件方向限制</li>
+        </ul><div class="tia-links"><button class="goto" data-goto="7">↩ 拨码对应 STEP 07</button><button class="goto" data-goto="8">↩ 电机对应 STEP 08</button></div></div>
+      </div>
+    </article>
+
+    <article class="tia-card reveal">
+      <div class="tia-head"><span class="tia-no">SHOT 04</span><h4>动态 · 速度与加减速</h4><span class="tia-path mono">轴 ▸ 扩展参数 ▸ 动态  常规</span></div>
+      <div class="tia-body">
+        <div class="tm-wrap"><div class="tm-win">
+          <div class="tm-top"><span class="tm-tab act">功能图</span></div>
+          <div class="tm-body">
+            <div class="tm-tree">
+              <div class="nd"><i class="cv">▼</i>基本参数<i class="ck">✓</i></div>
+              <div class="nd i1">常规<i class="ck">✓</i></div>
+              <div class="nd i1">驱动器<i class="ck">✓</i></div>
+              <div class="nd"><i class="cv">▼</i>扩展参数<i class="ck">✓</i></div>
+              <div class="nd i1">机械<i class="ck">✓</i></div>
+              <div class="nd i1">位置限制<i class="ck b">✓</i></div>
+              <div class="nd i1"><i class="cv">▼</i>动态<i class="ck">✓</i></div>
+              <div class="nd i2 sel">常规<i class="ck">✓</i></div>
+              <div class="nd i2">急停<i class="ck">✓</i></div>
+              <div class="nd i1"><i class="cv">▼</i>回原点<i class="ck b">✓</i></div>
+              <div class="nd i2">主动<i class="ck b">✓</i></div>
+              <div class="nd i2">被动<i class="ck b">✓</i></div>
+            </div>
+            <div class="tm-main">
+              <div class="tm-h"><i class="cv">▸</i>常规</div>
+              <div class="tm-panel">
+                <div class="tm-note" style="margin-bottom:10px">注意：更改速度限值会影响加速度和减速度；加速时间和减速时间保持不变。</div>
+                <div class="tm-2col" style="grid-template-columns:1.15fr .85fr">
+                  <div>
+                    <div class="tm-note">速度</div>
+                    <svg class="tm-svg" viewBox="0 0 300 120" style="background:#f4f6f8">
+                      <line x1="20" y1="104" x2="286" y2="104" stroke="#111" stroke-width="2"/><polygon points="292,104 282,99 282,109" fill="#111"/>
+                      <line x1="24" y1="108" x2="24" y2="10" stroke="#111" stroke-width="2"/><polygon points="24,4 19,14 29,14" fill="#111"/>
+                      <path d="M24 104 L24 74 L110 30 L170 30 L250 74 L250 104" fill="none" stroke="#2b3fd0" stroke-width="3"/>
+                      <g stroke="#888" stroke-dasharray="3 3"><line x1="60" y1="104" x2="60" y2="52"/><line x1="110" y1="104" x2="110" y2="30"/><line x1="170" y1="104" x2="170" y2="30"/><line x1="250" y1="104" x2="250" y2="74"/><line x1="24" y1="30" x2="250" y2="30"/><line x1="24" y1="74" x2="250" y2="74"/></g>
+                      <text x="284" y="118">t</text>
+                    </svg>
+                    <div class="tm-note">加速度/减速度</div>
+                    <svg class="tm-svg" viewBox="0 0 300 120" style="background:#f4f6f8">
+                      <line x1="20" y1="60" x2="286" y2="60" stroke="#111" stroke-width="2"/><polygon points="292,60 282,55 282,65" fill="#111"/>
+                      <line x1="24" y1="112" x2="24" y2="8" stroke="#111" stroke-width="2"/><polygon points="24,2 19,12 29,12" fill="#111"/><polygon points="24,118 19,108 29,108" fill="#111"/>
+                      <path d="M24 60 L60 60 L60 24 L130 24 L130 60 L180 60 L180 96 L250 96 L250 60" fill="none" stroke="#2b3fd0" stroke-width="3"/>
+                      <g stroke="#888" stroke-dasharray="3 3"><line x1="60" y1="6" x2="60" y2="112"/><line x1="130" y1="6" x2="130" y2="112"/><line x1="180" y1="6" x2="180" y2="112"/><line x1="250" y1="6" x2="250" y2="112"/></g>
+                      <text x="284" y="76">t</text>
+                    </svg>
+                    <div class="tm-row" style="justify-content:space-around">
+                      <span><span class="tm-in" style="min-width:60px">0.5<span class="tm-dd">s</span></span><br><span class="tm-note">加速时间：</span></span>
+                      <span><span class="tm-in" style="min-width:60px">0.5<span class="tm-dd">s</span></span><br><span class="tm-note">减速时间：</span></span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="tm-row"><span class="tm-lbl" style="min-width:96px">速度限值的单位：</span><span class="tm-in" style="min-width:70px">°/s<span class="tm-dd">▾</span></span></div>
+                    <div class="tm-row"><span class="tm-lbl" style="min-width:96px">最大转速：</span></div>
+                    <div class="tm-row" data-hl="t4-vmax" style="display:block"><span class="tm-in" style="min-width:110px;margin:2px 0">900.0<span class="tm-dd">°/s</span></span><br><span class="tm-in dis" style="min-width:110px;margin:2px 0">900.0<span class="tm-dd">°/s</span></span></div>
+                    <div class="tm-row"><span class="tm-lbl" style="min-width:96px">启动/停止速度：</span></div>
+                    <div class="tm-row" style="display:block"><span class="tm-in" style="min-width:110px;margin:2px 0">36.0<span class="tm-dd">°/s</span></span><br><span class="tm-in dis" style="min-width:110px;margin:2px 0">36.0<span class="tm-dd">°/s</span></span></div>
+                    <div class="tm-row" data-hl="t4-acc"><span class="tm-lbl" style="min-width:96px">加速度：</span><span class="tm-in" style="min-width:110px">1728.0<span class="tm-dd">°/s²</span></span></div>
+                    <div class="tm-row"><span class="tm-lbl" style="min-width:96px">减速度：</span><span class="tm-in" style="min-width:110px">1728.0<span class="tm-dd">°/s²</span></span></div>
+                  </div>
+                </div>
+                <div class="tm-row"><span class="tm-cb"></span>激活加加速度限值</div>
+                <div class="tm-row"><span class="tm-note">滤波时间： t1</span><span class="tm-in dis" style="min-width:60px">0.0<span class="tm-dd">s</span></span><span class="tm-note">t2</span><span class="tm-in dis" style="min-width:60px">0.0<span class="tm-dd">s</span></span><span class="tm-note" style="margin-left:20px">加加速度：</span><span class="tm-in dis" style="min-width:80px">0.0<span class="tm-dd">°/s³</span></span></div>
+                <div class="tm-note" style="margin-top:8px">请注意，通过激活加加速度限值，可增加辅加速和减速的总时间。</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="tia-notes"><h5>看什么</h5><ul>
+          <li data-hl="t4-vmax">最大转速 <b>900 °/s</b>（=2.5 转/秒），启动/停止速度 <b>36 °/s</b></li>
+          <li data-hl="t4-acc">加/减速度 <b>1728 °/s²</b>，即加减速时间 <b>0.5 s</b>，梯形曲线（加加速度限值未激活）</li>
+          <li>页首提示：更改速度限值会重算加减速度，而加减速时间保持不变</li>
+          <li>加速度设太急 → 失步抖动，正是排故手册 <b>FAULT-04</b> 的现象来源</li>
+        </ul><div class="tia-links"><button class="goto" data-goto="9">↩ 调试对应 STEP 09</button></div></div>
+      </div>
+    </article>
+
+    <article class="tia-card reveal">
+      <div class="tia-head"><span class="tia-no">SHOT 05</span><h4>程序块 · 运动控制指令</h4><span class="tia-path mono">程序块 ▸ 轴控制块 ▸ LAD</span></div>
+      <div class="tia-body">
+        <div class="tm-wrap"><div class="tm-win">
+          <div class="tm-top"><span class="tm-tab act">LAD</span></div>
+          <div class="tm-lad">
+            <div class="net-h"><i class="cv">▾</i>程序段 1: <span class="mono">MC_Power</span></div>
+            <div class="lad-cmt">注释</div>
+            <div class="mc" data-hl="t5-power">
+              <div class="mc-l">
+                <div class="lrow"><span class="ln"></span></div>
+                <div class="lrow"><span class="tag">#iAxis_Select</span><span class="ln"></span></div>
+                <div class="lrow"><span class="tag">#iEnable_Axis</span><span class="ln"></span></div>
+                <div class="lrow"><span class="konst">1</span><span class="ln"></span></div>
+                <div class="lrow"><span class="konst">0</span><span class="ln"></span></div>
+              </div>
+              <div class="blk">
+                <div class="bt">MC_Power</div>
+                <div class="prow"><span>EN</span><span>ENO</span></div>
+                <div class="prow"><span>Axis</span><span></span></div>
+                <div class="prow"><span>Enable</span><span></span></div>
+                <div class="prow"><span>StartMode</span><span>Status</span></div>
+                <div class="prow"><span>StopMode</span><span>Error</span></div>
+              </div>
+              <div class="mc-r">
+                <div class="lrow"><span class="ln"></span></div>
+                <div class="lrow"></div>
+                <div class="lrow"></div>
+                <div class="lrow"><span class="ln"></span><span class="tag"><i class="cmt bg">TP：轴使能（.手动模式）</i><br>#Ctrl_Status.TP.o AxisEnabled</span></div>
+                <div class="lrow"><span class="ln"></span><span class="tag">#Mc_Power_Error</span></div>
+              </div>
+            </div>
+            <div class="net-h"><i class="cv">▸</i>程序段 2: <span class="mono">MC_Reset</span></div>
+            <div class="net-h"><i class="cv">▸</i>程序段 3: <span class="mono">MC_Home</span></div>
+            <div class="net-h"><i class="cv">▸</i>程序段 4: <span class="mono">MC_Halt</span></div>
+            <div class="net-h"><i class="cv">▸</i>程序段 5: 绝对运动位置及速度设定</div>
+            <div class="net-h"><i class="cv">▸</i>程序段 6: 手动触发汇总</div>
+            <div class="net-h"><i class="cv">▾</i>程序段 7: <span class="mono">MC_MoveAbsolute</span></div>
+            <div class="ladline">
+              <span class="ladcell"><i class="cmt">手动模式</i><span><span class="ct">| |</span> <span class="tag">#iMode_Manual</span></span></span>
+              <span class="ladcell"><span><span class="ct">| |</span> <span class="tag">#TP_Start</span></span></span>
+              <span class="ladcell"><i class="cmt">TP：0 绝对定位，1 相对定位（.手动模式）</i><span><span class="ct">|/|</span> <span class="tag">#Ctrl_Status.TPi Pos_Mode</span></span></span>
+            </div>
+            <div class="ladline">
+              <span class="ladcell"><i class="cmt">自动模式</i><span><span class="ct">| |</span> <span class="tag">#iMode_Auto</span></span></span>
+              <span class="ladcell"><i class="cmt">自动模式：定位启动（.自动模式）</i><span><span class="ct">| |</span> <span class="tag">#Ctrl_Status.Auto.Pos_Start</span></span></span>
+              <span class="ladcell"><i class="cmt">自动模式：0 绝对定位，1 相对定位（.自动模式）</i><span><span class="ct">|/|</span> <span class="tag">#Ctrl_Status.Auto.Pos_Mode</span></span></span>
+            </div>
+            <div class="mc" data-hl="t5-move">
+              <div class="mc-l">
+                <div class="lrow"><span class="ln"></span></div>
+                <div class="lrow"><span class="tag">#iAxis_Select</span><span class="ln"></span></div>
+                <div class="lrow"><span class="ln"></span></div>
+                <div class="lrow"><span class="tag">#Move_Position_Setting</span><span class="ln"></span></div>
+                <div class="lrow"><span class="tag">#Move_Velocity_Setting</span><span class="ln"></span></div>
+                <div class="lrow"><span class="konst">1</span><span class="ln"></span></div>
+              </div>
+              <div class="blk">
+                <div class="bt">MC_MoveAbsolute</div>
+                <div class="prow"><span>EN</span><span>ENO</span></div>
+                <div class="prow"><span>Axis</span><span>Done</span></div>
+                <div class="prow"><span>Execute</span><span>Busy</span></div>
+                <div class="prow"><span>Position</span><span>CommandAborted</span></div>
+                <div class="prow"><span>Velocity</span><span>Error</span></div>
+                <div class="prow"><span>Direction</span><span>ErrorID</span></div>
+              </div>
+              <div class="mc-r">
+                <div class="lrow"><span class="ln"></span></div>
+                <div class="lrow"><span class="ln"></span><span class="tag">#Mc_MoveAbsolute_Done</span></div>
+                <div class="lrow"><span class="ln"></span><span class="tag">#Move_Absolute_On_Move</span></div>
+                <div class="lrow"><span class="ln"></span><span class="tag">#Mc_Moveabsolute_Abort</span></div>
+                <div class="lrow"><span class="ln"></span><span class="tag">#Mc_MoveAbsolute_Error</span></div>
+                <div class="lrow"><span class="ln"></span><span class="konst">16#0</span></div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="tia-notes"><h5>看什么</h5><ul>
+          <li data-hl="t5-power">段 1 <b>MC_Power</b>：轴使能是一切运动的前提，Status 汇入 AxisEnabled 供全程序互锁</li>
+          <li>段 2–4 <b>MC_Reset / MC_Home / MC_Halt</b>：故障复位、回原点、停止——安全链三件套</li>
+          <li data-hl="t5-move">段 7 <b>MC_MoveAbsolute</b>：绝对定位，Position / Velocity 来自设定值，Done / Error 做完成与报警处理</li>
+          <li>手动 / 自动模式用触点切换（<span class="mono">| |</span> 常开、<span class="mono">|/|</span> 常闭），手动下 TP_Start 点动</li>
+          <li>调用铁律：<b>Power → Home(如需) → Move</b>；报 Error 后必须先 MC_Reset 才能重新使能</li>
+        </ul><div class="tia-links"><button class="goto" data-goto="9">↩ 上电检查 STEP 09</button></div></div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<footer>
+  <div class="f-hazard"></div>
+  <div class="wrap f-body">
+    <div class="f-note"><b>安全声明：</b>本页为仿真教学用途。实际操作必须遵循"断电、验电、挂牌、监护"流程，遵守所在单位的电气安全规程，接线与上电须经具备资质人员确认。</div>
+    <div class="mono" style="text-align:right">WIRING TRAINER v2.0<br>S7-1200 · ENCODER · STEPPER · MCB · TIA<br>把每一根线，接到它该去的位置。</div>
+  </div>
+</footer>
+
+<script>
+const STEPS=[
+{t:"认识元件",d:"这套系统要做的事：PLC 读取编码器反馈，再从 Q0.0 发出高速脉冲指挥步进电机精确旋转——一套典型的开环/半闭环位置控制回路。图中分为电源区、控制区、驱动区，先悬停各个元件熟悉它们，再点'下一步'开始接线。",
+ tips:["接线顺序总原则：先电源、后信号，先控制、后功率，最后统一接地","全程断电作业，上电前必须复查"],
+ chips:[["qf","QF1~3 空开"],["psu","开关电源"],["plc","S7-1200"],["enc","编码器"],["drv","步进驱动器"],["mot","步进电机"]]},
+{t:"主回路电源",d:"从电网取电：L、N 接入 2P 空开 QF1，出线分配给 24V 与 48V 两台开关电源；PE 线此时先不做，最后统一接接地铜排。",
+ tips:["作业前先验电、断电、挂'禁止合闸'牌","主回路导线 ≥1.5mm²，两端压冷压端子","QF1 选 2P：检修时能同时断开 L 和 N","每根线套号码管，编号与图纸一致"],chips:[["qf","QF1"],["psu","电源输入侧"]]},
+{t:"建立 24V 母线",d:"开关电源把 220V 变成 24V，输出经直流空开 QF2 后汇成两条母线：24V+（红）与 0V（蓝）。之后所有 24V 设备都从母线取电，这是全柜的'供血干管'。",
+ tips:["开关电源容量按负载总电流的 1.2~1.5 倍留余量","输出极性勿反：+ 进正极母线，− 进 0V 母线","直流回路请用直流专用空开保护","母线成型后，用万用表实测 ≈24V 再继续"],chips:[["psu","24V 输出"],["qf","QF2"]]},
+{t:"PLC 上电准备",d:"从母线引两根线到 CPU：24V+ → L+，0V → M（M 经 1M 跳线节点汇入）。这是 PLC 的生命线，极性接反会直接烧毁模块。",
+ tips:["S7-1200 允许 24V ±10%（20.4~28.8V）","接线前先用万用表确认母线电压与极性","压线后轻拉导线检查牢固度"],chips:[["plc","L+ / M"]]},
+{t:"输入侧与编码器供电",d:"把输入公共端 1M 与 M 短接（决定输入参考电位），再给编码器供电：棕线接 24V+，蓝线接 0V。",
+ tips:["S7-1200 数字输入为高电平有效，1M 必须接 M","编码器供电电压以铭牌为准（常见 5~24V 宽压）","供电接好后先别急着接信号线"],chips:[["enc","电源端"],["plc","1M"]]},
+{t:"编码器信号接入",d:"三根信号线对号入座：A 相 → I0.0，B 相 → I0.1，Z 相 → I0.2。屏蔽层剥出后单端接柜内接地铜排。",
+ tips:["A/B 正交相差 90°，在硬件组态中启用 HSC 并选正交模式","计数方向反了？交换 A、B 两相即可","屏蔽层只允许单端接地，两端接地会形成环流","信号线用双绞屏蔽线，与动力线分槽走"],chips:[["enc","A/B/Z"],["plc","I0.0~I0.2"]]},
+{t:"脉冲信号 → 驱动器",d:"CPU 1214C 晶体管输出为源型（电流从 Q 流出），因此采用共阴接法：Q0.0→PUL+（脉冲）、Q0.1→DIR+（方向）、Q0.2→ENA+（使能），PUL−/DIR−/ENA− 短接后回到 0V 母线。",
+ tips:["发脉冲必须用晶体管输出点，Q0.0/Q0.1 最高 100kHz","共阴接法 = 驱动器负端公共回 0V，匹配西门子源型输出","在 TIA Portal '工艺对象'中组态轴（见 SHOT 02）","信号线同样建议屏蔽并单端接地"],chips:[["plc","Q0.0~Q0.2"],["drv","PUL/DIR/ENA"]]},
+{t:"驱动器功率电源",d:"给驱动器'上大电'：48V 电源输出经 QF3 接到驱动器 V+ / V−。接线前务必把细分和电流拨码先设置好。",
+ tips:["核对驱动器额定电压范围与 48V 匹配","极性反接会瞬间烧毁驱动器，接完必测一遍","先设拨码后上电，带电拨码是禁忌（拨码值=SHOT 03 的 1000）","功率线按驱动器额定电流选线径"],chips:[["psu","48V 电源"],["drv","V+ / V−"],["qf","QF3"]]},
+{t:"电机接线",d:"两相四线接驱动器输出：A+ / A− 一相，B+ / B− 一相。接完后用手轻转电机轴，断电状态下两相应有明显'齿感'阻尼。",
+ tips:["万用表电阻档：同相两根线阻值接近 0，不同相之间开路","任一相的两根线接反 → 电机抖动不转，对调即可","驱动器电容有余电：断电后等指示灯熄灭再作业"],chips:[["drv","输出侧"],["mot","四根线"]]},
+{t:"接地与检查，准备通电",d:"最后统一接地：开关电源、PLC、驱动器、电机机壳的黄绿线全部压到接地铜排。然后按检查清单逐项过关，点击右侧'通电模拟'见证系统跑起来。",
+ tips:["黄绿线只做 PE，严禁挪作他用","检查清单：蜂鸣档查短路 → 极性复查 → 空开全部分闸 → 机械检查","上电顺序：QF1 → QF2（先控制回路）→ 观察无误 → QF3（后功率回路）"],chips:[["plc","机壳地"],["drv","机壳地"],["mot","机壳地"]]}
+];
+const QUIZ=[
+{q:"S7-1200 CPU 1214C DC/DC/DC 型号中，第三个 \"DC\" 代表什么？",o:["电源为直流 24V","输入为直流型","输出为晶体管（源型）"],a:2,s:6,w:"DC/DC/DC 依次表示：直流供电 / 直流输入 / 晶体管源型输出。发高速脉冲必须选晶体管型，继电器输出做不到。"},
+{q:"西门子源型晶体管输出接步进驱动器，推荐采用哪种接法？",o:["共阳接法：PUL+/DIR+/ENA+ 短接 +24V","共阴接法：PUL−/DIR−/ENA− 短接回 0V","随便接，驱动器内部自适应"],a:1,s:6,w:"源型输出的电流从 Q 点流出，需流经驱动器光耦后回到 0V，因此负端公共（共阴）才能构成回路。"},
+{q:"增量式编码器的屏蔽层应该如何处理？",o:["两端都接地，屏蔽更彻底","单端接柜内接地铜排","悬空不接，避免引入干扰"],a:1,s:5,w:"单端接地可泄放干扰又避免地环路电流；两端接地在两点地电位不等时反而形成环流干扰。"},
+{q:"编码器 A/B 两相正交信号无法直接提供的信息是？",o:["转速","转向","断电后的绝对位置"],a:2,s:5,w:"增量式编码器只输出相对脉冲，断电即丢失位置；要绝对位置需 Z 相回零或换绝对值编码器。"},
+{q:"步进电机某相的两根线接反，最典型的现象是？",o:["电机立即烧毁","抖动、啸叫、不转或丢步","完全不受影响"],a:1,s:8,w:"相序错误会让磁场顺序混乱，电机原地抖动发热。对调该相两根线即可恢复。"},
+{q:"检修后恢复送电，合理的顺序是？",o:["先合 QF3 功率回路，再合 QF2 控制回路","先合 QF2 控制回路，确认正常后再合 QF3 功率回路","所有空开同时一次性合上"],a:1,s:9,w:"先让控制系统上电自检，确认无异常再放功率电，可以把故障范围限制在最小。"},
+{q:"按 IEC/GB 规范推荐，直流正极导线的颜色是？",o:["红色","棕色","黄绿色"],a:1,s:2,w:"规范推荐 DC+ 为棕色、DC− 为蓝色；红色是国内工程界常见惯例，同一项目内保持统一即可。"}
+];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const $=id=>document.getElementById(id);
+
+/* ===== 步骤控制 ===== */
+const stage=$('stage'); let cur=0,powered=false,busy=false,autoTimer=null;
+function goTo(n){
+  n=Math.max(0,Math.min(9,n)); cur=n;
+  for(let i=1;i<=9;i++){const g=$('g'+i); g.classList.remove('done','active');
+    if(i<n) g.classList.add('done'); else if(i===n) g.classList.add('active');}
+  const s=STEPS[n];
+  $('stepNo').textContent=String(n).padStart(2,'0');
+  $('stepTitle').innerHTML=`<span>STEP ${String(n).padStart(2,'0')}</span> · ${s.t}`;
+  $('stepDesc').textContent=s.d;
+  $('stepTips').innerHTML=s.tips.map(t=>`<li>${t}</li>`).join('');
+  $('stepChips').innerHTML=s.chips.map(c=>`<span class="chip" data-el="${c[0]}">${c[1]}</span>`).join('');
+  $('pbar').style.width=(n/9*100)+'%';
+  $('btnPrev').disabled=(n===0||powered);
+  $('btnNext').disabled=powered;
+  $('btnNext').textContent=(n===9)?'✓ 已完成，可通电':'下一步 ▶';
+  const pb=$('btnPower');
+  if(!powered){
+    if(n===9){pb.classList.add('ready');pb.title='点击模拟上电';}
+    else{pb.classList.remove('ready');pb.title='完成全部步骤后可通电';}
+  }
+  stage.dataset.step=n;
+}
+$('btnPrev').onclick=()=>{if(!powered)goTo(cur-1)};
+$('btnNext').onclick=()=>{if(!powered)goTo(cur+1)};
+function stopAuto(){if(autoTimer){clearInterval(autoTimer);autoTimer=null;const b=$('btnAuto');b.classList.remove('playing');b.textContent='▶ 自动演示';}}
+$('btnAuto').onclick=function(){
+  if(autoTimer){stopAuto();return}
+  this.classList.add('playing');this.textContent='⏸ 暂停';
+  autoTimer=setInterval(()=>{if(powered||cur>=9){stopAuto();return} goTo(cur+1);},4200);
+  goTo(cur>=9?0:cur+1);
+};
+
+/* ===== 元件高亮（映射 + 事件委托） ===== */
+const ELMAP={qf:['el-qf1','el-qf2','el-qf3'],psu:['el-smp24','el-smp48'],plc:['el-plc'],enc:['el-enc'],drv:['el-drv'],mot:['el-mot']};
+function hl(key,on){(ELMAP[key]||[]).forEach(id=>{const g=$(id);if(g)g.querySelectorAll('.body').forEach(b=>b.classList.toggle('el-hl',on))})}
+document.addEventListener('mouseover',e=>{const t=e.target.closest('[data-el]');if(t&&!t.contains(e.relatedTarget))hl(t.dataset.el,true)});
+document.addEventListener('mouseout',e=>{const t=e.target.closest('[data-el]');if(t&&!t.contains(e.relatedTarget))hl(t.dataset.el,false)});
+
+/* ===== 端子提示 ===== */
+const tip=$('tip'),wrap=$('stageWrap');
+stage.addEventListener('pointerover',e=>{const t=e.target.closest('.term');if(!t)return;tip.innerHTML=t.dataset.tip;tip.classList.add('on');});
+stage.addEventListener('pointermove',e=>{
+  if(!tip.classList.contains('on'))return;
+  const r=wrap.getBoundingClientRect();
+  let x=e.clientX-r.left+wrap.scrollLeft+16, y=e.clientY-r.top+wrap.scrollTop-40;
+  x=Math.min(x,wrap.scrollLeft+wrap.clientWidth-tip.offsetWidth-12);
+  tip.style.left=Math.max(8,x)+'px'; tip.style.top=Math.max(8,y)+'px';
+});
+stage.addEventListener('pointerout',e=>{if(e.target.closest('.term'))tip.classList.remove('on')});
+
+/* ===== 通电模拟 ===== */
+const flows=[];
+function addFlow(sel){document.querySelectorAll(sel).forEach(p=>{
+  const c=document.createElementNS('http://www.w3.org/2000/svg','path');
+  c.setAttribute('d',p.getAttribute('d')); c.setAttribute('class','flow');
+  c.removeAttribute('pathLength');
+  p.parentNode.appendChild(c); flows.push(c);});}
+function clearFlow(){flows.forEach(f=>f.remove());flows.length=0}
+function setStatus(txt,hot){const s=$('powerStatus');s.textContent=txt;s.classList.toggle('hot',!!hot)}
+$('btnPower').onclick=async function(){
+  if(busy)return;
+  if(!powered){
+    if(cur<9)goTo(9);
+    stopAuto();
+    busy=true; powered=true; document.body.classList.add('powered');
+    this.classList.remove('ready'); this.classList.add('on'); this.innerHTML='⏻ 断电停机';
+    setStatus('▶ 合闸 QF1 …'); document.querySelectorAll('.cb-move')[0].classList.add('on'); addFlow('#g1 .wire'); await sleep(500);
+    setStatus('▶ 开关电源启动中 …'); $('led-psu24').classList.add('on-g'); await sleep(600);
+    setStatus('▶ 合闸 QF2，24V 母线建立'); document.querySelectorAll('.cb-move')[1].classList.add('on');
+    document.querySelectorAll('.bus').forEach(b=>b.classList.add('bus-glow')); addFlow('#g2 .wire'); await sleep(700);
+    setStatus('✓ PLC 上电，PWR / RUN 正常'); $('led-pwr').classList.add('on-g'); $('led-run').classList.add('on-g'); await sleep(700);
+    setStatus('▶ 合闸 QF3，48V 就绪'); document.querySelectorAll('.cb-move')[2].classList.add('on');
+    $('led-psu48').classList.add('on-g'); addFlow('#g7 .wire'); await sleep(600);
+    setStatus('▶ 工艺轴激活：Q0.0 发送脉冲 …'); $('qled0').classList.add('flash'); $('qled1').classList.add('on-y'); await sleep(800);
+    setStatus('▶ 驱动器使能，电机运转'); $('led-drv').classList.add('on-g'); stage.classList.add('spinning'); await sleep(600);
+    setStatus('● 系统运行中 —— 编码器反馈正常，轴匀速旋转',true);
+    busy=false;
+  }else{
+    busy=true; powered=false; document.body.classList.remove('powered');
+    this.classList.remove('on'); this.innerHTML='⏻ 通电模拟';
+    if(cur===9)this.classList.add('ready');
+    $('btnPrev').disabled=(cur===0); $('btnNext').disabled=false;
+    document.querySelectorAll('.cb-move').forEach(c=>c.classList.remove('on'));
+    ['led-psu24','led-psu48','led-pwr','led-run','led-drv'].forEach(id=>$(id).classList.remove('on-g'));
+    $('qled0').classList.remove('flash'); $('qled1').classList.remove('on-y');
+    stage.classList.remove('spinning');
+    document.querySelectorAll('.bus').forEach(b=>b.classList.remove('bus-glow'));
+    clearFlow(); setStatus('系统状态：断电检修中 · 已挂牌'); busy=false;
+  }
+};
+
+/* ===== 排故手风琴 ===== */
+document.querySelectorAll('.faq-item').forEach(item=>{
+  item.querySelector('.faq-q').onclick=()=>{
+    const open=item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i=>{i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=0});
+    if(!open){item.classList.add('open');const a=item.querySelector('.faq-a');a.style.maxHeight=a.scrollHeight+'px'}
+  };
+});
+
+/* ===== 测验 ===== */
+let score=0,answered=0;
+function bindGoto(sel){document.querySelectorAll(sel).forEach(a=>{a.onclick=()=>{goTo(+a.dataset.goto);document.getElementById('bench').scrollIntoView({behavior:'smooth'})}})}
+function renderQuiz(){
+  score=0;answered=0;$('scoreNum').textContent=0;$('scoreMsg').textContent='开始答题吧';
+  $('quizBox').innerHTML=QUIZ.map((q,i)=>`
+    <div class="qcard" data-qi="${i}">
+      <div class="qn">QUESTION ${String(i+1).padStart(2,'0')} / 07</div>
+      <div class="qq">${q.q}</div>
+      <div class="opts">${q.o.map((o,j)=>`<button class="opt" data-oi="${j}"><span class="k">${'ABC'[j]}</span>${o}</button>`).join('')}</div>
+      <div class="why">💡 ${q.w}　<a data-goto="${q.s}">→ 回看第 ${q.s} 步</a></div>
+    </div>`).join('');
+  document.querySelectorAll('#quizBox .opt').forEach(b=>{
+    b.onclick=()=>{
+      const card=b.closest('.qcard'); if(card.dataset.done)return; card.dataset.done=1;
+      const qi=+card.dataset.qi, oi=+b.dataset.oi, ok=(oi===QUIZ[qi].a);
+      card.querySelectorAll('.opt').forEach(o=>{o.classList.add('lock');if(+o.dataset.oi===QUIZ[qi].a)o.classList.add('correct')});
+      if(!ok)b.classList.add('wrong');
+      card.querySelector('.why').classList.add('show');
+      if(ok)score++; answered++; $('scoreNum').textContent=score;
+      $('scoreMsg').textContent=answered<7?'继续！':(score>=6?'🎉 通过！你已掌握本回路接线':'未达标，回看步骤后再来一次');
+    };
+  });
+  bindGoto('#quizBox [data-goto]');
+}
+$('btnResetQuiz').onclick=renderQuiz;
+
+/* ===== 组态复刻界面：要点联动高亮 + 跳转 ===== */
+document.addEventListener('mouseover',e=>{
+  const t=e.target.closest('[data-hl]'); if(!t||t.contains(e.relatedTarget))return;
+  document.querySelectorAll('[data-hl="'+t.dataset.hl+'"]').forEach(el=>el.classList.add('tm-hl'));
+});
+document.addEventListener('mouseout',e=>{
+  const t=e.target.closest('[data-hl]'); if(!t||t.contains(e.relatedTarget))return;
+  document.querySelectorAll('[data-hl="'+t.dataset.hl+'"]').forEach(el=>el.classList.remove('tm-hl'));
+});
+bindGoto('#tia .goto');
+
+/* ===== 滚动显现 & 初始化 ===== */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+renderQuiz();
+goTo(0);
+</script>
+</body>
+</html>

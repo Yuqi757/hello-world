@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>三菱PLC指令查询系统</title>
+  <script>
+    try{var t=localStorage.getItem("plc-theme");var d=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.setAttribute("data-theme",t||(d?"dark":"light"));}catch(e){}
+  </script>
+  <style>
+    :root{--bg:#eef3f9;--card:#fff;--text:#222;--muted:#666;--border:#e5ebf2;--hover:#f8fbff;--accent:#1874b8;--accent-dark:#12598d;--chip-bg:#eaf3fb;--chip-text:#175f97;--code-bg:#101828;--code-text:#d8e5ff;--mark-bg:#ffd54f;--mark-text:#222;--topbar1:#0d3f69;--topbar2:#1874b8;--sidebar-title-bg:#fbfdff;--tree-header-bg:#f7fafd;--tree-header-border:#e4edf6;--tree-hover:#eef6ff;--input-bg:#fff;--input-text:#222;--placeholder:#7a8694;--overlay:rgba(8,15,26,.52);--thead:#f2f7fb;--star:#f5b301;--btn-light-bg:rgba(255,255,255,.14);--danger:#d64545;--flash:rgba(24,116,184,.32)}
+    [data-theme="dark"]{--bg:#0d141c;--card:#151f2b;--text:#e8eef7;--muted:#9db0c3;--border:#263444;--hover:#1b2836;--accent:#4da3e8;--accent-dark:#79bdf4;--chip-bg:#173752;--chip-text:#9ed1fb;--code-bg:#09101d;--code-text:#d5e5ff;--mark-bg:#f0b429;--mark-text:#111;--topbar1:#07111c;--topbar2:#10456f;--sidebar-title-bg:#111b26;--tree-header-bg:#172433;--tree-header-border:#283c52;--tree-hover:#1d3046;--input-bg:#0b1420;--input-text:#e8eef7;--placeholder:#7c8fa3;--overlay:rgba(0,0,0,.66);--thead:#132030;--star:#f5b301;--btn-light-bg:rgba(255,255,255,.10);--danger:#ff6b6b;--flash:rgba(77,163,232,.32)}
+    *{box-sizing:border-box;margin:0;padding:0}
+    [hidden]{display:none!important}
+    html{scroll-behavior:smooth}
+    body{font-family:"Microsoft YaHei",Arial,sans-serif;background:var(--bg);color:var(--text)}
+    button{font-family:inherit}
+    .topbar{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,var(--topbar1),var(--topbar2));color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.16)}
+    .topbar-inner{max-width:1920px;margin:0 auto;padding:12px 16px}
+    .topbar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+    .topbar h1{font-size:24px}
+    .design-credit{font-size:13px;color:#fff;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);padding:6px 14px;border-radius:999px;white-space:nowrap;font-weight:700;letter-spacing:1px}
+    .topbar p{font-size:13px;opacity:.92;margin-bottom:10px;line-height:1.5}
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .search-box{position:relative;flex:1;min-width:260px;max-width:680px}
+    .search-box input{width:100%;height:44px;border:none;outline:none;border-radius:12px;padding:0 42px 0 14px;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,.08);background:var(--input-bg);color:var(--input-text)}
+    .search-box input::placeholder{color:var(--placeholder)}
+    .search-icon{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--placeholder);font-size:17px}
+    .btn{border:none;outline:none;cursor:pointer;border-radius:12px;padding:0 14px;height:44px;font-size:14px;transition:.2s}
+    .btn-reset{background:var(--card);color:var(--text);border:1px solid var(--border);font-weight:600}
+    .btn-reset:hover{background:var(--hover)}
+    .btn-theme,.btn-ghost{background:var(--btn-light-bg);color:#fff;border:1px solid rgba(255,255,255,.2);font-weight:600}
+    .btn-theme:hover,.btn-ghost:hover{background:rgba(255,255,255,.22)}
+    .select{height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:var(--btn-light-bg);color:#fff;padding:0 12px;font-size:14px;outline:none;cursor:pointer}
+    .select option{color:#222}
+    .stats{background:var(--btn-light-bg);padding:10px 13px;border-radius:12px;font-size:13px;white-space:nowrap;color:#fff}
+    .layout{max-width:1920px;margin:14px auto;padding:0 16px 60px;display:flex;gap:16px;align-items:flex-start}
+    .sidebar{width:320px;flex-shrink:0;background:var(--card);color:var(--text);border-radius:16px;box-shadow:0 6px 22px rgba(15,40,70,.08);overflow:hidden;position:sticky;top:130px;max-height:calc(100vh - 150px);display:flex;flex-direction:column}
+    .sidebar-title{padding:14px 16px 10px;font-size:17px;font-weight:700;border-bottom:1px solid var(--border);background:var(--sidebar-title-bg)}
+    .tree-wrap{padding:12px;overflow:auto}
+    .all-btn{width:100%;border:1px solid var(--border);background:var(--card);color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .all-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    .mini-count{background:rgba(255,255,255,.18);color:inherit;border-radius:999px;min-width:30px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;padding:0 8px}
+    .recent-label{font-size:12px;color:var(--muted);margin:4px 0 6px;font-weight:700}
+    .recent-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+    .recent-item{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);background:var(--tree-header-bg);color:var(--accent);border-radius:999px;padding:4px 6px 4px 10px;font-size:12px;cursor:pointer;font-family:Consolas,monospace;font-weight:700}
+    .recent-item:hover{background:var(--tree-hover)}
+    .recent-cmd{line-height:1}
+    .recent-del{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.15);color:inherit;font-size:12px;cursor:pointer;line-height:1;flex-shrink:0}
+    .recent-del:hover{background:var(--danger);color:#fff}
+    .tree-cat{margin-bottom:8px}
+    .tree-cat-header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;cursor:pointer;user-select:none;font-weight:700;color:var(--text);background:var(--tree-header-bg);border:1px solid var(--tree-header-border)}
+    .tree-cat-header:hover{background:var(--tree-hover)}
+    .tree-cat-header.active{background:var(--chip-bg);color:var(--accent);border-color:var(--accent)}
+    .arrow{font-size:12px;transition:.18s;transform:rotate(0deg)}
+    .tree-cat.closed .arrow{transform:rotate(-90deg)}
+    .count{margin-left:auto;background:var(--accent);color:#fff;min-width:26px;height:24px;padding:0 8px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+    .tree-items{display:grid;gap:5px;padding:9px 0 4px 18px}
+    .tree-cat.closed .tree-items{display:none}
+    .tree-item{width:100%;border:none;background:transparent;text-align:left;padding:8px 10px;border-radius:10px;cursor:pointer;color:var(--text);font-size:14px;line-height:1.5;display:flex;align-items:center;gap:6px}
+    .tree-item:hover{background:var(--tree-hover)}
+    .tree-item .cmd{font-family:Consolas,monospace;font-weight:700;color:var(--accent)}
+    .tree-badges{margin-left:auto;font-size:13px;white-space:nowrap}
+    .tree-open{margin-left:6px;cursor:pointer;opacity:.75;font-size:15px;flex-shrink:0}
+    .tree-open:hover{opacity:1;transform:scale(1.12)}
+    .content{flex:1;min-width:0}
+    .print-title{display:none}
+    .table-card{background:var(--card);color:var(--text);border-radius:16px;overflow:hidden;box-shadow:0 6px 22px rgba(15,40,70,.08);scroll-margin-top:150px}
+    .table-wrap{overflow:auto;max-height:calc(100vh - 200px)}
+    table{width:100%;border-collapse:collapse;min-width:1250px}
+    thead{background:var(--thead)}
+    thead th{position:sticky;top:0;z-index:5;background:var(--thead);box-shadow:0 1px 0 var(--border)}
+    th,td{padding:13px 14px;border-bottom:1px solid var(--border);vertical-align:top;font-size:15px;line-height:1.6}
+    th{color:var(--text);text-align:left;font-weight:700;white-space:nowrap}
+    tbody tr{cursor:pointer;scroll-margin-top:60px}
+    tbody tr:hover{background:var(--hover)}
+    tbody tr.row-flash{animation:rowFlash 2.2s ease}
+    @keyframes rowFlash{0%{background:var(--flash)}65%{background:var(--flash)}100%{background:transparent}}
+    .fav-cell{width:58px;text-align:center}
+    .fav-btn{background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#b8c4d2;padding:2px 6px;border-radius:8px}
+    .fav-btn:hover{background:var(--hover);color:var(--star)}
+    .fav-btn.active{color:var(--star)}
+    .cmd{font-family:Consolas,monospace;font-weight:700;color:var(--accent);white-space:nowrap;font-size:16px}
+    .badge{font-size:13px;margin-left:5px}
+    .name{font-weight:600;white-space:nowrap}
+    .cat{display:inline-block;background:var(--chip-bg);color:var(--chip-text);padding:4px 10px;border-radius:999px;font-size:12px;white-space:nowrap}
+    .models{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5}
+    .desc{min-width:240px}
+    .note{margin-top:6px;color:var(--muted);font-size:13px}
+    .code{font-family:Consolas,monospace;background:var(--code-bg);color:var(--code-text);padding:10px 12px;border-radius:10px;white-space:pre;overflow-x:auto;min-width:210px;font-size:13.5px;line-height:1.55}
+    mark{background:var(--mark-bg);color:var(--mark-text);padding:0 2px;border-radius:3px}
+    .empty{text-align:center;color:var(--muted);padding:20px 10px}
+    .footer-note{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.5}
+    .modal-overlay{position:fixed;inset:0;background:var(--overlay);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000}
+    .modal{width:min(920px,100%);max-height:92vh;overflow:auto;background:var(--card);color:var(--text);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.28)}
+    .modal-header{padding:20px 22px;background:linear-gradient(135deg,var(--topbar1),var(--topbar2));color:#fff;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;position:sticky;top:0;z-index:2}
+    .modal-title{font-size:28px;font-weight:800;font-family:Consolas,monospace;margin-bottom:6px;word-break:break-all}
+    .modal-sub{font-size:14px;opacity:.92}
+    .modal-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+    .modal-fav-btn{border:none;min-width:100px;height:38px;border-radius:10px;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;font-size:14px;font-weight:700}
+    .modal-fav-btn.active{background:var(--star);color:#222}
+    .modal-close{border:none;width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.16);color:#fff;font-size:18px;cursor:pointer}
+    .modal-close:hover,.modal-fav-btn:hover{filter:brightness(1.08)}
+    .modal-body{padding:22px}
+    .meta-grid{display:grid;grid-template-columns:110px 1fr;gap:12px 16px;margin-bottom:10px}
+    .meta-label{font-weight:700;color:var(--accent)}
+    .copy-btn,.small-btn{border:none;outline:none;background:var(--accent);color:#fff;border-radius:12px;cursor:pointer;font-size:14px}
+    .copy-btn{margin-top:12px;padding:11px 16px}
+    .small-btn{height:38px;padding:0 14px}
+    .copy-btn:hover,.small-btn:hover{background:var(--accent-dark)}
+    .small-btn:disabled{opacity:.55;cursor:not-allowed}
+    .section-title{margin:20px 0 10px;font-size:16px;font-weight:800;color:var(--accent);border-left:4px solid var(--accent);padding-left:10px}
+    textarea{width:100%;min-height:120px;resize:vertical;border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--card);color:var(--text);outline:none;line-height:1.7;font-size:14px}
+    textarea:focus{border-color:var(--accent)}
+    .note-actions{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+    .muted{color:var(--muted);font-size:12px;line-height:1.6}
+    .img-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+    .img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+    .img-item{position:relative;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--code-bg)}
+    .img-item img{width:100%;height:100px;object-fit:cover;display:block;cursor:zoom-in}
+    .img-del{position:absolute;top:6px;right:6px;width:26px;height:26px;border:none;border-radius:50%;background:rgba(0,0,0,.58);color:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+    .img-del:hover{background:var(--danger)}
+    .related-wrap{display:flex;flex-wrap:wrap;gap:8px}
+    .related-chip{border:1px solid var(--border);background:var(--tree-header-bg);color:var(--text);border-radius:10px;padding:8px 12px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+    .related-chip:hover{background:var(--tree-hover);border-color:var(--accent)}
+    .related-chip .cmd{font-size:13px}
+    .img-viewer{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;z-index:2000;padding:30px}
+    .img-viewer img{max-width:95vw;max-height:90vh;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+    .img-viewer-close{position:fixed;top:18px;right:18px;width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:20px;cursor:pointer;z-index:2001}
+    .img-viewer-close:hover{background:rgba(255,255,255,.28)}
+    .back-top{position:fixed;right:24px;bottom:28px;width:50px;height:50px;border:none;border-radius:50%;background:var(--accent);color:#fff;font-size:22px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.22);z-index:900;opacity:.94;transition:.2s}
+    .back-top:hover{background:var(--accent-dark);transform:translateY(-2px)}
+    @media (max-width:1100px){.layout{flex-direction:column}.sidebar{width:100%;position:static;max-height:none}.tree-wrap{max-height:420px}.table-wrap{max-height:none}}
+    @media (max-width:768px){.topbar h1{font-size:20px}.toolbar{flex-direction:column;align-items:stretch}.search-box{max-width:100%}.btn-reset,.btn-theme,.btn-ghost,.stats,.select{width:100%;text-align:center}.meta-grid{grid-template-columns:1fr;gap:4px 0}.meta-label{margin-top:10px}.modal-actions{flex-direction:column}.back-top{right:16px;bottom:18px;width:44px;height:44px}}
+    @media print{
+      .topbar,.sidebar,.back-top,.footer-note,.img-viewer,.modal-overlay{display:none!important}
+      .print-title{display:block!important;font-size:22px;font-weight:800;margin:0 0 14px;color:#000}
+      body{background:#fff}
+      .layout{display:block;max-width:none;margin:0;padding:0}
+      .content{width:100%}
+      .table-card{box-shadow:none;border-radius:0}
+      .table-wrap{max-height:none;overflow:visible}
+      table{min-width:0;width:100%}
+      thead th{position:static;background:#eee!important;color:#000;box-shadow:none}
+      th,td{color:#000;border-bottom:1px solid #ccc;font-size:11px;padding:6px}
+      .code{background:#f5f5f5;color:#000;white-space:pre-wrap;min-width:0}
+      .cat{background:#eee;color:#000}
+      .models{color:#555}
+      .desc{min-width:0}
+      mark{background:none;color:#000}
+      th:first-child,td.fav-cell{display:none!important}
+      .badge{display:none}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-head">
+        <h1>三菱PLC指令查询系统</h1>
+        <div class="design-credit">本系统由王总设计</div>
+      </div>
+      <p>快捷键：/ 聚焦搜索，Esc 关闭弹窗。支持中文/拼音搜索、机型筛选、打印、备份。共收录 166 条指令。</p>
+      <div class="toolbar">
+        <div class="search-box">
+          <input id="searchInput" type="text" placeholder="支持中文/拼音，如：定时器 或 dingshiqi 或 dsq" autocomplete="off" />
+          <span class="search-icon">🔍</span>
+        </div>
+        <select id="modelFilter" class="select"></select>
+        <button id="themeBtn" class="btn btn-theme">🌙 暗色</button>
+        <button id="resetBtn" class="btn btn-reset">重置</button>
+        <button id="printBtn" class="btn btn-ghost">打印手册</button>
+        <button id="exportBtn" class="btn btn-ghost">导出备份</button>
+        <button id="importBtn" class="btn btn-ghost">导入备份</button>
+        <input id="importFile" type="file" accept="application/json,.json" hidden />
+        <div id="stats" class="stats">共 0 条指令</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">指令目录树</div>
+      <div class="tree-wrap" id="tree"></div>
+    </aside>
+
+    <main class="content" id="content">
+      <div class="print-title">三菱PLC指令手册</div>
+      <div class="table-card" id="tableCard">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>收藏</th><th>指令</th><th>名称</th><th>分类</th><th>中文说明</th><th>示例程序</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="footer-note">点击目录项定位，点 📖 查看详情与相关指令；机型与拼音仅供参考；数据存本机，请定期导出备份。</div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="指令详情">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="modalTitle"></div>
+          <div class="modal-sub" id="modalSub"></div>
+        </div>
+        <div class="modal-actions">
+          <button id="modalFavBtn" class="modal-fav-btn">☆ 收藏</button>
+          <button class="modal-close" id="modalClose" aria-label="关闭">✕</button>
+        </div>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <div class="img-viewer" id="imgViewer" hidden>
+    <button id="imgViewerClose" class="img-viewer-close" aria-label="关闭图片">✕</button>
+    <img id="imgViewerImg" alt="图片预览" />
+  </div>
+
+  <button id="backTopBtn" class="back-top" hidden title="回到顶部">↑</button>
+  <script>
+    const SERIES=[
+      {code:"1N",name:"FX1N"},{code:"2N",name:"FX2N"},{code:"3G",name:"FX3G"},{code:"3U",name:"FX3U"},{code:"5U",name:"FX5U"}
+    ];
+    const CODE2NAME={};SERIES.forEach(function(s){CODE2NAME[s.code]=s.name;});
+    function parseModels(s){if(!s||s==="ALL")return SERIES.map(x=>x.code);var o=[];for(var i=0;i<s.length;i+=2)o.push(s.slice(i,i+2));return o;}
+
+    const RAW=[
+      ["LD","取指令","基本逻辑","从母线读取常开触点，逻辑行开始。","X0为ON时导通。","LD X0\nOUT Y0","ALL"],
+      ["LDI","取反指令","基本逻辑","从母线读取常闭触点。","X0为OFF时导通。","LDI X0\nOUT Y0","ALL"],
+      ["AND","与指令","基本逻辑","串联常开触点。","X0、X1均ON时输出。","LD X0\nAND X1\nOUT Y0","ALL"],
+      ["ANI","与非指令","基本逻辑","串联常闭触点。","X0为ON且X1为OFF时输出。","LD X0\nANI X1\nOUT Y0","ALL"],
+      ["OR","或指令","基本逻辑","并联常开触点，可自锁。","常用于自锁。","LD X0\nOR Y0\nOUT Y0","ALL"],
+      ["ORI","或非指令","基本逻辑","并联常闭触点。","任一条件满足即导通。","LD X0\nORI M0\nOUT Y0","ALL"],
+      ["OUT","输出指令","基本逻辑","驱动线圈，可输出Y、M、S、T、C。","导通时Y0输出。","LD X0\nOUT Y0","ALL"],
+      ["SET","置位指令","基本逻辑","置位并保持。","触发后Y0保持ON。","LD X0\nSET Y0","ALL"],
+      ["RST","复位指令","基本逻辑","复位元件或清除当前值。","触发后Y0复位。","LD X1\nRST Y0","ALL"],
+      ["LDP","上升沿触点","基本逻辑","取上升沿脉冲触点。","上升沿导通一拍。","LDP X0\nOUT Y0","ALL"],
+      ["LDF","下降沿触点","基本逻辑","取下降沿脉冲触点。","下降沿导通一拍。","LDF X0\nOUT Y0","ALL"],
+      ["ANDP","串联上升沿触点","基本逻辑","串联上升沿脉冲触点。","仅检测上升沿。","LD X0\nANDP X1\nOUT Y0","ALL"],
+      ["ANDF","串联下降沿触点","基本逻辑","串联下降沿脉冲触点。","仅检测下降沿。","LD X0\nANDF X1\nOUT Y0","ALL"],
+      ["ORP","并联上升沿触点","基本逻辑","并联上升沿脉冲触点。","仅检测上升沿。","LD X0\nORP X1\nOUT Y0","ALL"],
+      ["ORF","并联下降沿触点","基本逻辑","并联下降沿脉冲触点。","仅检测下降沿。","LD X0\nORF X1\nOUT Y0","ALL"],
+      ["ANB","块串联指令","基本逻辑","回路块与前级串联。","用于块串联。","LD X0\nOR X1\nLD X2\nOR X3\nANB\nOUT Y0","ALL"],
+      ["ORB","块并联指令","基本逻辑","回路块与前级并联。","用于块并联。","LD X0\nAND X1\nLD X2\nAND X3\nORB\nOUT Y0","ALL"],
+      ["INV","取反运算指令","基本逻辑","将当前逻辑结果取反。","结果取反输出。","LD X0\nINV\nOUT Y0","ALL"],
+      ["MPS","进栈指令","堆栈指令","逻辑结果压栈。","多分支用。","LD X0\nMPS\nAND X1\nOUT Y0","ALL"],
+      ["MRD","读栈指令","堆栈指令","读栈不弹出。","与MPS配合。","LD X0\nMPS\nMRD\nOUT Y1","ALL"],
+      ["MPP","出栈指令","堆栈指令","读栈并弹出。","与MPS配合。","LD X0\nMPS\nMPP\nOUT Y2","ALL"],
+      ["MC","主控开始指令","程序控制","主控电路开始。","主控条件满足时执行。","LD X0\nMC N0 M100","ALL"],
+      ["MCR","主控结束指令","程序控制","主控电路结束。","与MC成对。","MCR N0","ALL"],
+      ["NOP","空操作指令","程序控制","不执行操作。","占位用。","NOP","ALL"],
+      ["END","程序结束指令","程序控制","程序结束。","末尾必须有。","END","ALL"],
+      ["OUT T","定时器输出","定时器/计数器","启动定时器。","100ms定时器K100约10秒。","LD X0\nOUT T0 K100","ALL"],
+      ["OUT C","计数器输出","定时器/计数器","启动计数器。","计满后触点动作。","LD X0\nOUT C0 K10","ALL"],
+      ["HOUR","小时计时指令","定时器/计数器","累计ON时间（小时）。","最大9999小时，按手册。","LD X0\nHOUR X0 D0","2N3G3U5U"],
+      ["CMP","比较指令","比较指令","比较两数，结果占3个继电器。","M0大/M1等/M2小。","LD X0\nCMP K100 D0 M0","ALL"],
+      ["ZCP","区间比较指令","比较指令","判断是否在区间内。","占3个继电器。","LD X0\nZCP K0 K100 D0 M10","ALL"],
+      ["LD=","等于比较触点","比较指令","两数相等时导通。","D0=100导通。","LD= D0 K100\nOUT Y0","ALL"],
+      ["LD<>","不等于比较触点","比较指令","两数不等时导通。","D0≠100导通。","LD<> D0 K100\nOUT Y0","ALL"],
+      ["LD>","大于比较触点","比较指令","前者大于后者导通。","D0>100导通。","LD> D0 K100\nOUT Y0","ALL"],
+      ["LD>=","大于等于比较触点","比较指令","前者大于等于后者导通。","D0≥100导通。","LD>= D0 K100\nOUT Y0","ALL"],
+      ["LD<","小于比较触点","比较指令","前者小于后者导通。","D0<100导通。","LD< D0 K100\nOUT Y0","ALL"],
+      ["LD<=","小于等于比较触点","比较指令","前者小于等于后者导通。","D0≤100导通。","LD<= D0 K100\nOUT Y0","ALL"],
+      ["AND=","串联等于触点","比较指令","串联，两数相等导通。","与逻辑串联。","LD X0\nAND= D0 K100\nOUT Y0","ALL"],
+      ["AND<>","串联不等于触点","比较指令","串联，两数不等导通。","与逻辑串联。","LD X0\nAND<> D0 K100\nOUT Y0","ALL"],
+      ["AND>","串联大于触点","比较指令","串联，前者大于后者导通。","与逻辑串联。","LD X0\nAND> D0 K100\nOUT Y0","ALL"],
+      ["AND<","串联小于触点","比较指令","串联，前者小于后者导通。","与逻辑串联。","LD X0\nAND< D0 K100\nOUT Y0","ALL"],
+      ["OR=","并联等于触点","比较指令","并联，两数相等导通。","或逻辑并联。","LD X0\nOR= D0 K100\nOUT Y0","ALL"],
+      ["OR<>","并联不等于触点","比较指令","并联，两数不等导通。","或逻辑并联。","LD X0\nOR<> D0 K100\nOUT Y0","ALL"],
+      ["OR>","并联大于触点","比较指令","并联，前者大于后者导通。","或逻辑并联。","LD X0\nOR> D0 K100\nOUT Y0","ALL"],
+      ["OR<","并联小于触点","比较指令","并联，前者小于后者导通。","或逻辑并联。","LD X0\nOR< D0 K100\nOUT Y0","ALL"],
+      ["MOV","数据传送指令","数据传送","源数据送目标。","K100送D0。","LD X0\nMOV K100 D0","ALL"],
+      ["DMOV","32位数据传送","数据传送","传送32位数据。","占两个寄存器。","LD X0\nDMOV D0 D10","ALL"],
+      ["CMOV","条件传送指令","数据传送","条件满足时传送。","按手册配置。","LD X0\nCMOV D0 D10","2N3G3U5U"],
+      ["FMOV","多点传送指令","数据传送","同一数据写入多个地址。","K0写D0~D9。","LD X0\nFMOV K0 D0 K10","ALL"],
+      ["BMOV","块传送指令","数据传送","复制数据块。","D0起10个送D100。","LD X0\nBMOV D0 D100 K10","ALL"],
+      ["XCH","数据交换指令","数据传送","交换两操作数。","D0、D1互换。","LD X0\nXCH D0 D1","ALL"],
+      ["SWAP","高低字节交换","数据传送","交换16位高低字节。","通信用。","LD X0\nSWAP D0","ALL"],
+      ["ADD","加法指令","算术运算","两数相加。","D2=D0+D1。","LD X0\nADD D0 D1 D2","ALL"],
+      ["SUB","减法指令","算术运算","两数相减。","D2=D0-D1。","LD X0\nSUB D0 D1 D2","ALL"],
+      ["MUL","乘法指令","算术运算","两数相乘，结果32位。","结果存D2/D3。","LD X0\nMUL D0 D1 D2","ALL"],
+      ["DIV","除法指令","算术运算","两数相除，得商和余数。","商D2余D3。","LD X0\nDIV D0 D1 D2","ALL"],
+      ["DADD","32位加法","算术运算","32位加法。","(D0,D1)+(D2,D3)。","LD X0\nDADD D0 D2 D4","ALL"],
+      ["DSUB","32位减法","算术运算","32位减法。","(D0,D1)-(D2,D3)。","LD X0\nDSUB D0 D2 D4","ALL"],
+      ["DMUL","32位乘法","算术运算","32位乘法，结果64位。","占多个寄存器。","LD X0\nDMUL D0 D2 D4","ALL"],
+      ["DDIV","32位除法","算术运算","32位除法。","含商和余数。","LD X0\nDDIV D0 D2 D4","ALL"],
+      ["INC","加1指令","算术运算","目标加1。","建议上升沿触发。","LD X0\nINC D0","ALL"],
+      ["DEC","减1指令","算术运算","目标减1。","建议上升沿触发。","LD X0\nDEC D0","ALL"],
+      ["DINC","32位加1指令","算术运算","32位数据加1。","占两个寄存器。","LD X0\nDINC D0","ALL"],
+      ["DDEC","32位减1指令","算术运算","32位数据减1。","占两个寄存器。","LD X0\nDDEC D0","ALL"],
+      ["FLT","整数转浮点","浮点/数学","整数转浮点数。","结果占两寄存器。","LD X0\nFLT D0 D10","2N3G3U5U"],
+      ["INT","浮点转整数","浮点/数学","浮点数转整数。","源占两寄存器。","LD X0\nINT D10 D0","2N3G3U5U"],
+      ["EADD","浮点加法","浮点/数学","浮点数相加。","源/目标为浮点。","LD X0\nEADD D0 D2 D4","2N3G3U5U"],
+      ["ESUB","浮点减法","浮点/数学","浮点数相减。","源/目标为浮点。","LD X0\nESUB D0 D2 D4","2N3G3U5U"],
+      ["EMUL","浮点乘法","浮点/数学","浮点数相乘。","源/目标为浮点。","LD X0\nEMUL D0 D2 D4","2N3G3U5U"],
+      ["EDIV","浮点除法","浮点/数学","浮点数相除。","源/目标为浮点。","LD X0\nEDIV D0 D2 D4","2N3G3U5U"],
+      ["SQR","开方指令","浮点/数学","数据开方。","注意范围。","LD X0\nSQR D0 D1","2N3G3U5U"],
+      ["EXP","浮点指数指令","浮点/数学","求e的x次方。","源/目标为浮点。","LD X0\nEXP D0 D10","2N3G3U5U"],
+      ["LN","浮点自然对数","浮点/数学","求自然对数ln。","源/目标为浮点。","LD X0\nLN D0 D10","2N3G3U5U"],
+      ["LOG","浮点常用对数","浮点/数学","求以10为底的对数。","源/目标为浮点。","LD X0\nLOG D0 D10","2N3G3U5U"],
+      ["SIN","浮点正弦指令","浮点/数学","求正弦值。","源/目标为浮点。","LD X0\nSIN D0 D10","2N3G3U5U"],
+      ["COS","浮点余弦指令","浮点/数学","求余弦值。","源/目标为浮点。","LD X0\nCOS D0 D10","2N3G3U5U"],
+      ["TAN","浮点正切指令","浮点/数学","求正切值。","源/目标为浮点。","LD X0\nTAN D0 D10","2N3G3U5U"],
+      ["ASIN","浮点反正弦","浮点/数学","求反正弦值。","源/目标为浮点。","LD X0\nASIN D0 D10","2N3G3U5U"],
+      ["ACOS","浮点反余弦","浮点/数学","求反余弦值。","源/目标为浮点。","LD X0\nACOS D0 D10","2N3G3U5U"],
+      ["ATAN","浮点反正切","浮点/数学","求反正切值。","源/目标为浮点。","LD X0\nATAN D0 D10","2N3G3U5U"],
+      ["RAD","角度转弧度","浮点/数学","角度转弧度。","源/目标为浮点。","LD X0\nRAD D0 D10","2N3G3U5U"],
+      ["DEGR","弧度转角度","浮点/数学","弧度转角度。","源/目标为浮点。","LD X0\nDEGR D0 D10","2N3G3U5U"],
+      ["WAND","字与指令","逻辑/位处理","按位与运算。","D2=D0 AND D1。","LD X0\nWAND D0 D1 D2","ALL"],
+      ["WOR","字或指令","逻辑/位处理","按位或运算。","D2=D0 OR D1。","LD X0\nWOR D0 D1 D2","ALL"],
+      ["WXOR","字异或指令","逻辑/位处理","按位异或运算。","D2=D0 XOR D1。","LD X0\nWXOR D0 D1 D2","ALL"],
+      ["CML","取反指令","逻辑/位处理","按位取反传送。","D1为D0取反。","LD X0\nCML D0 D1","ALL"],
+      ["NEG","求补指令","逻辑/位处理","数据求补。","D0求补。","LD X0\nNEG D0","ALL"],
+      ["ZRST","区间复位指令","逻辑/位处理","批量复位位元件区间。","复位M0~M9。","LD X0\nZRST M0 M9","ALL"],
+      ["BON","位检查指令","逻辑/位处理","判断指定位是否为1。","判断D0第4位。","LD X0\nBON D0 K4 M0","ALL"],
+      ["BIN","BCD转BIN","数据转换","BCD码转二进制。","源须为合法BCD。","LD X0\nBIN D0 D1","ALL"],
+      ["BCD","BIN转BCD","数据转换","二进制转BCD码。","数码管显示用。","LD X0\nBCD D0 D1","ALL"],
+      ["DECO","译码指令","数据转换","低n位译码为位输出。","二进制译码。","LD X0\nDECO D0 M0 K3","ALL"],
+      ["ENCO","编码指令","数据转换","最高位ON位置编码。","与DECO相反。","LD X0\nENCO M0 D0 K3","ALL"],
+      ["SUM","ON位求和指令","数据转换","统计为1的位数。","结果存D1。","LD X0\nSUM D0 D1","ALL"],
+      ["SER","数据查找指令","数据转换","在数据表中查找数据。","返回位置和标志。","LD X0\nSER D0 D10 K5","ALL"],
+      ["SEGD","七段码译码","数据转换","译码为七段数码管。","接线按硬件。","LD X0\nSEGD D0 Y0","ALL"],
+      ["SEGL","带锁存七段码","数据转换","带锁存七段码显示。","按手册配置。","LD X0\nSEGL D0 Y0","ALL"],
+      ["ASC","ASCII转换","数据转换","ASCII码转换。","通信用。","LD X0\nASC D0 D1","ALL"],
+      ["HEX","十六进制转换","数据转换","十六进制/ASCII转换。","通信用。","LD X0\nHEX D0 D1","ALL"],
+      ["TRD","时钟读取指令","数据转换","读取实时时钟到寄存器。","占7个寄存器。","LD X0\nTRD D0","2N3G3U5U"],
+      ["TWR","时钟写入指令","数据转换","写入实时时钟。","占7个寄存器。","LD X0\nTWR D0","2N3G3U5U"],
+      ["SFTL","位左移指令","移位/循环","位元件左移。","按手册配置。","LD X0\nSFTL X1 M10 K4","ALL"],
+      ["SFTR","位右移指令","移位/循环","位元件右移。","按手册配置。","LD X0\nSFTR X1 M10 K4","ALL"],
+      ["WSFL","字左移指令","移位/循环","字数据左移。","寄存器队列用。","LD X0\nWSFL D0 D10 K4","ALL"],
+      ["WSFR","字右移指令","移位/循环","字数据右移。","寄存器队列用。","LD X0\nWSFR D0 D10 K4","ALL"],
+      ["ROL","循环左移","移位/循环","数据循环左移。","最高位进最低位。","LD X0\nROL D0 K4","ALL"],
+      ["ROR","循环右移","移位/循环","数据循环右移。","最低位进最高位。","LD X0\nROR D0 K4","ALL"],
+      ["RCL","带进位循环左移","移位/循环","带M8022循环左移。","M8022参与。","LD X0\nRCL D0 K4","ALL"],
+      ["RCR","带进位循环右移","移位/循环","带M8022循环右移。","M8022参与。","LD X0\nRCR D0 K4","ALL"],
+      ["CJ","条件跳转","程序控制","条件满足时跳转。","跳到P0。","LD X0\nCJ P0","ALL"],
+      ["CALL","子程序调用","程序控制","调用子程序。","子程序在FEND后。","LD X0\nCALL P10","ALL"],
+      ["SRET","子程序返回","程序控制","子程序返回。","与CALL配合。","SRET","ALL"],
+      ["FEND","主程序结束","程序控制","主程序结束。","子程序放其后。","FEND","ALL"],
+      ["FOR","循环开始","程序控制","开始循环。","与NEXT配对。","LD X0\nFOR K3","ALL"],
+      ["NEXT","循环结束","程序控制","循环体结束。","与FOR配对。","NEXT","ALL"],
+      ["EI","允许中断","程序控制","允许响应中断。","高速/定时中断用。","EI","ALL"],
+      ["DI","禁止中断","程序控制","禁止响应中断。","保护关键程序。","DI","ALL"],
+      ["IRET","中断返回","程序控制","中断处理返回。","与中断配合。","IRET","ALL"],
+      ["STL","步进触点指令","程序控制","步进开始，激活状态S。","与RET配合。","STL S0","ALL"],
+      ["RET","步进返回指令","程序控制","步进结束返回。","与STL配合。","RET","ALL"],
+      ["IST","初始状态指令","程序控制","步进自动设初始状态。","与STL配合。","LD X0\nIST S0 S20 S22","ALL"],
+      ["WDT","看门狗刷新指令","程序控制","刷新看门狗定时器。","长循环中使用。","WDT","ALL"],
+      ["REF","I/O刷新指令","程序控制","立即刷新I/O映像区。","加快I/O响应。","LD X0\nREF X0 K10","ALL"],
+      ["PLSY","脉冲输出指令","高速/定位","输出指定频率和数量脉冲。","输出点看机型。","LD X0\nPLSY K1000 K5000 Y0","1N2N3G3U5U"],
+      ["PLSR","带加减速脉冲输出","高速/定位","输出带加减速脉冲。","步进/伺服常用。","LD X0\nPLSR K1000 K5000 K100 Y0","1N2N3G3U5U"],
+      ["PLSV","可变速度脉冲输出","高速/定位","输出可变速脉冲。","S1频率，S2输出，S3方向。","LD X0\nPLSV D0 Y0 Y1","3G3U5U"],
+      ["DPLSY","32位脉冲输出","高速/定位","32位方式输出脉冲。","D0/D1频率，D2/D3脉冲数。","LD X0\nDPLSY D0 D2 Y0","3U5U"],
+      ["DPLSR","32位带加减速脉冲","高速/定位","32位带加减速脉冲。","按手册配置。","LD X0\nDPLSR D0 D2 D4 Y0","3U5U"],
+      ["DRVI","相对定位指令","高速/定位","相对定位输出脉冲。","示例仅格式参考。","LD X0\nDRVI K1000 K100 Y0","3G3U5U"],
+      ["DRVA","绝对定位指令","高速/定位","绝对定位输出脉冲。","示例仅格式参考。","LD X0\nDRVA K10000 K1000 Y0","3G3U5U"],
+      ["DDRVI","32位相对定位","高速/定位","32位相对定位。","D0/D1距离，D2/D3频率。","LD X0\nDDRVI D0 D2 Y0","3U5U"],
+      ["DDRVA","32位绝对定位","高速/定位","32位绝对定位。","D0/D1位置，D2/D3频率。","LD X0\nDDRVA D0 D2 Y0","3U5U"],
+      ["ZRN","原点回归指令","高速/定位","执行原点回归。","参数多，按手册。","LD X0\nZRN D0 D1 Y0","3G3U5U"],
+      ["DSZR","伺服回零指令","高速/定位","伺服回零，部分机型支持。","按手册配置。","LD X0\nDSZR D0 D1 Y0","3U5U"],
+      ["PWM","脉宽调制输出","高速/定位","输出PWM波形。","加热/调速用。","LD X0\nPWM K1000 K300 Y0","ALL"],
+      ["SPD","速度检测指令","高速/定位","检测单位时间脉冲数。","结果存D0。","LD X0\nSPD X1 K100 D0","ALL"],
+      ["ABS","高速计数器当前值读取","高速/定位","读取高速计数器当前值。","C235读入D0。","LD X0\nABS C235 D0","2N3G3U5U"],
+      ["HSCS","高速比较置位","高速/定位","高速计数达标置位输出。","C235到K1000置位Y0。","LD X0\nHSCS K1000 C235 Y0","2N3G3U5U"],
+      ["HSCR","高速比较复位","高速/定位","高速计数达标复位输出。","C235到K2000复位Y0。","LD X0\nHSCR K2000 C235 Y0","2N3G3U5U"],
+      ["HSZ","高速区间比较","高速/定位","高速计数区间比较。","占3个继电器。","LD X0\nHSZ K0 K1000 C235 M0","2N3G3U5U"],
+      ["DHSCS","32位高速比较置位","高速/定位","32位高速比较置位。","比较值D0/D1。","LD X0\nDHSCS D0 C235 Y0","3U5U"],
+      ["DHSCR","32位高速比较复位","高速/定位","32位高速比较复位。","比较值D0/D1。","LD X0\nDHSCR D0 C235 Y0","3U5U"],
+      ["DHSZ","32位高速区间比较","高速/定位","32位高速区间比较。","下限D0/D1上限D2/D3。","LD X0\nDHSZ D0 D2 C235 M0","3U5U"],
+      ["FROM","模块读取指令","通信/模块","从特殊模块读数据。","读模块0缓冲区。","LD X0\nFROM K0 K0 D0 K1","ALL"],
+      ["TO","模块写入指令","通信/模块","向特殊模块写数据。","写模块0缓冲区。","LD X0\nTO K0 K0 D0 K1","ALL"],
+      ["RS","串口通信指令","通信/模块","串口收发数据。","需配置通信参数。","LD X0\nRS D0 K2 D10 K3","2N3G3U5U"],
+      ["RS2","串口通信2指令","通信/模块","第二串口收发数据。","需配置通信参数。","LD X0\nRS2 D0 K2 D10 K3","3U5U"],
+      ["CRC","通信校验指令","通信/模块","生成/校验CRC码。","MODBUS等通信用。","LD X0\nCRC D0 D1","3U5U"],
+      ["ADPRW","MODBUS读写指令","通信/模块","MODBUS主站读写。","按手册配置。","LD X0\nADPRW K1 K0 D0 K0 K1","3U5U"],
+      ["PID","PID控制指令","过程控制","执行PID闭环控制。","按手册配置参数区。","LD X0\nPID D0 D1 D2 D100","2N3G3U5U"],
+      ["RAMP","斜坡输出指令","过程控制","输出斜坡渐变信号。","按手册配置。","LD X0\nRAMP D0 D10 K1000","2N3G3U5U"],
+      ["M8000","RUN监控常开","特殊继电器","PLC运行时为ON。","RUN时ON。","LD M8000\nOUT Y0","ALL"],
+      ["M8001","RUN监控常闭","特殊继电器","PLC运行时为OFF。","RUN时OFF。","LD M8001\nOUT M100","ALL"],
+      ["M8002","初始脉冲常开","特殊继电器","运行初期ON一拍。","初始化用。","LD M8002\nSET M0","ALL"],
+      ["M8011","10ms时钟脉冲","特殊继电器","10ms周期脉冲。","计时基准。","LD M8011\nOUT M100","ALL"],
+      ["M8012","100ms时钟脉冲","特殊继电器","100ms周期脉冲。","计时基准。","LD M8012\nOUT M100","ALL"],
+      ["M8013","1秒时钟脉冲","特殊继电器","1秒周期脉冲。","秒闪烁。","LD M8013\nOUT M100","ALL"],
+      ["M8014","1分钟时钟脉冲","特殊继电器","1分钟周期脉冲。","分钟闪烁。","LD M8014\nOUT M100","ALL"],
+      ["M8020","零标志","特殊继电器","运算结果为0时ON。","算术/比较用。","LD M8020\nOUT M100","ALL"],
+      ["M8021","借位标志","特殊继电器","减法产生借位时ON。","算术用。","LD M8021\nOUT M100","ALL"],
+      ["M8022","进位标志","特殊继电器","运算产生进位时ON。","移位/算术用。","LD M8022\nOUT M100","ALL"],
+      ["M8029","指令执行结束标志","特殊继电器","高速/定位指令完成标志。","按指令和机型确认。","LD M8029\nSET M0","ALL"],
+      ["M8340","Y0脉冲输出监控","特殊继电器","监控Y0脉冲输出。","Y0输出脉冲时ON。","LD M8340\nOUT M100","ALL"],
+      ["M8341","Y1脉冲输出监控","特殊继电器","监控Y1脉冲输出。","Y1输出脉冲时ON。","LD M8341\nOUT M100","ALL"],
+      ["M8342","Y2脉冲输出监控","特殊继电器","监控Y2脉冲输出。","Y2输出脉冲时ON。","LD M8342\nOUT M100","ALL"],
+      ["M8343","Y3脉冲输出监控","特殊继电器","监控Y3脉冲输出。","Y3输出脉冲时ON。","LD M8343\nOUT M100","ALL"],
+      ["D8013~D8019","时钟数据区","特殊继电器","实时时钟寄存器：秒分时日月年星期。","与TRD/TWR配合。","LD M8000\nMOV D8015 D0","2N3G3U5U"]
+    ];
+
+    const plcData=RAW.map(function(item){
+      return{cmd:item[0],name:item[1],cat:item[2],desc:item[3],note:item[4],example:item[5],
+        models:parseModels(item[6]),id:encodeURIComponent(item[0]+"|"+item[1]+"|"+item[2])};
+    });
+
+    const THEME_KEY="plc-theme",FAV_KEY="plc-favorites",NOTES_KEY="plc-notes",IMAGES_KEY="plc-images",RECENT_KEY="plc-recent";
+    const IDB_NAME="plc-app",IDB_STORE="images",MAX_IMAGES=6;
+    const $=id=>document.getElementById(id);
+    const searchInput=$("searchInput"),resetBtn=$("resetBtn"),themeBtn=$("themeBtn"),stats=$("stats"),tree=$("tree"),tbody=$("tbody"),tableCard=$("tableCard"),backTopBtn=$("backTopBtn"),modelFilter=$("modelFilter"),exportBtn=$("exportBtn"),importBtn=$("importBtn"),importFile=$("importFile"),printBtn=$("printBtn"),modalOverlay=$("modalOverlay"),modalClose=$("modalClose"),modalTitle=$("modalTitle"),modalSub=$("modalSub"),modalBody=$("modalBody"),modalFavBtn=$("modalFavBtn"),imgViewer=$("imgViewer"),imgViewerImg=$("imgViewerImg"),imgViewerClose=$("imgViewerClose");
+    let keyword="",tokens=[],activeCat="全部",activeModel="all",currentModalId=null,noteTimer=null,idb=null,useIDB=true;
+    const cats=["全部","收藏",...new Set(plcData.map(i=>i.cat))];
+    const expanded=new Set(cats.filter(c=>c!=="全部"&&c!=="收藏"));
+    let favorites=new Set(),notes={},images={},recent=[];
+    try{const s=JSON.parse(localStorage.getItem(FAV_KEY)||"[]");if(Array.isArray(s))favorites=new Set(s.map(String));}catch(e){}
+    try{const o=JSON.parse(localStorage.getItem(NOTES_KEY)||"{}");if(o&&typeof o==="object")notes=o;}catch(e){}
+    try{const r=JSON.parse(localStorage.getItem(RECENT_KEY)||"[]");if(Array.isArray(r))recent=r;}catch(e){}
+
+    const PYCHAR={};
+    ("取qu 指zhi 令ling 反fan 与yu 非fei 或huo 输shu 出chu 置zhi 位wei 复fu 上shang 升sheng 沿yan 触chu 点dian 下xia 降jiang 串chuan 联lian 并bing 块kuai 运yun 算suan 微wei 分fen 交jiao 替ti 进jin 栈zhan 读du 步bu 返fan 回hui 主zhu 控kong 开kai 始shi 结jie 束shu 空kong 操cao 作zuo 程cheng 序xu 定ding 时shi 器qi 计ji 数shu 比bi 较jiao 区qu 间jian 于yu 等deng 大da 小xiao 据ju 送song 传chuan 多duo 高gao 低di 字zi 节jie 加jia 法fa 减jian 乘cheng 除chu 浮fu 异yi 求qiu 补bu 转zhuan 七qi 段duan 码ma 译yi 带dai 锁suo 存cun 十shi 六liu 制zhi 钟zhong 写xie 入ru 整zheng 方fang 左zuo 右you 移yi 环huan 循xun 条tiao 件jian 跳tiao 子zi 调diao 用yong 允yun 许xu 禁jin 止zhi 中zhong 断duan 脉mai 冲chong 速su 度du 可ke 变bian 相xiang 对dui 绝jue 原yuan 归gui 伺si 服fu 宽kuan 检jian 测ce 当dang 前qian 值zhi 模mo 口kou 通tong 信xin 校jiao 验yan 监jian 常chang 初chu 秒miao 执zhi 行xing 基ji 本ben 逻luo 辑ji 边bian 堆dui 处chu 理li 换huan 学xue 特te 殊shu 继ji 电dian 轴zhou 标biao 志zhi 过guo 术shu 编bian 和he 平ping 均jun 状zhuang 态tai 查cha 找zhao 看kan 门men 狗gou 刷shua 新xin 正zheng 弦xian 余yu 切qie 自zi 然ran 斜xie 坡po 角jiao 弧hu 零ling 借jie").split(" ").forEach(s=>{PYCHAR[s[0]]=s.slice(1);});
+    function toPy(str){let full="",ini="";for(const ch of str){const p=PYCHAR[ch];if(p){full+=p;ini+=p[0];}else if(/[a-z0-9]/i.test(ch)){full+=ch.toLowerCase();ini+=ch.toLowerCase();}}return{full,ini};}
+    function buildPinyin(){plcData.forEach(it=>{const r=toPy(it.name+it.cat);it._py=r.full+" "+r.ini;});}
+
+    function currentTheme(){return document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light";}
+    function applyTheme(t){document.documentElement.setAttribute("data-theme",t);try{localStorage.setItem(THEME_KEY,t);}catch(e){}themeBtn.textContent=t==="dark"?"☀️ 亮色":"🌙 暗色";}
+    function saveFavorites(){try{localStorage.setItem(FAV_KEY,JSON.stringify([...favorites]));return true;}catch(e){alert("收藏保存失败");return false;}}
+    function saveNotes(){try{localStorage.setItem(NOTES_KEY,JSON.stringify(notes));return true;}catch(e){alert("笔记保存失败");return false;}}
+    function saveRecent(){try{localStorage.setItem(RECENT_KEY,JSON.stringify(recent));}catch(e){}}
+    function addRecent(id){recent=recent.filter(x=>x!==id);recent.unshift(id);recent=recent.slice(0,10);saveRecent();}
+    function removeRecent(id){recent=recent.filter(x=>x!==id);saveRecent();renderTree();}
+
+    function openIDB(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE);};r.onsuccess=e=>{idb=e.target.result;res();};r.onerror=()=>rej(r.error);});}
+    function idbLoadAll(){return new Promise((res,rej)=>{const tx=idb.transaction(IDB_STORE,"readonly"),st=tx.objectStore(IDB_STORE),out={};const kr=st.getAllKeys();kr.onsuccess=()=>{const keys=kr.result,vr=st.getAll();vr.onsuccess=()=>{const vals=vr.result;keys.forEach((k,i)=>out[k]=vals[i]||[]);res(out);};vr.onerror=()=>rej(vr.error);};kr.onerror=()=>rej(kr.error);});}
+    function idbSet(id,arr){return new Promise((res,rej)=>{const tx=idb.transaction(IDB_STORE,"readwrite");tx.objectStore(IDB_STORE).put(arr,id);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+    function idbDel(id){return new Promise((res,rej)=>{const tx=idb.transaction(IDB_STORE,"readwrite");tx.objectStore(IDB_STORE).delete(id);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+    function loadLSImages(){try{const o=JSON.parse(localStorage.getItem(IMAGES_KEY)||"{}");return(o&&typeof o==="object")?o:{};}catch(e){return{};}}
+    async function persistImages(id){if(useIDB){await idbSet(id,images[id]);}else{try{localStorage.setItem(IMAGES_KEY,JSON.stringify(images));}catch(e){alert("图片保存失败：空间不足");}}}
+    async function removeImagesPersist(id){if(useIDB){await idbDel(id);}else{try{localStorage.setItem(IMAGES_KEY,JSON.stringify(images));}catch(e){}}}
+    async function initStorage(){try{await openIDB();images=await idbLoadAll();useIDB=true;}catch(e){useIDB=false;images=loadLSImages();}
+      if(useIDB){const ls=loadLSImages();for(const k in ls){if(!(k in images)){images[k]=ls[k];try{await idbSet(k,ls[k]);}catch(e){}}}try{localStorage.removeItem(IMAGES_KEY);}catch(e){}}
+      renderAll();}
+
+    function toggleFavorite(id){if(favorites.has(id))favorites.delete(id);else favorites.add(id);if(saveFavorites()){renderAll();updateModalFavBtn();}}
+    function updateModalFavBtn(){if(currentModalId===null)return;const f=favorites.has(currentModalId);modalFavBtn.textContent=f?"★ 已收藏":"☆ 收藏";modalFavBtn.classList.toggle("active",f);}
+    function escapeRegExp(s){return String(s).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
+    function escapeHtml(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
+    function updateTokens(){tokens=keyword.trim().toLowerCase().split(/\s+/).filter(Boolean);}
+    function getHighlightRegex(){if(!tokens.length)return null;return new RegExp("(?:"+tokens.map(escapeRegExp).join("|")+")","gi");}
+    function highlight(text){const raw=String(text??"");if(!tokens.length)return escapeHtml(raw);const re=getHighlightRegex();if(!re)return escapeHtml(raw);let res="",last=0;for(const m of raw.matchAll(re)){res+=escapeHtml(raw.slice(last,m.index))+"<mark>"+escapeHtml(m[0])+"</mark>";last=m.index+m[0].length;}res+=escapeHtml(raw.slice(last));return res;}
+    function modelLabel(item){return(item.models||[]).map(c=>CODE2NAME[c]||c).join(" / ");}
+    function matchTokens(item){if(!tokens.length)return true;const hay=[item.cmd,item.name,item.cat,item.desc,item.note,item.example,item.myNote||"",item._py||""].join(" ").toLowerCase();return tokens.every(t=>hay.includes(t));}
+    function matchesView(item){if(activeCat==="收藏"&&!favorites.has(item.id))return false;if(activeCat!=="全部"&&activeCat!=="收藏"&&item.cat!==activeCat)return false;if(activeModel!=="all"&&!(item.models||[]).includes(activeModel))return false;return true;}
+    function getDataWithId(){return plcData.map(item=>({...item,myNote:notes[item.id]||"",imageCount:(images[item.id]||[]).length}));}
+    function getFilteredTableData(){return getDataWithId().filter(i=>matchesView(i)&&matchTokens(i));}
+    function getTreeGroups(){const g=new Map();getDataWithId().forEach(i=>{if(!matchesView(i)||!matchTokens(i))return;if(!g.has(i.cat))g.set(i.cat,{cat:i.cat,items:[]});g.get(i.cat).items.push(i);});return[...g.values()];}
+
+    function renderTree(){
+      const groups=getTreeGroups();const allData=getDataWithId();
+      const allMatch=allData.filter(matchTokens).length;const favMatch=allData.filter(i=>favorites.has(i.id)&&matchTokens(i)).length;
+      let html=`<button class="all-btn ${activeCat==="全部"?"active":""}" data-cat="全部"><span>全部指令</span><span class="mini-count">${allMatch}</span></button>
+      <button class="all-btn ${activeCat==="收藏"?"active":""}" data-cat="收藏"><span>我的收藏</span><span class="mini-count">${favMatch}</span></button>`;
+      if(recent.length){html+='<div class="recent-label">最近查看</div><div class="recent-wrap">'+recent.map(id=>{const it=plcData.find(x=>x.id===id);if(!it)return"";return `<span class="recent-item" data-recent-id="${id}" title="${escapeHtml(it.name)}"><span class="recent-cmd">${escapeHtml(it.cmd)}</span><span class="recent-del" data-recent-del="${id}" title="删除">×</span></span>`;}).join("")+'</div>';}
+      if(!groups.length){html+='<div class="empty">未找到相关目录。</div>';tree.innerHTML=html;return;}
+      groups.forEach(group=>{const isOpen=tokens.length?true:expanded.has(group.cat);
+        html+=`<div class="tree-cat ${isOpen?"open":"closed"}"><div class="tree-cat-header ${activeCat===group.cat?"active":""}" data-cat="${escapeHtml(group.cat)}"><span class="arrow">▼</span><span>${highlight(group.cat)}</span><span class="count">${group.items.length}</span></div><div class="tree-items">${group.items.map(item=>{const hasNote=Boolean((item.myNote||"").trim());const hasImage=item.imageCount>0;const badges=[hasNote?"📝":"",hasImage?"🖼️":""].filter(Boolean).join(" ");
+          return `<button class="tree-item" data-id="${item.id}" title="点击定位，点 📖 打开详情"><span class="cmd">${highlight(item.cmd)}</span><span>${highlight(item.name)}</span>${badges?`<span class="tree-badges">${badges}</span>`:""}<span class="tree-open" data-open-id="${item.id}" title="打开详情">📖</span></button>`;}).join("")}</div></div>`;});
+      tree.innerHTML=html;
+    }
+    function renderTable(){
+      const list=getFilteredTableData();
+      stats.textContent=`共 ${plcData.length} 条，匹配 ${list.length} 条，收藏 ${favorites.size} 条`;
+      if(!list.length){tbody.innerHTML='<tr><td colspan="6" class="empty">未找到相关指令。</td></tr>';return;}
+      tbody.innerHTML=list.map(item=>{const isFav=favorites.has(item.id);const hasNote=Boolean((item.myNote||"").trim());const hasImage=item.imageCount>0;
+        return `<tr data-id="${item.id}">
+          <td class="fav-cell"><button class="fav-btn ${isFav?"active":""}" data-fav-id="${item.id}" title="${isFav?"取消收藏":"收藏"}">${isFav?"★":"☆"}</button></td>
+          <td class="cmd">${highlight(item.cmd)}${hasNote?'<span class="badge" title="有笔记">📝</span>':""}${hasImage?'<span class="badge" title="有图片">🖼️</span>':""}</td>
+          <td class="name">${highlight(item.name)}</td>
+          <td><span class="cat">${highlight(item.cat)}</span><div class="models">${modelLabel(item)}</div></td>
+          <td class="desc"><div>${highlight(item.desc)}</div>${item.note?`<div class="note">说明：${highlight(item.note)}</div>`:""}</td>
+          <td><pre class="code">${highlight(item.example)}</pre></td></tr>`;}).join("");
+    }
+    function renderAll(){renderTree();renderTable();}
+    function scrollToFirstRow(){requestAnimationFrame(()=>setTimeout(()=>{const row=tbody.querySelector("tr[data-id]");if(row)row.scrollIntoView({behavior:"smooth",block:"start"});else tableCard.scrollIntoView({behavior:"smooth",block:"start"});},60));}
+    function scrollToCommand(id){closeModal();const target=plcData.find(x=>x.id===id);if(!target)return;const item=getDataWithId().find(x=>x.id===id);const visible=Boolean(item&&matchesView(item)&&matchTokens(item));
+      if(!visible){searchInput.value="";keyword="";activeCat="全部";updateTokens();expanded.add(target.cat);}
+      renderAll();requestAnimationFrame(()=>setTimeout(()=>{const row=tbody.querySelector(`tr[data-id="${id}"]`);if(!row)return;row.scrollIntoView({behavior:"smooth",block:"center"});row.classList.remove("row-flash");void row.offsetWidth;row.classList.add("row-flash");setTimeout(()=>row.classList.remove("row-flash"),2300);},70));}
+    function renderNoteSection(){const ta=$("noteArea"),st=$("noteStatus");if(!ta||currentModalId===null)return;ta.value=notes[currentModalId]||"";if(st)st.textContent="笔记会自动保存到当前浏览器。";}
+    function renderImageSection(){if(currentModalId===null)return;const grid=$("imgGrid"),btn=$("uploadImgBtn");if(!grid||!btn)return;const arr=images[currentModalId]||[];btn.disabled=arr.length>=MAX_IMAGES;btn.textContent=arr.length>=MAX_IMAGES?"图片已满":"上传图片";
+      if(!arr.length){grid.innerHTML='<div class="empty">暂无图片，点击“上传图片”添加。</div>';return;}
+      grid.innerHTML=arr.map((src,i)=>`<div class="img-item"><img src="${src}" data-view-index="${i}" alt="指令图片 ${i+1}" /><button class="img-del" data-del-index="${i}" title="删除图片">✕</button></div>`).join("");}
+    function openModal(id){const item=plcData.find(x=>x.id===id);if(!item)return;currentModalId=id;addRecent(id);
+      modalTitle.innerHTML=highlight(item.cmd);modalSub.innerHTML=`${highlight(item.name)} ｜ ${highlight(item.cat)}`;
+      const related=plcData.filter(x=>x.cat===item.cat&&x.id!==item.id).slice(0,6);
+      modalBody.innerHTML=`<div class="meta-grid">
+        <div class="meta-label">指令</div><div>${highlight(item.cmd)}</div>
+        <div class="meta-label">名称</div><div>${highlight(item.name)}</div>
+        <div class="meta-label">分类</div><div><span class="cat">${highlight(item.cat)}</span></div>
+        <div class="meta-label">适用机型</div><div>${modelLabel(item)}</div>
+        <div class="meta-label">功能说明</div><div>${highlight(item.desc)}</div>
+        ${item.note?`<div class="meta-label">补充说明</div><div>${highlight(item.note)}</div>`:""}
+        <div class="meta-label">示例程序</div><div><pre class="code">${highlight(item.example)}</pre><button class="copy-btn" data-id="${item.id}">复制示例程序</button></div>
+      </div>
+      <div class="section-title">我的笔记</div>
+      <textarea id="noteArea" placeholder="输入该指令的个人笔记，例如：应用场景、参数、接线、调试经验等。"></textarea>
+      <div class="note-actions"><button class="small-btn" id="saveNoteBtn">保存笔记</button><span id="noteStatus" class="muted"></span></div>
+      <div class="section-title">图片资料</div>
+      <div class="img-toolbar"><button class="small-btn" id="uploadImgBtn">上传图片</button><input id="imgInput" type="file" accept="image/*" multiple hidden /><span class="muted">每个指令最多 ${MAX_IMAGES} 张，自动压缩后存入 IndexedDB。</span></div>
+      <div id="imgGrid" class="img-grid"></div>
+      <div class="section-title">相关指令</div>
+      <div class="related-wrap">${related.map(r=>`<button class="related-chip" data-related-id="${r.id}"><span class="cmd">${escapeHtml(r.cmd)}</span><span class="muted">${escapeHtml(r.name)}</span></button>`).join("")||'<span class="muted">暂无</span>'}</div>`;
+      renderNoteSection();renderImageSection();updateModalFavBtn();renderTree();
+      modalOverlay.hidden=false;document.body.style.overflow="hidden";}
+    function closeModal(){saveCurrentNote(true,true);modalOverlay.hidden=true;imgViewer.hidden=true;imgViewerImg.src="";document.body.style.overflow="";currentModalId=null;}
+    function saveCurrentNote(manual=false,silent=false){if(currentModalId===null)return;const ta=$("noteArea"),st=$("noteStatus");if(!ta)return;const v=ta.value;if(v.trim())notes[currentModalId]=v;else delete notes[currentModalId];
+      if(saveNotes()){if(st&&!silent)st.textContent=manual?"已保存。":"已自动保存。";renderAll();}else{if(st&&!silent)st.textContent="保存失败。";}}
+    async function copyText(text,btn){const orig=btn.textContent;try{await navigator.clipboard.writeText(text);btn.textContent="已复制";setTimeout(()=>btn.textContent=orig,1500);}catch(e){const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");btn.textContent="已复制";setTimeout(()=>btn.textContent=orig,1500);}catch(err){alert("复制失败");}document.body.removeChild(ta);}}
+    function compressImage(file){return new Promise((res,rej)=>{if(!file.type.startsWith("image/")){rej(new Error("不是图片"));return;}const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{const max=900;let w=img.width,h=img.height;const sc=Math.min(1,max/Math.max(w,h));w=Math.round(w*sc);h=Math.round(h*sc);const c=document.createElement("canvas");c.width=w;c.height=h;const ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);res(c.toDataURL("image/jpeg",0.78));};img.onerror=()=>rej(new Error("图片读取失败"));img.src=rd.result;};rd.onerror=()=>rej(new Error("文件读取失败"));rd.readAsDataURL(file);});}
+    async function handleImageUpload(files){if(currentModalId===null||!files||!files.length)return;const id=currentModalId,current=images[id]||[];const remaining=MAX_IMAGES-current.length;if(remaining<=0){alert(`每个指令最多 ${MAX_IMAGES} 张图片。`);return;}
+      const list=Array.from(files).slice(0,remaining);if(files.length>remaining)alert(`最多 ${MAX_IMAGES} 张，本次只处理前 ${remaining} 张。`);const old=current.slice();
+      try{for(const f of list){const d=await compressImage(f);current.push(d);}images[id]=current;await persistImages(id);renderImageSection();renderAll();}catch(e){images[id]=old;renderImageSection();alert("图片处理失败");}}
+    async function deleteImage(index){if(currentModalId===null)return;const id=currentModalId,current=images[id]||[];if(index<0||index>=current.length)return;if(!confirm("确定删除这张图片吗？"))return;const old=current.slice();const next=old.filter((_,i)=>i!==index);
+      if(next.length)images[id]=next;else delete images[id];try{if(next.length)await persistImages(id);else await removeImagesPersist(id);}catch(e){images[id]=old;}renderImageSection();renderAll();}
+    function openImageViewer(i){if(currentModalId===null)return;const src=(images[currentModalId]||[])[i];if(!src)return;imgViewerImg.src=src;imgViewer.hidden=false;}
+    function closeImageViewer(){imgViewer.hidden=true;imgViewerImg.src="";}
+    function toggleBackTopButton(){backTopBtn.hidden=window.scrollY<300;}
+    function exportBackup(){const data={app:"mitsubishi-plc",version:3,exportedAt:new Date().toISOString(),theme:currentTheme(),favorites:[...favorites],notes:notes,images:images,recent:recent};
+      const blob=new Blob([JSON.stringify(data)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="plc-backup-"+Date.now()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+    function importBackup(file){const fr=new FileReader();fr.onload=async()=>{try{const d=JSON.parse(fr.result);if(!confirm("导入将覆盖当前收藏、笔记和图片，是否继续？"))return;
+      favorites=new Set((d.favorites||[]).map(String));notes=d.notes||{};images=d.images||{};recent=Array.isArray(d.recent)?d.recent:recent;saveFavorites();saveNotes();saveRecent();
+      if(useIDB){for(const k in images){await idbSet(k,images[k]);}}else{try{localStorage.setItem(IMAGES_KEY,JSON.stringify(images));}catch(e){}}
+      if(d.theme)applyTheme(d.theme);renderAll();alert("导入成功");}catch(e){alert("导入失败：文件格式不正确。");}};fr.readAsText(file);}
+
+    modelFilter.innerHTML='<option value="all">全部机型</option>'+SERIES.map(s=>`<option value="${s.code}">${s.name}</option>`).join("");
+    modelFilter.addEventListener("change",()=>{activeModel=modelFilter.value;renderAll();});
+    searchInput.addEventListener("input",e=>{keyword=e.target.value;updateTokens();renderAll();});
+    resetBtn.addEventListener("click",()=>{searchInput.value="";keyword="";activeCat="全部";activeModel="all";modelFilter.value="all";updateTokens();expanded.clear();cats.filter(c=>c!=="全部"&&c!=="收藏").forEach(c=>expanded.add(c));renderAll();window.scrollTo({top:0,behavior:"smooth"});});
+    themeBtn.addEventListener("click",()=>applyTheme(currentTheme()==="dark"?"light":"dark"));
+    printBtn.addEventListener("click",()=>window.print());
+    exportBtn.addEventListener("click",exportBackup);
+    importBtn.addEventListener("click",()=>importFile.click());
+    importFile.addEventListener("change",e=>{const f=e.target.files[0];if(f)importBackup(f);e.target.value="";});
+    backTopBtn.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
+    window.addEventListener("scroll",toggleBackTopButton,{passive:true});
+    tree.addEventListener("click",e=>{
+      const recentDel=e.target.closest(".recent-del");if(recentDel){removeRecent(recentDel.dataset.recentDel);return;}
+      const recentItem=e.target.closest(".recent-item");if(recentItem){openModal(recentItem.dataset.recentId);return;}
+      const allBtn=e.target.closest(".all-btn");if(allBtn){activeCat=allBtn.dataset.cat;renderAll();scrollToFirstRow();return;}
+      const header=e.target.closest(".tree-cat-header");if(header){const cat=header.dataset.cat;if(expanded.has(cat))expanded.delete(cat);else expanded.add(cat);activeCat=cat;renderAll();scrollToFirstRow();return;}
+      const openDetail=e.target.closest(".tree-open");if(openDetail){openModal(openDetail.dataset.openId);return;}
+      const itemBtn=e.target.closest(".tree-item");if(itemBtn)scrollToCommand(itemBtn.dataset.id);});
+    tbody.addEventListener("click",e=>{const favBtn=e.target.closest(".fav-btn");if(favBtn){e.stopPropagation();toggleFavorite(favBtn.dataset.favId);return;}const row=e.target.closest("tr[data-id]");if(row)openModal(row.dataset.id);});
+    modalFavBtn.addEventListener("click",()=>{if(currentModalId!==null)toggleFavorite(currentModalId);});
+    modalClose.addEventListener("click",closeModal);
+    modalOverlay.addEventListener("click",e=>{if(e.target===modalOverlay)closeModal();});
+    modalBody.addEventListener("input",e=>{if(e.target&&e.target.id==="noteArea"){const st=$("noteStatus");if(st)st.textContent="正在输入...";clearTimeout(noteTimer);noteTimer=setTimeout(()=>saveCurrentNote(false),700);}});
+    modalBody.addEventListener("click",e=>{
+      const relatedChip=e.target.closest(".related-chip");if(relatedChip){openModal(relatedChip.dataset.relatedId);return;}
+      const copyBtn=e.target.closest(".copy-btn");if(copyBtn){const item=plcData.find(x=>x.id===copyBtn.dataset.id);if(item)copyText(item.example,copyBtn);return;}
+      const saveNoteBtn=e.target.closest("#saveNoteBtn");if(saveNoteBtn){saveCurrentNote(true);return;}
+      const uploadBtn=e.target.closest("#uploadImgBtn");if(uploadBtn){const fi=$("imgInput");if(fi)fi.click();return;}
+      const delBtn=e.target.closest(".img-del");if(delBtn){deleteImage(Number(delBtn.dataset.delIndex));return;}
+      const img=e.target.closest("#imgGrid img[data-view-index]");if(img)openImageViewer(Number(img.dataset.viewIndex));});
+    modalBody.addEventListener("change",e=>{if(e.target&&e.target.id==="imgInput"){const files=Array.from(e.target.files||[]);e.target.value="";if(files.length)handleImageUpload(files);}});
+    imgViewerClose.addEventListener("click",closeImageViewer);
+    imgViewer.addEventListener("click",e=>{if(e.target===imgViewer)closeImageViewer();});
+    document.addEventListener("keydown",e=>{
+      if(e.key==="Escape"){if(!imgViewer.hidden){closeImageViewer();return;}if(!modalOverlay.hidden)closeModal();return;}
+      if(e.key==="/"){const ae=document.activeElement;const tag=ae?ae.tagName:"";if(tag!=="INPUT"&&tag!=="TEXTAREA"){e.preventDefault();searchInput.focus();}}});
+
+    buildPinyin();applyTheme(currentTheme());updateTokens();initStorage();toggleBackTopButton();
+  </script>
+</body>
+</html>
